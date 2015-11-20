@@ -1,12 +1,13 @@
 {
     "name": "iothub",
-    "version": "0.1.0",
+    "version": "0.0.0",
     "description": "Node.js IotHub implementation by the IoT Lab of the University of Helsinki",
     "homepage": "http://iotlab.cs.helsinki.fi",
     "keywords": [
 	"iot",
 	"iot hub"
     ],
+    "main": "index.js",
     "scripts": {
 	"test": "echo \"Error, there are no test defined at the moment\" && exit 1"
     },
@@ -14,8 +15,9 @@
 	"looback": "^2.25.0"
     },
     "repository": {
-	"type": "",
-	"url": ""
+	"type": "git",
+	"url": "https://github.com/uh-cs-iotlab/node-iothub"
     },
+    "author": "Julien Mineraud <julien.mineraud@helsinki.fi>",
     "license": "Apache-2.0"
 }
