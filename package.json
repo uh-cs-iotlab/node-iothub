@@ -1,0 +1,21 @@
+{
+    "name": "iothub",
+    "version": "0.1.0",
+    "description": "Node.js IotHub implementation by the IoT Lab of the University of Helsinki",
+    "homepage": "http://iotlab.cs.helsinki.fi",
+    "keywords": [
+	"iot",
+	"iot hub"
+    ],
+    "scripts": {
+	"test": "echo \"Error, there are no test defined at the moment\" && exit 1"
+    },
+    "dependencies": {
+	"looback": "^2.25.0"
+    },
+    "repository": {
+	"type": "",
+	"url": ""
+    },
+    "license": "Apache-2.0"
+}
