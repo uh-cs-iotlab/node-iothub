@@ -92,7 +92,8 @@ describe("IoT Hub javascript VM", function() {
     		// runs before all tests in this block
 			var app = express();
 			app.get('/', function(req, res, next) {
-				res.send('Hello from web server');
+
+				setTimeout(function(){res.send('Hello from web server')}, 1000);
 			});
 			server = app.listen(3001);
   		});
@@ -105,8 +106,8 @@ describe("IoT Hub javascript VM", function() {
 		it("Use XMLHttpRequest in script", function(done) {
 			var script = "var xhr = XMLHttpRequest();" +
 				"xhr.open('GET', 'http://localhost:3001', true);" +
-				"xhr.onreadystatechange = function(res) {print(res);};" + 
-				"xhr.send(null);";
+				"xhr.onreadystatechange = function(res) {print('Vida da loca');};" + 
+				"xhr.send(null); print('Tiotio');";
 			var vm = iothubvm({XMLHttpRequest: true});
 			var output;
 			var unhook = hook_consolelog(function(msg) {
@@ -114,7 +115,7 @@ describe("IoT Hub javascript VM", function() {
 			});
 			vm.runScript(script, function(err, res) { 
 				unhook();
-				expect(result).to.be.undefined;
+				expect(res).to.be.undefined;
 				expect(output).to.equal('Hello from web server');
 				done();
 			});
