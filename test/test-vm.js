@@ -37,7 +37,7 @@ describe("IoT Hub javascript VM", function() {
 		});
 
 		it("Hello world with return", function(done) {
-			var script = "print('Hello World'); return 5;";
+			var script = "print('Hello World'); 5;";
 			var output;
 			var unhook = hook_consolelog(function(msg) {
 				output = msg;
@@ -92,8 +92,7 @@ describe("IoT Hub javascript VM", function() {
     		// runs before all tests in this block
 			var app = express();
 			app.get('/', function(req, res, next) {
-
-				setTimeout(function(){res.send('Hello from web server')}, 1000);
+				res.send('Hello from web server');
 			});
 			server = app.listen(3001);
   		});
@@ -106,8 +105,8 @@ describe("IoT Hub javascript VM", function() {
 		it("Use XMLHttpRequest in script", function(done) {
 			var script = "var xhr = XMLHttpRequest();" +
 				"xhr.open('GET', 'http://localhost:3001', true);" +
-				"xhr.onreadystatechange = function(res) {print('Vida da loca');};" + 
-				"xhr.send(null); print('Tiotio');";
+				"xhr.onreadystatechange = function(res) {print(res);};" + 
+				"xhr.send(null);";
 			var vm = iothubvm({XMLHttpRequest: true});
 			var output;
 			var unhook = hook_consolelog(function(msg) {
