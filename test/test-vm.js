@@ -8,7 +8,6 @@ function hook_consolelog(callback) {
 
     console.log = (function(write) {
         return function() {
-            //write.apply(console, arguments)
             callback.apply(null, arguments);
         }
     })(console.log)
@@ -87,24 +86,24 @@ describe("IoT Hub javascript VM", function() {
 	describe("Execute code with access to XMLHttpRequest", function() {
 
 		var server;
+		var port;
 
 		before(function() {
-    		// runs before all tests in this block
 			var app = express();
 			app.get('/', function(req, res, next) {
 				res.send('Hello from web server');
 			});
-			server = app.listen(3001);
+			server = app.listen();
+			port = server.address().port;
   		});
 
   		after(function() {
-    		// runs before all tests in this block
 			server.close();
   		});
 
 		it("Use XMLHttpRequest in script", function(done) {
 			var script = "var xhr = XMLHttpRequest();" +
-				"xhr.open('GET', 'http://localhost:3001', true);" +
+				"xhr.open('GET', 'http://localhost:" + port + "', true);" +
 				"xhr.onreadystatechange = function(res) {print(res);};" + 
 				"xhr.send(null);";
 			var vm = iothubvm({XMLHttpRequest: true});
