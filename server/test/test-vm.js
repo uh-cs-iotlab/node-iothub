@@ -1,7 +1,7 @@
 var expect = require('chai').expect,
 util = require('util'),
 express = require('express'),
-iothubvm = require('../lib/iothub-vm');
+iothubvm = require('../../lib/iothub-vm');
 
 function hook_consolelog(callback) {
     var old_log = console.log;
@@ -49,11 +49,11 @@ describe("IoT Hub javascript VM", function() {
 				done();
 			});
 		});
-		
+
 		it("Use console.log in script", function(done) {
 			var script = "console.log('Hello World');";
 			var vm = iothubvm();
-			vm.runScript(script, function(err, res) { 
+			vm.runScript(script, function(err, res) {
 				expect(err).to.exist;
 				done();
 			});
@@ -61,10 +61,10 @@ describe("IoT Hub javascript VM", function() {
 
 		it("Use require in script", function(done) {
 			var script = "var testUtil = require('util');" +
-				"var testObj = { name: 'test'};" + 
+				"var testObj = { name: 'test'};" +
 				"testUtil.inspect(testObj);";
 			var vm = iothubvm();
-			vm.runScript(script, function(err, res) { 
+			vm.runScript(script, function(err, res) {
 				expect(err).to.exist;
 				done();
 			});
@@ -73,10 +73,10 @@ describe("IoT Hub javascript VM", function() {
 		it("Use XMLHttpRequest in script", function(done) {
 			var script = "var xhr = XMLHttpRequest();" +
 				"xhr.open('GET', 'http://localhost:8080', true);" +
-				"xhr.onreadystatechange = function(res) {print(res);};" + 
+				"xhr.onreadystatechange = function(res) {print(res);};" +
 				"xhr.send(null);";
 			var vm = iothubvm();
-			vm.runScript(script, function(err, res) { 
+			vm.runScript(script, function(err, res) {
 				expect(err).to.exist;
 				done();
 			});
@@ -104,14 +104,14 @@ describe("IoT Hub javascript VM", function() {
 		it("Use XMLHttpRequest in script", function(done) {
 			var script = "var xhr = XMLHttpRequest();" +
 				"xhr.open('GET', 'http://localhost:" + port + "', true);" +
-				"xhr.onreadystatechange = function(res) {print(res);};" + 
+				"xhr.onreadystatechange = function(res) {print(res);};" +
 				"xhr.send(null);";
 			var vm = iothubvm({XMLHttpRequest: true});
 			var output;
 			var unhook = hook_consolelog(function(msg) {
 				output = msg;
 			});
-			vm.runScript(script, function(err, res) { 
+			vm.runScript(script, function(err, res) {
 				unhook();
 				expect(res).to.be.undefined;
 				expect(output).to.equal('Hello from web server');

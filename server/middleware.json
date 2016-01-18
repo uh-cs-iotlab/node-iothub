@@ -1,0 +1,27 @@
+{
+    "initial:before": {
+        "loopback#favicon": {}
+    },
+    "initial": {},
+    "session": {},
+    "auth": {},
+    "parse": {},
+    "routes": {
+        "loopback#rest": {
+            "paths": [
+                "${restApiRoot}"
+            ]
+        }
+    },
+    "files": {
+        "loopback#static": {
+            "params": "$!../client"
+        }
+    },
+    "final": {
+        "loopback#urlNotFound": {}
+    },
+    "final:after": {
+        "loopback#errorHandler": {}
+    }
+}

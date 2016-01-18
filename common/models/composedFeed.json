@@ -1,0 +1,32 @@
+{
+    "name": "ComposedFeed",
+    "base": "PersistedModel",
+    "strict": true,
+    "idInjection": true,
+    "http": {"path": "/feeds/composed"},
+    "properties": {
+        "field": { "type": ["object"] }
+    },
+    "validations": [],
+    "relations": {},
+    "acls": [
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$everyone",
+            "permission": "DENY"
+        },
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "admin",
+            "permission": "ALLOW"
+        }
+    ],
+    "mixins": {
+        "BaseFeed": {}
+    },
+    "methods": []
+}
