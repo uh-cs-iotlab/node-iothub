@@ -7,11 +7,20 @@
     "properties": {
         "storage": { "type": "boolean", "default": false },
         "readable": { "type": "boolean", "default": false },
-        "writeable": { "type": "boolean", "default": false },
-        "fields": { "type": ["object"], "required": true }
+        "writeable": { "type": "boolean", "default": false }
     },
     "validations": [],
-    "relations": {},
+    "relations": {
+        "fields": {
+            "type": "embedsMany",
+            "model": "Field",
+            "property": "fields",
+            "options": {
+                "validate": true,
+                "forceId": false
+            }
+        }
+    },
     "acls": [
         {
             "accessType": "*",

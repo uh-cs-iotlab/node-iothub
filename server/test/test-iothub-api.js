@@ -89,19 +89,34 @@ describe('IoT Hub API, Authenticated', function() {
 
 	var token;
 
+	var validField = function(options) {
+		options = options || {};
+		var ret = extend({
+			id: 0,
+			name: '',
+			type: '',
+			metadata: '',
+			optional: true,
+			keywords: []
+		}, options);
+		return ret;
+	};
+
 	var validComposedFeed = function(options) {
 		options = options || {};
+		var fields = options._fields;
+		delete options._fields;
 		var ret = extend({
 			name: 'testFeed',
 			id: 0,
-			fields: [
-				{ key: 'value' }
-			],
 			readable: false,
 			writeable: false,
 			storage: false,
 			keywords: [],
-			metadata: ''
+			metadata: '',
+			_fields: [
+				validField(fields)
+			]
 		}, options);
 		return ret;
 	}
@@ -170,18 +185,28 @@ describe('IoT Hub API, Authenticated', function() {
 
 			it("Invalid composed feed (built-in validation mecanism)", function(done) {
 				// the name field is missing
+				var invalidFeed = validComposedFeed();
+				delete invalidFeed.name;
 				request(app)
 				.post('/api/feeds/composed')
 				.set('Authorization', token)
 				.type('json')
-				.send(JSON.stringify({
-					id: 0,
-					fields: [
-						{ key: 'value'}
-					]
-				}))
+				.send(JSON.stringify(invalidFeed))
 				.expect(422, done);
 			});
+
+			it('Invalid composed feed (custom validation procedure)', function(done) {
+				// no field provided
+				var invalidFeed = validComposedFeed();
+				invalidFeed._fields = [];
+				request(app)
+				.post('/api/feeds/composed')
+				.set('Authorization', token)
+				.type('json')
+				.send(JSON.stringify(invalidFeed))
+				.expect(422, done);
+			});
+
 		});
 
 	});

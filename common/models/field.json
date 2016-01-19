@@ -1,0 +1,32 @@
+{
+    "name": "Field",
+    "base": "PersistedModel",
+    "strict": true,
+    "idInjection": true,
+    "properties": {
+        "name": { "type": "string", "default": "" },
+        "type": { "type": "string", "default": "" },
+        "metadata": { "type": "string", "default": "" },
+        "optional": { "type": "boolean", "default": true },
+        "keywords": { "type": ["string"], "default": [] }
+    },
+    "validations": [],
+    "relations": {},
+    "acls": [
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$everyone",
+            "permission": "DENY"
+        },
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "admin",
+            "permission": "ALLOW"
+        }
+    ],
+    "methods": []
+}
