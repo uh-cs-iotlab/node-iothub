@@ -5,7 +5,10 @@
     "idInjection": true,
     "http": {"path": "/feeds/composed"},
     "properties": {
-        "field": { "type": ["object"] }
+        "storage": { "type": "boolean", "default": false },
+        "readable": { "type": "boolean", "default": false },
+        "writeable": { "type": "boolean", "default": false },
+        "fields": { "type": ["object"], "required": true }
     },
     "validations": [],
     "relations": {},
