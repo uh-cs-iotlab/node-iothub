@@ -22,15 +22,23 @@ module.exports = function(app) {
             count: 0,
             types: []
         };
-        redirectRoute(req, restApiRoot + '/feeds/composed', function(err, composedRes) {
-            if (err) return res.status(err.status).send(err.response);
-            if (composedRes.body.length > 0) {
-                feeds.count += composedRes.body.length;
-                feeds.types.push('composed');
-                feeds.composed = composedRes.body;
+        redirectRoute(req, restApiRoot + '/feeds/atomic', function(atomicErr, atomicRes) {
+            if (atomicErr) return res.status(atomicErr.status).send(atomicErr.response);
+            if (atomicRes.body.length > 0) {
+                feeds.count += atomicRes.body.length;
+                feeds.types.push('atomic');
+                feeds.atomic = atomicRes.body;
             }
+            redirectRoute(req, restApiRoot + '/feeds/composed', function(composedErr, composedRes) {
+                if (composedErr) return res.status(composedErr.status).send(composedErr.response);
+                if (composedRes.body.length > 0) {
+                    feeds.count += composedRes.body.length;
+                    feeds.types.push('composed');
+                    feeds.composed = composedRes.body;
+                }
 
-            res.status(200).send(feeds);
+                res.status(200).send(feeds);
+            });
         });
     });
 

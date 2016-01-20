@@ -1,20 +1,16 @@
 {
-    "name": "ComposedFeed",
+    "name": "AtomicFeed",
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
-    "http": {"path": "/feeds/composed"},
-    "properties": {
-        "storage": { "type": "boolean", "default": false },
-        "readable": { "type": "boolean", "default": false },
-        "writeable": { "type": "boolean", "default": false }
-    },
+    "http": {"path": "/feeds/atomic"},
+    "properties": {},
     "validations": [],
     "relations": {
-        "fields": {
-            "type": "embedsMany",
+        "field": {
+            "type": "embedsOne",
             "model": "Field",
-            "property": "fields",
+            "property": "field",
             "options": {
                 "persistent": true,
                 "forceId": true

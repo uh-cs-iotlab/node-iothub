@@ -12,6 +12,7 @@
     "test": "./node_modules/.bin/mocha --reporter spec \"server/test\""
   },
   "dependencies": {
+    "async": "^1.5.2",
     "chai": "^3.4.1",
     "loopback": "^2.22.0",
     "loopback-boot": "^2.6.5",

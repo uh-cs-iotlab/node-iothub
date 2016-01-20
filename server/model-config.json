@@ -31,6 +31,10 @@
         "dataSource": "db",
         "public": true
     },
+    "AtomicFeed": {
+        "dataSource": "db",
+        "public": true
+    },
     "Field": {
         "dataSource": "db",
         "public": false
