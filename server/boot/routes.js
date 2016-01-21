@@ -36,8 +36,16 @@ module.exports = function(app) {
                     feeds.types.push('composed');
                     feeds.composed = composedRes.body;
                 }
-
-                res.status(200).send(feeds);
+                redirectRoute(req, restApiRoot + '/feeds/executable', function (executableErr, executableRes) {
+                    if (executableErr) return res.status(executableErr.status).send(executableErr.response);
+                    if (executableRes.body.length > 0) {
+                        feeds.count += executableRes.body.length;
+                        feeds.types.push('executable');
+                        feeds.executable = executableRes.body;
+                    }
+                    
+                    res.status(200).send(feeds);
+                });
             });
         });
     });

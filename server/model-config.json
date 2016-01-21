@@ -27,16 +27,20 @@
         "dataSource": "db",
         "public": false
     },
-    "ComposedFeed": {
+    "Field": {
         "dataSource": "db",
-        "public": true
+        "public": false
     },
     "AtomicFeed": {
         "dataSource": "db",
         "public": true
     },
-    "Field": {
+    "ComposedFeed": {
         "dataSource": "db",
-        "public": false
+        "public": true
+    },
+    "ExecutableFeed": {
+        "dataSource": "db",
+        "public": true
     }
 }

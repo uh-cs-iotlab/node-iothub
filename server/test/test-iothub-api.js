@@ -229,6 +229,43 @@ describe('IoT Hub API, Authenticated', function() {
 		});
 	};
 
+	var validExecutableFeed = function (options) {
+		options = options || {};
+		var ret = extend({
+			name: 'testFeed',
+			metadata: '',
+			keywords: [],
+			source: '',
+			params: [],
+			readable: false,
+			writeable: false
+		}, options);
+		return ret;
+	}
+	var insertValidExecutableFeed = function (options, cb) {
+		if (typeof options === 'function' && cb === undefined) {
+			// insertValidExecutableFeed(cb)
+			cb = options;
+			options = {};
+		}
+		var feed = validExecutableFeed(options);
+		request(app)
+		.post('/api/feeds/executable')
+		.set('Authorization', token)
+		.type('json')
+		.send(JSON.stringify(feed))
+		.expect(200, function(err, res) {
+			expect(err).to.not.exist;
+			expect(res).to.exist;
+			expect(res.body).to.exist;
+			expect(res.body).to.have.property('id');
+			cb(res.body.id);
+		});
+	}
+	var cleanAllExecutableFeeds = function (cb) {
+		app.models.ExecutableFeed.destroyAll(cb);
+	}
+
 	before(function(done) {
 		var User = app.models.User;
 		User.login(
@@ -354,6 +391,56 @@ describe('IoT Hub API, Authenticated', function() {
 
 	});
 
+	describe('Executable feeds', function() {
+
+		describe('Creating new executable feeds', function() {
+
+			beforeEach(function(done) {
+				cleanAllExecutableFeeds(done);
+			});
+
+			after(function(done) {
+				cleanAllExecutableFeeds(done);
+			});
+
+			it("Valid executable feed", function(done) {
+				insertValidExecutableFeed(function(insertedId){
+					done();
+				});
+			});
+
+			it("Invalid executable feed (built-in validation mecanism)", function(done) {
+				// the name field is missing
+				var invalidFeed = validExecutableFeed();
+				delete invalidFeed.name;
+				request(app)
+				.post('/api/feeds/executable')
+				.set('Authorization', token)
+				.type('json')
+				.send(JSON.stringify(invalidFeed))
+				.expect(422, done);
+			});
+
+			it('Should find a previously inserted feed', function(done) {
+				insertValidExecutableFeed(function(insertedId) {
+					request(app)
+					.get('/api/feeds/executable/' + insertedId)
+					.set('Authorization', token)
+					.expect(200, function(err, res) {
+						expect(err).to.not.exist;
+						expect(res).to.exist;
+						expect(res.body).to.eql(validExecutableFeed({
+							id: insertedId
+						}));
+						done();
+					});
+				});
+			});
+
+		});
+
+	});
+
 	describe('General querying', function() {
 
 		var getAllFeeds = function(cb) {
@@ -377,25 +464,34 @@ describe('IoT Hub API, Authenticated', function() {
 		it('Getting all types of feeds after insertion', function(done) {
 			insertValidAtomicFeed(function(atomicId, atomicFieldId) {
 				insertValidComposedFeed(function(composedId, composedFieldId) {
-					getAllFeeds(function(body) {
-						expect(body.count).to.equal(2);
-						expect(body.types).to.have.members(['atomic', 'composed']);
-						// AtomicFeed
-						expect(body.atomic).to.exist;
-						expect(body.atomic[0]).to.eql(validAtomicFeed({
-							id: atomicId,
-							_field: validField({id: atomicFieldId})
-						}));
-						// ComposedFeed
-						expect(body.composed).to.exist;
-						expect(body.composed[0]).to.eql(validComposedFeed({
-							id: composedId,
-							_fields: [
-								validField({id: composedFieldId})
-							]
-						}));
-						cleanAllAtomicFeeds(function() {
-							cleanAllComposedFeeds(done);
+					insertValidExecutableFeed(function (executableId) {
+						getAllFeeds(function(body) {
+							expect(body.count).to.equal(3);
+							expect(body.types).to.have.members(['atomic', 'composed', 'executable']);
+							// AtomicFeed
+							expect(body.atomic).to.exist;
+							expect(body.atomic[0]).to.eql(validAtomicFeed({
+								id: atomicId,
+								_field: validField({id: atomicFieldId})
+							}));
+							// ComposedFeed
+							expect(body.composed).to.exist;
+							expect(body.composed[0]).to.eql(validComposedFeed({
+								id: composedId,
+								_fields: [
+									validField({id: composedFieldId})
+								]
+							}));
+							// ExecutableFeed
+							expect(body.executable).to.exist;
+							expect(body.executable[0]).to.eql(validExecutableFeed({
+								id: executableId
+							}));
+							cleanAllAtomicFeeds(function() {
+								cleanAllComposedFeeds(function () {
+									cleanAllExecutableFeeds(done);
+								});
+							});
 						});
 					});
 				});
