@@ -1,4 +1,5 @@
-var request = require('superagent');
+var request = require('superagent'),
+    async   = require('async');
 
 module.exports = function(app) {
 
@@ -17,36 +18,23 @@ module.exports = function(app) {
 
     var restApiRoot = app.get('restApiRoot');
     app.get(restApiRoot + '/feeds', function(req, res) {
-        var ComposedFeed = app.models.ComposedFeed;
         var feeds = {
             count: 0,
             types: []
         };
-        redirectRoute(req, restApiRoot + '/feeds/atomic', function(atomicErr, atomicRes) {
-            if (atomicErr) return res.status(atomicErr.status).send(atomicErr.response);
-            if (atomicRes.body.length > 0) {
-                feeds.count += atomicRes.body.length;
-                feeds.types.push('atomic');
-                feeds.atomic = atomicRes.body;
-            }
-            redirectRoute(req, restApiRoot + '/feeds/composed', function(composedErr, composedRes) {
-                if (composedErr) return res.status(composedErr.status).send(composedErr.response);
-                if (composedRes.body.length > 0) {
-                    feeds.count += composedRes.body.length;
-                    feeds.types.push('composed');
-                    feeds.composed = composedRes.body;
+        async.each(['atomic', 'composed', 'executable'], function(feedType, callback) {
+            redirectRoute(req, restApiRoot + '/feeds/' + feedType, function (err, res) {
+                if(err) return callback(err);
+                if(res.body.length > 0) {
+                    feeds.count += res.body.length;
+                    feeds.types.push(feedType);
+                    feeds[feedType] = res.body;
                 }
-                redirectRoute(req, restApiRoot + '/feeds/executable', function (executableErr, executableRes) {
-                    if (executableErr) return res.status(executableErr.status).send(executableErr.response);
-                    if (executableRes.body.length > 0) {
-                        feeds.count += executableRes.body.length;
-                        feeds.types.push('executable');
-                        feeds.executable = executableRes.body;
-                    }
-                    
-                    res.status(200).send(feeds);
-                });
+                callback();
             });
+        }, function (err) {
+            if(err) return res.status(err.status).send(err.response);
+            res.status(200).send(feeds);
         });
     });
 
