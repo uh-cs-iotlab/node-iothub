@@ -153,7 +153,7 @@ describe('IoT Hub API, Authenticated', function() {
 				fieldProperty: 'field'
 			}, function(fieldId) {
 				cb(res.body.id, fieldId);
-			})
+			});
 		});
 	};
 	var cleanAllAtomicFeeds = function(cb) {
@@ -209,7 +209,7 @@ describe('IoT Hub API, Authenticated', function() {
 				fieldProperty: 'fields'
 			}, function(fieldId) {
 				cb(res.body.id, fieldId);
-			})
+			});
 		});
 	};
 	var cleanAllComposedFeeds = function(cb) {
@@ -241,7 +241,7 @@ describe('IoT Hub API, Authenticated', function() {
 			writeable: false
 		}, options);
 		return ret;
-	}
+	};
 	var insertValidExecutableFeed = function (options, cb) {
 		if (typeof options === 'function' && cb === undefined) {
 			// insertValidExecutableFeed(cb)
@@ -261,10 +261,10 @@ describe('IoT Hub API, Authenticated', function() {
 			expect(res.body).to.have.property('id');
 			cb(res.body.id);
 		});
-	}
+	};
 	var cleanAllExecutableFeeds = function (cb) {
 		app.models.ExecutableFeed.destroyAll(cb);
-	}
+	};
 
 	before(function(done) {
 		var User = app.models.User;
@@ -287,156 +287,212 @@ describe('IoT Hub API, Authenticated', function() {
 		});
 	});
 
+	describe('Fields', function () {
+
+		it('Should find a previously inserted field', function(done) {
+			cleanAllAtomicFeeds(function() {
+				insertValidAtomicFeed(function(insertedId, fieldId) {
+					app.models.Field.find(function (err, fields) {
+						expect(err).to.not.exist;
+						expect(fields).to.have.length(1);
+						expect(fields[0].getId()).to.equal(fieldId);
+						cleanAllAtomicFeeds(done);
+					});
+				});
+			});
+		});
+
+	});
+
 	describe('Atomic feeds', function() {
 
-		describe('Creating new atomic feeds', function() {
+		beforeEach(function(done) {
+			cleanAllAtomicFeeds(done);
+		});
 
-			beforeEach(function(done) {
-				cleanAllAtomicFeeds(done);
+		after(function(done) {
+			cleanAllAtomicFeeds(done);
+		});
+
+		it('Valid atomic feed', function(done) {
+			insertValidAtomicFeed(function(insertedId, fieldId) {
+				done();
 			});
+		});
 
-			after(function(done) {
-				cleanAllAtomicFeeds(done);
-			});
+		it("Invalid atomic feed (built-in validation mecanism)", function(done) {
+			// the name field is missing
+			var invalidFeed = validAtomicFeed();
+			delete invalidFeed.name;
+			request(app)
+			.post('/api/feeds/atomic')
+			.set('Authorization', token)
+			.type('json')
+			.send(JSON.stringify(invalidFeed))
+			.expect(422, done);
+		});
 
-			it('Valid atomic feed', function(done) {
-				insertValidAtomicFeed(function(insertedId, fieldId) {
+		it('Should find a previously inserted feed', function(done) {
+			insertValidAtomicFeed(function(insertedId, fieldId) {
+				request(app)
+				.get('/api/feeds/atomic/' + insertedId)
+				.set('Authorization', token)
+				.expect(200, function(err, res) {
+					expect(err).to.not.exist;
+					expect(res).to.exist;
+					expect(res.body).to.eql(validAtomicFeed({
+						id: insertedId,
+						_field: validField({ id: fieldId })
+					}));
 					done();
 				});
 			});
+		});
 
-			it("Invalid atomic feed (built-in validation mecanism)", function(done) {
-				// the name field is missing
-				var invalidFeed = validAtomicFeed();
-				delete invalidFeed.name;
+		it('Should delete a previously inserted feed', function (done) {
+			insertValidAtomicFeed(function (insertedId) {
 				request(app)
-				.post('/api/feeds/atomic')
+				.delete('/api/feeds/atomic/' + insertedId)
 				.set('Authorization', token)
-				.type('json')
-				.send(JSON.stringify(invalidFeed))
-				.expect(422, done);
-			});
-
-			it('Should find a previously inserted feed', function(done) {
-				insertValidAtomicFeed(function(insertedId, fieldId) {
-					request(app)
-					.get('/api/feeds/atomic/' + insertedId)
-					.set('Authorization', token)
-					.expect(200, function(err, res) {
+				.expect(200, function (err, res) {
+					expect(err).to.not.exist;
+					expect(res).to.exist;
+					app.models.AtomicFeed.find(function (err, feeds) {
 						expect(err).to.not.exist;
-						expect(res).to.exist;
-						expect(res.body).to.eql(validAtomicFeed({
-							id: insertedId,
-							_field: validField({ id: fieldId })
-						}));
+						expect(feeds).to.have.length(0);
 						done();
 					});
 				});
 			});
-
 		});
 
 	});
 
 	describe("Composed feeds", function() {
 
-		describe('Creating new composed feeds', function() {
+		beforeEach(function(done) {
+			cleanAllComposedFeeds(done);
+		});
 
-			beforeEach(function(done) {
-				cleanAllComposedFeeds(done);
+		after(function(done) {
+			cleanAllComposedFeeds(done);
+		});
+
+		it("Valid composed feed", function(done) {
+			insertValidComposedFeed(function(insertedId, fieldId){
+				done();
 			});
+		});
 
-			after(function(done) {
-				cleanAllComposedFeeds(done);
-			});
+		it("Invalid composed feed (built-in validation mecanism)", function(done) {
+			// the name field is missing
+			var invalidFeed = validComposedFeed();
+			delete invalidFeed.name;
+			request(app)
+			.post('/api/feeds/composed')
+			.set('Authorization', token)
+			.type('json')
+			.send(JSON.stringify(invalidFeed))
+			.expect(422, done);
+		});
 
-			it("Valid composed feed", function(done) {
-				insertValidComposedFeed(function(insertedId, fieldId){
+		it('Should find a previously inserted feed', function(done) {
+			insertValidComposedFeed(function(insertedId, fieldId) {
+				request(app)
+				.get('/api/feeds/composed/' + insertedId)
+				.set('Authorization', token)
+				.expect(200, function(err, res) {
+					expect(err).to.not.exist;
+					expect(res).to.exist;
+					expect(res.body).to.eql(validComposedFeed({
+						id: insertedId,
+						_fields: [
+							validField({ id: fieldId })
+						]
+					}));
 					done();
 				});
 			});
+		});
 
-			it("Invalid composed feed (built-in validation mecanism)", function(done) {
-				// the name field is missing
-				var invalidFeed = validComposedFeed();
-				delete invalidFeed.name;
+		it('Should delete a previously inserted feed', function (done) {
+			insertValidComposedFeed(function (insertedId) {
 				request(app)
-				.post('/api/feeds/composed')
+				.delete('/api/feeds/composed/' + insertedId)
 				.set('Authorization', token)
-				.type('json')
-				.send(JSON.stringify(invalidFeed))
-				.expect(422, done);
-			});
-
-			it('Should find a previously inserted feed', function(done) {
-				insertValidComposedFeed(function(insertedId, fieldId) {
-					request(app)
-					.get('/api/feeds/composed/' + insertedId)
-					.set('Authorization', token)
-					.expect(200, function(err, res) {
+				.expect(200, function (err, res) {
+					expect(err).to.not.exist;
+					expect(res).to.exist;
+					app.models.ComposedFeed.find(function (err, feeds) {
 						expect(err).to.not.exist;
-						expect(res).to.exist;
-						expect(res.body).to.eql(validComposedFeed({
-							id: insertedId,
-							_fields: [
-								validField({ id: fieldId })
-							]
-						}));
+						expect(feeds).to.have.length(0);
 						done();
 					});
 				});
 			});
-
 		});
 
 	});
 
 	describe('Executable feeds', function() {
 
-		describe('Creating new executable feeds', function() {
+		beforeEach(function(done) {
+			cleanAllExecutableFeeds(done);
+		});
 
-			beforeEach(function(done) {
-				cleanAllExecutableFeeds(done);
+		after(function(done) {
+			cleanAllExecutableFeeds(done);
+		});
+
+		it("Valid executable feed", function(done) {
+			insertValidExecutableFeed(function(insertedId){
+				done();
 			});
+		});
 
-			after(function(done) {
-				cleanAllExecutableFeeds(done);
-			});
+		it("Invalid executable feed (built-in validation mecanism)", function(done) {
+			// the name field is missing
+			var invalidFeed = validExecutableFeed();
+			delete invalidFeed.name;
+			request(app)
+			.post('/api/feeds/executable')
+			.set('Authorization', token)
+			.type('json')
+			.send(JSON.stringify(invalidFeed))
+			.expect(422, done);
+		});
 
-			it("Valid executable feed", function(done) {
-				insertValidExecutableFeed(function(insertedId){
+		it('Should find a previously inserted feed', function(done) {
+			insertValidExecutableFeed(function(insertedId) {
+				request(app)
+				.get('/api/feeds/executable/' + insertedId)
+				.set('Authorization', token)
+				.expect(200, function(err, res) {
+					expect(err).to.not.exist;
+					expect(res).to.exist;
+					expect(res.body).to.eql(validExecutableFeed({
+						id: insertedId
+					}));
 					done();
 				});
 			});
+		});
 
-			it("Invalid executable feed (built-in validation mecanism)", function(done) {
-				// the name field is missing
-				var invalidFeed = validExecutableFeed();
-				delete invalidFeed.name;
+		it('Should delete a previously inserted feed', function (done) {
+			insertValidExecutableFeed(function (insertedId) {
 				request(app)
-				.post('/api/feeds/executable')
+				.delete('/api/feeds/executable/' + insertedId)
 				.set('Authorization', token)
-				.type('json')
-				.send(JSON.stringify(invalidFeed))
-				.expect(422, done);
-			});
-
-			it('Should find a previously inserted feed', function(done) {
-				insertValidExecutableFeed(function(insertedId) {
-					request(app)
-					.get('/api/feeds/executable/' + insertedId)
-					.set('Authorization', token)
-					.expect(200, function(err, res) {
+				.expect(200, function (err, res) {
+					expect(err).to.not.exist;
+					expect(res).to.exist;
+					app.models.ExecutableFeed.find(function (err, feeds) {
 						expect(err).to.not.exist;
-						expect(res).to.exist;
-						expect(res.body).to.eql(validExecutableFeed({
-							id: insertedId
-						}));
+						expect(feeds).to.have.length(0);
 						done();
 					});
 				});
 			});
-
 		});
 
 	});
