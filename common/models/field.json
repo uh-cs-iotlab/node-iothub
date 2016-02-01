@@ -21,6 +21,13 @@
             "permission": "DENY"
         },
         {
+            "accessType": "READ",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$authenticated",
+            "permission": "ALLOW"
+        },
+        {
             "accessType": "*",
             "property": "*",
             "principalType": "ROLE",

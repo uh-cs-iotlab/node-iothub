@@ -1,20 +1,30 @@
 {
-    "name": "AtomicFeed",
+    "name": "FeedRoleACL",
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
-    "http": {"path": "/feeds/atomic"},
     "properties": {},
     "validations": [],
     "relations": {
-        "field": {
-            "type": "embedsOne",
-            "model": "Field",
-            "property": "field",
-            "options": {
-                "persistent": true,
-                "forceId": true
-            }
+        "role": {
+            "type": "belongsTo",
+            "model": "Role",
+            "foreignKey": "roleId"
+        },
+        "atomic": {
+            "type": "belongsTo",
+            "model": "AtomicFeed",
+            "foreignKey": "atomicId"
+        },
+        "composed": {
+            "type": "belongsTo",
+            "model": "ComposedFeed",
+            "foreignKey": "composedId"
+        },
+        "executable": {
+            "type": "belongsTo",
+            "model": "ExecutableFeed",
+            "foreignKey": "executableId"
         }
     },
     "acls": [
@@ -26,13 +36,6 @@
             "permission": "DENY"
         },
         {
-            "accessType": "READ",
-            "property": "*",
-            "principalType": "ROLE",
-            "principalId": "$authenticated",
-            "permission": "ALLOW"
-        },
-        {
             "accessType": "*",
             "property": "*",
             "principalType": "ROLE",
@@ -40,8 +43,5 @@
             "permission": "ALLOW"
         }
     ],
-    "mixins": {
-        "BaseFeed": {"type": "atomic"}
-    },
     "methods": []
 }

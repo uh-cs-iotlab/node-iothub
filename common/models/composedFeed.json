@@ -30,6 +30,13 @@
             "permission": "DENY"
         },
         {
+            "accessType": "READ",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$authenticated",
+            "permission": "ALLOW"
+        },
+        {
             "accessType": "*",
             "property": "*",
             "principalType": "ROLE",
@@ -38,7 +45,7 @@
         }
     ],
     "mixins": {
-        "BaseFeed": {}
+        "BaseFeed": {"type": "composed"}
     },
     "methods": []
 }

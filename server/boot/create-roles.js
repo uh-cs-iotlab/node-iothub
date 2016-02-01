@@ -9,4 +9,11 @@ module.exports = function(app) {
             console.log('Role created: ', role.name);
         }
     );
+    Role.create(
+        { name: 'client'},
+        function(err, role) {
+            if(err) return console.error(err);
+            console.log('Role created: ', role.name);
+        }
+    );
 };

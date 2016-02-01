@@ -42,5 +42,9 @@
     "ExecutableFeed": {
         "dataSource": "db",
         "public": true
+    },
+    "FeedRoleACL": {
+        "dataSource": "db",
+        "public": true
     }
 }
