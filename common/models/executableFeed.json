@@ -22,7 +22,13 @@
         },
         {
             "accessType": "READ",
-            "property": "*",
+            "property": [
+                "filteredExists",
+                "filteredFind",
+                "filteredFindOne",
+                "filteredFindById",
+                "filteredCount"
+            ],
             "principalType": "ROLE",
             "principalId": "$authenticated",
             "permission": "ALLOW"

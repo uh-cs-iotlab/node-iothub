@@ -7,6 +7,23 @@ module.exports = function(Model, mixinOptions) {
     Model.defineProperty('metadata', {type: 'string', default: ''});
     Model.defineProperty('keywords', { type: ['string'], default: [] });
 
+    /*!
+     * Convert null callbacks to 404 error objects.
+     * @param  {HttpContext} ctx
+     * @param  {Function} cb
+     */
+    function convertNullToNotFoundError(ctx, cb) {
+        if (ctx.result !== null) return cb();
+
+        var modelName = ctx.method.sharedClass.name;
+        var id = ctx.getArgByName('id');
+        var msg = 'Unknown "' + modelName + '" id "' + id + '".';
+        var error = new Error(msg);
+        error.statusCode = error.status = 404;
+        error.code = 'MODEL_NOT_FOUND';
+        cb(error);
+    }
+
     if (mixinOptions && mixinOptions.type) {
 
         var Role = Model.registry.findModel('Role'),
@@ -15,99 +32,9 @@ module.exports = function(Model, mixinOptions) {
 
         /** ===================================================================
         *
-        *   Override access operations
-        *   - This method is discouraged but it's the simplest way I found to
-        *     filter results.
-        *   - See https://github.com/strongloop/loopback/issues/2016 for infos.
-        *   - Maybe this will need change when Loopback 3 will come out.
+        *   Client methods
         *
         *   ================================================================= */
-        Model.dataSourceAttachedHandler = function() {
-
-            var initialFind = Model.find;
-            var initialCount = Model.count;
-
-            // Model.find = function (filter, options, callback) {
-            //     if (options === undefined && callback === undefined) {
-            //         if (typeof filter === 'function') {
-            //             // find(callback);
-            //             callback = filter;
-            //             filter = {};
-            //         }
-            //     } else if (callback === undefined) {
-            //         if (typeof options === 'function') {
-            //             // find(filter, callback);
-            //             callback = options;
-            //             options = {};
-            //         }
-            //     }
-            //
-            //     initialFind.call(Model, filter, options, function (err, models) {
-            //         if (err) return callback(err);
-            //         if (models.length === 0) return callback(null, []);
-            //         /**
-            //         * This manner to get the token is not documented but you can get infos here:
-            //         * - https://github.com/strongloop/loopback/issues/569
-            //         * - https://github.com/strongloop/loopback/pull/775
-            //         */
-            //         var accessToken = loopback.getCurrentContext().get('accessToken');
-            //         if (!accessToken || !accessToken.userId) return callback({status: 401, name: 'Error', message: 'Access token not found.'});
-            //         // Here we get the roles of the user that made the request
-            //         Role.getRoles({
-            //             principalType: RoleMapping.USER,
-            //             principalId: accessToken.userId
-            //         }, function (err, roles) {
-            //             if (err) return callback(err);
-            //             if (roles.length === 0) return callback(null, []);
-            //             // We only keep the static roles
-            //             var dynamicRoles = [Role.OWNER, Role.AUTHENTICATED, Role.UNAUTHENTICATED, Role.EVERYONE];
-            //             var roleIds = roles.filter(function (roleId) {
-            //                 return dynamicRoles.indexOf(roleId) < 0;
-            //             });
-            //             // Then we keep only the feeds that the user has access to
-            //             async.filter(models, function (model, filterCallback) {
-            //                 // The ACL has to be associated with one of the user's roles...
-            //                 var whereFilter = {roleId: {inq: roleIds}};
-            //                 // ...and also to the current feed id
-            //                 whereFilter[mixinOptions.type+'Id'] = model.id;
-            //                 FeedRoleACL.findOne({where: whereFilter}, function (err, acl) {
-            //                     filterCallback(err === undefined && acl !== null);
-            //                 });
-            //             }, function (filteredModels) {
-            //                 callback(null, filteredModels);
-            //             });
-            //         });
-            //     });
-            // };
-
-            // Model.count = function (where, options, callback) {
-            //     if (options === undefined && callback === undefined) {
-            //         if (typeof where === 'function') {
-            //             // count(callback)
-            //             callback = where;
-            //             where = {};
-            //         }
-            //     } else if (callback === undefined) {
-            //         if (typeof options === 'function') {
-            //             // count(where, callback)
-            //             callback = options;
-            //             options = {};
-            //         }
-            //     }
-            //
-            //     Model.find({where: where}, options, function (err, models) {
-            //         callback(err, err ? null : models.length);
-            //     });
-            // };
-        };
-
-        /** ===================================================================
-        *
-        *   Remote methods
-        *
-        *   ================================================================= */
-
-        // Client methods
 
         Model.filteredFind = function (query, callback) {
             if (typeof query === 'function' && callback === undefined) {
@@ -159,7 +86,7 @@ module.exports = function(Model, mixinOptions) {
                 accessType: 'READ',
                 accepts: {arg: 'query', type: 'object', description: 'Filter defining fields, where, include, order, offset, and limit'},
                 returns: {arg: 'data', type: [Model], root: true},
-                http: {verb: 'get', path: '/f-find'}
+                http: {verb: 'get', path: '/filtered/'}
             }
         );
 
@@ -181,7 +108,7 @@ module.exports = function(Model, mixinOptions) {
                 accessType: 'READ',
                 accepts: {arg: 'query', type: 'object', description: 'Filter defining fields, where, include, order, offset, and limit'},
                 returns: {arg: 'data', type: Model, root: true},
-                http: {verb: 'get', path: '/f-findOne'},
+                http: {verb: 'get', path: '/filtered/findOne'},
                 rest: {after: convertNullToNotFoundError}
             }
         );
@@ -192,11 +119,10 @@ module.exports = function(Model, mixinOptions) {
                 callback = query;
                 query = {};
             }
+            if (!query) query = {};
             if (!query.where) query.where = {};
             query.where.id = id;
-            Model.filteredFindOne(query, function (err, model) {
-                callback(err, model);
-            });
+            Model.filteredFindOne(query, callback);
         };
         Model.remoteMethod(
             'filteredFindById',
@@ -205,11 +131,28 @@ module.exports = function(Model, mixinOptions) {
                 accessType: 'READ',
                 accepts: [
                     { arg: 'id', type: 'any', description: 'Feed id', required: true, http: {source: 'path'}},
-                    { arg: 'filter', type: 'object', description: 'Filter defining fields and include'}
+                    { arg: 'query', type: 'object', description: 'Filter defining fields and include'}
                 ],
-                returns: {arg: 'data', type: typeName, root: true},
-                http: {verb: 'get', path: '/f-find/:id'},
+                returns: {arg: 'data', type: Model, root: true},
+                http: {verb: 'get', path: '/filtered/:id'},
                 rest: {after: convertNullToNotFoundError}
+            }
+        );
+
+        Model.filteredExists = function (id, callback) {
+            Model.filteredFindById(id, function (err, model) {
+                if (err) return callback(err);
+                callback(null, model !== null);
+            });
+        };
+        Model.remoteMethod(
+            'filteredExists',
+            {
+                description: 'Check whether a feed instance, filtered by feed ACL, exists in the data source.',
+                accessType: 'READ',
+                accepts: {arg: 'id', type: 'any', description: 'Feed id', required: true},
+                returns: {arg: 'exists', type: 'boolean'},
+                http: {verb: 'get', path: '/filtered/:id/exists'}
             }
         );
 
@@ -230,11 +173,15 @@ module.exports = function(Model, mixinOptions) {
                 accessType: 'READ',
                 accepts: {arg: 'where', type: 'object', description: 'Criteria to match model instances'},
                 returns: {arg: 'count', type: 'number'},
-                http: {verb: 'get', path: '/f-count'}
+                http: {verb: 'get', path: '/filtered/count'}
             }
         );
 
-        // Admin methods
+        /** ===================================================================
+        *
+        *   Admin methods
+        *
+        *   ================================================================= */
 
         Model.createRoleAcl = function (modelId, body, cb) {
             if (!body || !body.roleId) return cb({name: 'Validation Error', status: 422, message: 'The request body is not valid. Details: `roleId` can\'t be blank'});
@@ -285,6 +232,12 @@ module.exports = function(Model, mixinOptions) {
                 http: {verb: 'get', path: '/:id/role-acl'}
             }
         );
+
+        /** ===================================================================
+        *
+        *   Operation hooks
+        *
+        *   ================================================================= */
 
         Model.observe('after save', function (ctx, next) {
             if (ctx.isNewInstance === true) {

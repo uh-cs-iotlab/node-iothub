@@ -506,7 +506,7 @@ describe('Controlling access to feeds for clients', function() {
 	it('not allowed user shouldn\'t be able to access a feed', function (done) {
 		Helper.insertValidAtomicFeed(adminToken, function (atomicId, atomicFieldId) {
 			request(app)
-			.get('/api/feeds/atomic/'+atomicId)
+			.get('/api/feeds/atomic/filtered/'+atomicId)
 			.set('Authorization', clientToken)
 			.expect(404, done);
 		});
@@ -521,7 +521,7 @@ describe('Controlling access to feeds for clients', function() {
 					roleId: clientRoleId
 				}, function (roleAclId) {
 					request(app)
-					.get('/api/feeds/atomic/count')
+					.get('/api/feeds/atomic/filtered/count')
 					.set('Authorization', clientToken)
 					.expect(200, function (err, res) {
 						expect(err).to.not.exist;
@@ -543,7 +543,7 @@ describe('Controlling access to feeds for clients', function() {
 				roleId: clientRoleId
 			}, function (roleAclId) {
 				request(app)
-				.get('/api/feeds/atomic/'+atomicId)
+				.get('/api/feeds/atomic/filtered/'+atomicId)
 				.set('Authorization', clientToken)
 				.expect(200, done);
 			});
