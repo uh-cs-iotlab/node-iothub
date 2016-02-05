@@ -23,7 +23,7 @@ module.exports = function(app) {
             types: []
         };
         async.each(['atomic', 'composed', 'executable'], function(feedType, callback) {
-            redirectRoute(req, restApiRoot + '/feeds/' + feedType, function (err, res) {
+            redirectRoute(req, restApiRoot + '/feeds/' + feedType + '/filtered', function (err, res) {
                 if(err) return callback(err);
                 if(res.body.length > 0) {
                     feeds.count += res.body.length;

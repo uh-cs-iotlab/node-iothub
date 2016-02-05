@@ -1,141 +1,114 @@
 var request = require('supertest');
-var expect = require('chai').expect;
-var async = require('async');
+var chai = require('chai');
+var chaiAsPromised = require('chai-as-promised');
+chai.use(chaiAsPromised);
+var expect = chai.expect;
 
-module.exports = function(app) {
+module.exports = (app) => {
 
     return {
-        extend: function(inObject) {
-        	var ret = new Object(inObject);
-        	for(var i=1; i < arguments.length; i++) {
-        		for(var key in arguments[i]) {
-        			if(arguments[i][key]) {
-        				ret[key] = arguments[i][key];
-        			}
-        		}
-        	}
-        	return ret;
-        },
-
-        getFeedsOfType: function(token, type, cb) {
-            request(app)
-            .get('/api/feeds/'+type)
-            .set('Authorization', token)
-            .expect(200, function (err, res) {
-                expect(err).to.not.exist;
-                expect(res).to.exist;
-                expect(res.body).to.exist;
-                cb(res.body);
+        getFeedsOfType(token, type) {
+            return new Promise((resolve, reject) => {
+                request(app)
+                .get(`/api/feeds/${type}`)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
             });
         },
-        deleteFeed: function(token, options, cb) {
-            request(app)
-            .delete('/api/feeds/'+options.type+'/'+options.id)
-            .set('Authorization', token)
-            .expect(200, cb);
+        deleteFeed(token, options) {
+            return new Promise((resolve, reject) => {
+                request(app)
+                .delete(`/api/feeds/${options.type}/${options.id}`)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
         },
 
-        validField: function(options) {
-            options = options || {};
-            var ret = this.extend({
+        validField(options) {
+            return Object.assign({
                 name: '',
                 type: '',
                 metadata: '',
                 optional: true,
                 keywords: []
             }, options);
-            return ret;
         },
-        insertValidField: function(token, idOptions, options, cb) {
-            var self = this;
-            if (typeof options === 'function' && cb === undefined) {
-                // insertValidField(idOptions, cb)
-                cb = options;
-                options = {};
-            }
-            var field = self.validField(options);
-            request(app)
-            .post('/api/feeds/' + idOptions.feedType + '/' + idOptions.id + '/' + idOptions.fieldProperty)
-            .set('Authorization', token)
-            .type('json')
-            .send(JSON.stringify(field))
-            .expect(200, function(err, res) {
-                expect(err).to.not.exist;
-                expect(res).to.exist;
-                expect(res.body).to.exist;
-                expect(res.body).to.have.property('id');
-                cb(res.body.id);
+        insertValidField(token, idOptions, options) {
+            options = options || {};
+            var field = this.validField(options);
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post(`/api/feeds/${idOptions.feedType}/${idOptions.id}/${idOptions.fieldProperty}`)
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(field))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
+                });
             });
         },
-        deleteFields: function(token, idOptions, cb) {
-            request(app)
-            .delete('/api/feeds/' + idOptions.feedType + '/' + idOptions.id + '/' + idOptions.fieldProperty)
-            .set('Authorization', token)
-            .expect(204, function (err, res) {
-                expect(err).to.not.exist;
-                expect(res).to.exist;
-                cb();
+        deleteFields(token, idOptions) {
+            return new Promise((resolve, reject) => {
+                request(app)
+                .delete(`/api/feeds/${idOptions.feedType}/${idOptions.id}/${idOptions.fieldProperty}`)
+                .set('Authorization', token)
+                .expect(204, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
             });
         },
 
-        validAtomicFeed: function(options) {
-            options = options || {};
-            var ret = this.extend({
+        validAtomicFeed(options) {
+            return Object.assign({
                 name: 'testFeed',
                 keywords: [],
                 metadata: '',
                 _field: {}
             }, options);
-            return ret;
         },
-        insertValidAtomicFeed: function(token, options, cb) {
-            var self = this;
-            if (typeof options === 'function' && cb === undefined) {
-                // insertValidAtomicFeed(cb)
-                cb = options;
-                options = {};
-            }
-            var feed = self.validAtomicFeed(options);
-            request(app)
-            .post('/api/feeds/atomic')
-            .set('Authorization', token)
-            .type('json')
-            .send(JSON.stringify(feed))
-            .expect(200, function(err, res) {
-                expect(err).to.not.exist;
-                expect(res).to.exist;
-                expect(res.body).to.exist;
-                expect(res.body).to.have.property('id');
-                self.insertValidField(token, {
-                    feedType: 'atomic',
-                    id: res.body.id,
-                    fieldProperty: 'field'
-                }, function(fieldId) {
-                    cb(res.body.id, fieldId);
+        insertValidAtomicFeed(token, options) {
+            options = options || {};
+            var feed = this.validAtomicFeed(options);
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/feeds/atomic')
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(feed))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
                 });
+            }).then((atomicFeedId) => {
+                return this.insertValidField(token, {
+                    feedType: 'atomic',
+                    id: atomicFeedId,
+                    fieldProperty: 'field'
+                }).then((fieldId) => Promise.resolve([atomicFeedId, fieldId]));
             });
         },
-        cleanAllAtomicFeeds: function(token, cb) {
-            var self = this;
-            self.getFeedsOfType(token, 'atomic', function (feeds) {
-                async.each(feeds, function(feed, callback) {
-                    self.deleteFields(token, {
+        cleanAllAtomicFeeds(token) {
+            return this.getFeedsOfType(token, 'atomic').then((feeds) => {
+                return Promise.all(feeds.map((feed) => {
+                    return this.deleteFields(token, {
                         feedType: 'atomic',
                         id: feed.id,
                         fieldProperty: 'field'
-                    }, function () {
-                        self.deleteFeed(token, {type: 'atomic', id: feed.id} , callback);
-                    });
-                }, function(feedErr) {
-                    expect(feedErr).to.not.exist;
-                    cb();
-                });
+                    }).then(() => this.deleteFeed(token, {type: 'atomic', id: feed.id}));
+                }));
             });
         },
 
-        validComposedFeed: function(options) {
-            options = options || {};
-            var ret = this.extend({
+        validComposedFeed(options) {
+            return Object.assign({
                 name: 'testFeed',
                 readable: false,
                 writeable: false,
@@ -144,56 +117,42 @@ module.exports = function(app) {
                 metadata: '',
                 _fields: []
             }, options);
-            return ret;
         },
-        insertValidComposedFeed: function(token, options, cb) {
-            var self = this;
-            if (typeof options === 'function' && cb === undefined) {
-                // insertValidComposedFeed(cb)
-                cb = options;
-                options = {};
-            }
-            var feed = self.validComposedFeed(options);
-            request(app)
-            .post('/api/feeds/composed')
-            .set('Authorization', token)
-            .type('json')
-            .send(JSON.stringify(feed))
-            .expect(200, function(err, res) {
-                expect(err).to.not.exist;
-                expect(res).to.exist;
-                expect(res.body).to.exist;
-                expect(res.body).to.have.property('id');
-                self.insertValidField(token, {
-                    feedType: 'composed',
-                    id: res.body.id,
-                    fieldProperty: 'fields'
-                }, function(fieldId) {
-                    cb(res.body.id, fieldId);
+        insertValidComposedFeed(token, options) {
+            options = options || {};
+            var feed = this.validComposedFeed(options);
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/feeds/composed')
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(feed))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
                 });
+            }).then((composedFeedId) => {
+                return this.insertValidField(token, {
+                    feedType: 'composed',
+                    id: composedFeedId,
+                    fieldProperty: 'fields'
+                }).then((fieldId) => Promise.resolve([composedFeedId, fieldId]));
             });
         },
-        cleanAllComposedFeeds: function(token, cb) {
-            var self = this;
-            self.getFeedsOfType(token, 'composed', function (feeds) {
-                async.each(feeds, function(feed, callback) {
-                    self.deleteFields(token, {
+        cleanAllComposedFeeds(token) {
+            return this.getFeedsOfType(token, 'composed').then((feeds) => {
+                return Promise.all(feeds.map((feed) => {
+                    return this.deleteFields(token, {
                         feedType: 'composed',
                         id: feed.id,
                         fieldProperty: 'fields'
-                    }, function () {
-                        self.deleteFeed(token, {type: 'composed', id: feed.id}, callback);
-                    });
-                }, function(feedErr) {
-                    expect(feedErr).to.not.exist;
-                    cb();
-                });
+                    }).then(() => this.deleteFeed(token, {type: 'composed', id: feed.id}));
+                }));
             });
         },
 
-        validExecutableFeed: function (options) {
-            options = options || {};
-            var ret = this.extend({
+        validExecutableFeed(options) {
+            return Object.assign({
                 name: 'testFeed',
                 metadata: '',
                 keywords: [],
@@ -202,38 +161,25 @@ module.exports = function(app) {
                 readable: false,
                 writeable: false
             }, options);
-            return ret;
         },
-        insertValidExecutableFeed: function (token, options, cb) {
-            var self = this;
-            if (typeof options === 'function' && cb === undefined) {
-                // insertValidExecutableFeed(cb)
-                cb = options;
-                options = {};
-            }
-            var feed = self.validExecutableFeed(options);
-            request(app)
-            .post('/api/feeds/executable')
-            .set('Authorization', token)
-            .type('json')
-            .send(JSON.stringify(feed))
-            .expect(200, function(err, res) {
-                expect(err).to.not.exist;
-                expect(res).to.exist;
-                expect(res.body).to.exist;
-                expect(res.body).to.have.property('id');
-                cb(res.body.id);
+        insertValidExecutableFeed(token, options) {
+            options = options || {};
+            var feed = this.validExecutableFeed(options);
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/feeds/executable')
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(feed))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
+                });
             });
         },
-        cleanAllExecutableFeeds: function (token, cb) {
-            var self = this;
-            self.getFeedsOfType(token, 'executable', function (feeds) {
-                async.each(feeds, function(feed, callback) {
-                    self.deleteFeed(token, {type: 'executable', id: feed.id}, callback);
-                }, function(feedErr) {
-                    expect(feedErr).to.not.exist;
-                    cb();
-                });
+        cleanAllExecutableFeeds(token) {
+            return this.getFeedsOfType(token, 'executable').then((feeds) => {
+                return Promise.all(feeds.map((feed) => this.deleteFeed(token, {type: 'executable', id: feed.id})));
             });
         }
     };

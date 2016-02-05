@@ -12,17 +12,16 @@ module.exports = function(Model, mixinOptions) {
      * @param  {HttpContext} ctx
      * @param  {Function} cb
      */
-    function convertNullToNotFoundError(ctx, cb) {
+    var convertNullToNotFoundError = function (ctx, cb) {
         if (ctx.result !== null) return cb();
 
         var modelName = ctx.method.sharedClass.name;
         var id = ctx.getArgByName('id');
-        var msg = 'Unknown "' + modelName + '" id "' + id + '".';
-        var error = new Error(msg);
+        var error = new Error(`Unknown "${modelName}" id "${id}".`);
         error.statusCode = error.status = 404;
         error.code = 'MODEL_NOT_FOUND';
         cb(error);
-    }
+    };
 
     if (mixinOptions && mixinOptions.type) {
 
@@ -61,15 +60,15 @@ module.exports = function(Model, mixinOptions) {
                     if (roles.length === 0) return callback(null, []);
                     // We only keep the static roles
                     var dynamicRoles = [Role.OWNER, Role.AUTHENTICATED, Role.UNAUTHENTICATED, Role.EVERYONE];
-                    var roleIds = roles.filter(function (roleId) {
-                        return dynamicRoles.indexOf(roleId) < 0;
-                    });
+                    var roleIds = roles.filter((roleId) => dynamicRoles.indexOf(roleId) < 0);
                     // Then we keep only the feeds that the user has access to
                     async.filter(models, function (model, filterCallback) {
                         // The ACL has to be associated with one of the user's roles...
-                        var whereFilter = {roleId: {inq: roleIds}};
-                        // ...and also to the current feed id
-                        whereFilter[mixinOptions.type+'Id'] = model.id;
+                        var whereFilter = {
+                            roleId: {inq: roleIds},
+                            // ...and also to the current feed id
+                            [`${mixinOptions.type}Id`]: model.id
+                        };
                         FeedRoleACL.findOne({where: whereFilter}, function (err, acl) {
                             filterCallback(err === undefined && acl !== null);
                         });
@@ -186,17 +185,17 @@ module.exports = function(Model, mixinOptions) {
         Model.createRoleAcl = function (modelId, body, cb) {
             if (!body || !body.roleId) return cb({name: 'Validation Error', status: 422, message: 'The request body is not valid. Details: `roleId` can\'t be blank'});
             Model.exists(modelId, function(err, modelExists) {
-                if (modelExists === false) return cb({name: 'Error', status: 404, message: 'Unknown \'' + Model.modelName + '\' id \'' + modelId + '\''});
+                if (modelExists === false) return cb({name: 'Error', status: 404, message: `Unknown '${Model.modelName}' id '${modelId}'`});
                 else if (err) return cb(err);
                 Role.exists(body.roleId, function (err, roleExists) {
-                    if (roleExists === false) return cb({name: 'Error', status: 404, message: 'Unknown \'Role\' id \'' + body.roleId + '\''});
+                    if (roleExists === false) return cb({name: 'Error', status: 404, message: `Unknown 'Role' id '${body.roleId}'`});
                     else if (err) return cb(err);
                     var aclBody = {
                         roleId: body.roleId,
                         readAccess: body.readAccess,
-                        writeAccess: body.writeAccess
+                        writeAccess: body.writeAccess,
+                        [`${mixinOptions.type}Id`]: modelId
                     };
-                    aclBody[mixinOptions.type+'Id'] = modelId;
                     FeedRoleACL.create(aclBody, cb);
                 });
             });
@@ -216,10 +215,11 @@ module.exports = function(Model, mixinOptions) {
 
         Model.getRoleAcls = function (modelId, cb) {
             Model.exists(modelId, function(err, modelExists) {
-                if (modelExists === false) return cb({name: 'Error', status: 404, message: 'Unknown \'' + Model.modelName + '\' id \'' + modelId + '\''});
+                if (modelExists === false) return cb({name: 'Error', status: 404, message: `Unknown '${Model.modelName}' id '${modelId}'`});
                 else if (err) return cb(err);
-                var predicate = {};
-                predicate[mixinOptions.type+'Id'] = modelId;
+                var predicate = {
+                    [`${mixinOptions.type}Id`]: modelId
+                };
                 FeedRoleACL.find(predicate, cb);
             });
         };
@@ -243,9 +243,9 @@ module.exports = function(Model, mixinOptions) {
             if (ctx.isNewInstance === true) {
                 Role.findOne({where: {name: 'admin'}}, function (err, role) {
                     var aclBody = {
-                        roleId: role.getId()
+                        roleId: role.getId(),
+                        [`${mixinOptions.type}Id`]: ctx.instance.getId()
                     };
-                    aclBody[mixinOptions.type+'Id'] = ctx.instance.getId();
                     FeedRoleACL.create(aclBody, function (err) {
                         next(err);
                     });
@@ -265,12 +265,10 @@ module.exports = function(Model, mixinOptions) {
             } else {
                 FeedRoleACL.find(function (err, acls) {
                     if (err) return next(err);
-                    var filteredAcls = acls.filter(function (acl) {
-                        return acl[mixinOptions.type+'Id'] !== undefined;
-                    });
+                    var filteredAcls = acls.filter((acl) => acl[`${mixinOptions.type}Id`] !== undefined);
                     async.each(filteredAcls, function (acl, callback) {
                         // Check if the related feed still exists, and if not, destroy the ACL
-                        Model.exists(acl[mixinOptions.type+'Id'], function (err, modelExists) {
+                        Model.exists(acl[`${mixinOptions.type}Id`], function (err, modelExists) {
                             if (modelExists === false) acl.destroy(callback);
                             else callback();
                         });
