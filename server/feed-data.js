@@ -18,19 +18,19 @@ module.exports = {
                 switch(createOptions.type) {
                     case FeedTypes.ATOMIC:
                         if (!feedInstance._field) {
-                            var err = new Error(`Model "${Model.modelName}" can't be validated, invalid "field" property (${feedInstance._field})`);
-                            err.statusCode = err.status = 422;
-                            err.name = 'Validation Error';
-                            return Promise.reject(err);
+                            var atomicErr = new Error(`Model "${Model.modelName}" can't be validated, invalid "field" property (${feedInstance._field})`);
+                            atomicErr.statusCode = atomicErr.status = 422;
+                            atomicErr.name = 'Validation Error';
+                            return Promise.reject(atomicErr);
                         }
                         fieldDescriptions = [feedInstance._field];
                         break;
                     case FeedTypes.COMPOSED:
                         if (!feedInstance._fields || feedInstance._fields.length === 0) {
-                            var err = new Error(`Model "${Model.modelName}" can't be validated, invalid "fields" property (${feedInstance._fields})`);
-                            err.statusCode = err.status = 422;
-                            err.name = 'Validation Error';
-                            return Promise.reject(err);
+                            var composedErr = new Error(`Model "${Model.modelName}" can't be validated, invalid "fields" property (${feedInstance._fields})`);
+                            composedErr.statusCode = composedErr.status = 422;
+                            composedErr.name = 'Validation Error';
+                            return Promise.reject(composedErr);
                         }
                         fieldDescriptions = feedInstance._fields;
                         break;

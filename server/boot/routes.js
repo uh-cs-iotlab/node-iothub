@@ -1,5 +1,5 @@
-var request = require('superagent'),
-    async   = require('async');
+var request = require('superagent');
+var FeedTypes = require('../feed-types.json');
 
 module.exports = function(app) {
 
@@ -7,13 +7,18 @@ module.exports = function(app) {
         res.send('Hello World!!!');
     });
 
-    var redirectRoute = function(req, newRoute, cb) {
-        var url = req.protocol + '://' + req.get('host') + newRoute;
-        request(req.method, url)
-        .set(req.headers || {})
-        .send(req.body || {})
-        .query(req.query || {})
-        .end(cb);
+    var redirectRoute = function(req, newRoute) {
+        return new Promise((resolve, reject) => {
+            var url = req.protocol + '://' + req.get('host') + newRoute;
+            request(req.method, url)
+            .set(req.headers || {})
+            .send(req.body || {})
+            .query(req.query || {})
+            .end((err, res) => {
+                if (err) reject(err);
+                resolve(res.body);
+            });
+        });
     };
 
     var restApiRoot = app.get('restApiRoot');
@@ -22,20 +27,23 @@ module.exports = function(app) {
             count: 0,
             types: []
         };
-        async.each(['atomic', 'composed', 'executable'], function(feedType, callback) {
-            redirectRoute(req, restApiRoot + '/feeds/' + feedType + '/filtered', function (err, res) {
-                if(err) return callback(err);
-                if(res.body.length > 0) {
-                    feeds.count += res.body.length;
-                    feeds.types.push(feedType);
-                    feeds[feedType] = res.body;
-                }
-                callback();
+        Promise.all(Object.keys(FeedTypes).map((feedTypeKey) => {
+            return redirectRoute(req, `${restApiRoot}/feeds/${FeedTypes[feedTypeKey]}/filtered`)
+            .then((body) => {
+                return {body, feedTypeKey};
             });
-        }, function (err) {
-            if(err) return res.status(err.status).send(err.response);
+        }))
+        .then((responses) => {
+            for (var response of responses) {
+                if (response.body.length > 0) {
+                    var feedType = FeedTypes[response.feedTypeKey];
+                    feeds.count += response.body.length;
+                    feeds.types.push(feedType);
+                    feeds[feedType] = response.body;
+                }
+            }
             res.status(200).send(feeds);
-        });
+        }, (err) => res.status(err.status).send(err.response));
     });
 
 };
