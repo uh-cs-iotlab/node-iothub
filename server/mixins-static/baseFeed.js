@@ -264,16 +264,50 @@ module.exports = function(Model, mixinOptions) {
                 }
             );
 
+            var validateFeedFields = function (model) {
+                if (mixinOptions.type !== FeedTypes.COMPOSED) return true;
+                var duplicates = {};
+                for (var field of model._fields) {
+                    var duplInfo = duplicates[field.name];
+                    if (typeof duplInfo === 'undefined') {
+                        duplicates[field.name] = [field.getId()];
+                    } else {
+                        duplicates[field.name].push(field.getId());
+                    }
+                }
+                var duplicatesLen = 0;
+                for (var dupl in duplicates) {
+                    duplicatesLen++;
+                    if (duplicates[dupl].length === 1) {
+                        delete duplicates[dupl];
+                        duplicatesLen--;
+                    }
+                }
+                if (duplicatesLen === 0) {
+                    return true;
+                } else {
+                    return duplicates;
+                }
+            };
+
             Model.validate = function (modelId, cb) {
                 var validatedChanged = false;
-                Model.findById(modelId).then((model) => {
+                Model.findById(modelId)
+                .then((model) => {
                     var feedDataCollection = `${Model.modelName}Data${model.getId()}`;
                     if (!model.validated) {
+                        var feedFieldsValid = validateFeedFields(model);
+                        if (typeof feedFieldsValid === 'object') {
+                            return Promise.reject(new Error(`Duplicate field names: ${JSON.stringify(feedFieldsValid)}`));
+                        }
                         var createOptions = Object.assign({}, mixinOptions, {
                             feedDataCollection
                         });
-                        return FeedData.create(Model, model, createOptions).then((FeedData) => {
-                            return model.updateAttribute('validated', true).then(() => {
+                        return FeedData.create(Model, model, createOptions)
+                        .then((FeedData) => {
+                            loopback.getCurrentContext().set('preventUnvalidating', true);
+                            return model.updateAttribute('validated', true)
+                            .then(() => {
                                 validatedChanged = true;
                                 return Promise.resolve(FeedData);
                             });
@@ -281,11 +315,8 @@ module.exports = function(Model, mixinOptions) {
                     } else {
                         return Promise.resolve(Model.registry.findModel(feedDataCollection));
                     }
-                }).then((FeedData) => {
-                    cb(null, {changed: validatedChanged});
-                }).catch((err) => {
-                    cb(err);
-                });
+                })
+                .then((FeedData) => cb(null, {changed: validatedChanged}), (err) => cb(err));
             };
             Model.remoteMethod(
                 'validate',
@@ -303,21 +334,45 @@ module.exports = function(Model, mixinOptions) {
         *   Operation hooks
         *
         *   ================================================================= */
+        Model.observe('before save', function (ctx, next) {
+            if (mixinOptions.type !== FeedTypes.EXECUTABLE) {
+                if (ctx.isNewInstance === true) {
+                    ctx.instance.validated = false;
+                }
+            }
+            next();
+        });
 
         Model.observe('after save', function (ctx, next) {
+            var hookP = Promise.resolve();
             if (ctx.isNewInstance === true) {
-                Role.findOne({where: {name: 'admin'}}, function (err, role) {
+                hookP = new Promise((resolve, reject) => {
+                    Role.findOne({where: {name: 'admin'}}, (err, role) => {
+                        if (err) reject(err);
+                        resolve(role);
+                    });
+                })
+                .then((role) => {
                     var aclBody = {
                         roleId: role.getId(),
                         [`${mixinOptions.type}Id`]: ctx.instance.getId()
                     };
-                    FeedRoleACL.create(aclBody, function (err) {
-                        next(err);
-                    });
+                    return FeedRoleACL.create(aclBody);
                 });
             } else {
-                next();
+                if (mixinOptions.type !== FeedTypes.EXECUTABLE) {
+                    var preventUnvalidating = loopback.getCurrentContext().get('preventUnvalidating');
+                    if (typeof preventUnvalidating === 'undefined' || preventUnvalidating === false) {
+                        loopback.getCurrentContext().set('preventUnvalidating', true);
+                        if (ctx.instance) {
+                            hookP = ctx.instance.updateAttribute('validated', false);
+                        } else {
+                            hookP = ctx.Model.updateAll(ctx.where, {validated: false});
+                        }
+                    }
+                }
             }
+            hookP.then(() => next(), (err) => next(err));
         });
 
         Model.observe('after delete', function (ctx, next) {
