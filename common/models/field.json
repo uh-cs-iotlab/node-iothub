@@ -4,10 +4,10 @@
     "strict": true,
     "idInjection": true,
     "properties": {
-        "name": { "type": "string", "default": "" },
-        "type": { "type": "string", "default": "" },
+        "name": { "type": "string", "required": true },
+        "type": { "type": "string", "required": true },
+        "required": { "type": "boolean", "default": false },
         "metadata": { "type": "string", "default": "" },
-        "optional": { "type": "boolean", "default": true },
         "keywords": { "type": ["string"], "default": [] }
     },
     "validations": [],

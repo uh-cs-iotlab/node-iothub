@@ -1,11 +1,19 @@
 var async = require('async');
 var loopback = require('loopback');
+var FeedData = require('../feed-data');
+var FeedTypes = require('../feed-types.json');
 
 module.exports = function(Model, mixinOptions) {
 
     Model.defineProperty('name', {type: 'string', required: true});
     Model.defineProperty('metadata', {type: 'string', default: ''});
     Model.defineProperty('keywords', { type: ['string'], default: [] });
+
+    if (mixinOptions !== FeedTypes.EXECUTABLE) {
+        Model.defineProperty('validated', { type: 'boolean', default: false });
+        if (Model.settings.hidden) Model.settings.hidden.push('validated');
+        else Model.settings.hidden = ['validated'];
+    }
 
     /*!
      * Convert null callbacks to 404 error objects.
@@ -24,6 +32,8 @@ module.exports = function(Model, mixinOptions) {
     };
 
     if (mixinOptions && mixinOptions.type) {
+
+        Model.sharedClass.http.path = `/feeds/${mixinOptions.type}`;
 
         var Role = Model.registry.findModel('Role'),
             RoleMapping = Model.registry.findModel('RoleMapping'),
@@ -63,6 +73,7 @@ module.exports = function(Model, mixinOptions) {
                     var roleIds = roles.filter((roleId) => dynamicRoles.indexOf(roleId) < 0);
                     // Then we keep only the feeds that the user has access to
                     async.filter(models, function (model, filterCallback) {
+                        if (mixinOptions.type !== FeedTypes.EXECUTABLE && !model.validated) return filterCallback(false);
                         // The ACL has to be associated with one of the user's roles...
                         var whereFilter = {
                             roleId: {inq: roleIds},
@@ -233,6 +244,60 @@ module.exports = function(Model, mixinOptions) {
             }
         );
 
+        if (mixinOptions !== FeedTypes.EXECUTABLE) {
+            Model.isValidated = function (modelId, cb) {
+                Model.findById(modelId).then((model) => {
+                    return Promise.resolve(model.validated);
+                }).then((validated) => {
+                    cb(null, validated);
+                }).catch((err) => {
+                    cb(err);
+                });
+            };
+            Model.remoteMethod(
+                'isValidated',
+                {
+                    description: 'Check if the feed has already been validated',
+                    accepts: {arg: 'id', type: 'string', required: true},
+                    returns: {arg: 'validated', type: 'boolean'},
+                    http: {verb: 'get', path: '/:id/validated'}
+                }
+            );
+
+            Model.validate = function (modelId, cb) {
+                var validatedChanged = false;
+                Model.findById(modelId).then((model) => {
+                    var feedDataCollection = `${Model.modelName}Data${model.getId()}`;
+                    if (!model.validated) {
+                        var createOptions = Object.assign({}, mixinOptions, {
+                            feedDataCollection
+                        });
+                        return FeedData.create(Model, model, createOptions).then((FeedData) => {
+                            return model.updateAttribute('validated', true).then(() => {
+                                validatedChanged = true;
+                                return Promise.resolve(FeedData);
+                            });
+                        });
+                    } else {
+                        return Promise.resolve(Model.registry.findModel(feedDataCollection));
+                    }
+                }).then((FeedData) => {
+                    cb(null, {changed: validatedChanged});
+                }).catch((err) => {
+                    cb(err);
+                });
+            };
+            Model.remoteMethod(
+                'validate',
+                {
+                    description: 'Validate feed for use and create data collection',
+                    accepts: {arg: 'id', type: 'string', required: true},
+                    returns: {type: 'object', root: true},
+                    http: {verb: 'post', path: '/:id/validate'}
+                }
+            );
+        }
+
         /** ===================================================================
         *
         *   Operation hooks
@@ -257,8 +322,7 @@ module.exports = function(Model, mixinOptions) {
 
         Model.observe('after delete', function (ctx, next) {
             if (ctx.instance) {
-                var predicate = {};
-                predicate[mixinOptions.type+'Id'] = ctx.instance.getId();
+                var predicate = {[`${mixinOptions.type}Id`]: ctx.instance.getId()};
                 FeedRoleACL.destroyAll(predicate, function (err) {
                     next(err);
                 });

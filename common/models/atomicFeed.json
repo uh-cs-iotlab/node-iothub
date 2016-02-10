@@ -3,7 +3,6 @@
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
-    "http": {"path": "/feeds/atomic"},
     "properties": {},
     "validations": [],
     "relations": {
@@ -46,8 +45,6 @@
             "permission": "ALLOW"
         }
     ],
-    "mixins": {
-        "BaseFeed": {"type": "atomic"}
-    },
+    "mixins": {},
     "methods": []
 }

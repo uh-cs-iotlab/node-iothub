@@ -3,7 +3,6 @@
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
-    "http": {"path": "/feeds/composed"},
     "properties": {
         "storage": { "type": "boolean", "default": false },
         "readable": { "type": "boolean", "default": false },
@@ -50,8 +49,6 @@
             "permission": "ALLOW"
         }
     ],
-    "mixins": {
-        "BaseFeed": {"type": "composed"}
-    },
+    "mixins": {},
     "methods": []
 }

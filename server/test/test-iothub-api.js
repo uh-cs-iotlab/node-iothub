@@ -323,14 +323,20 @@ describe('IoT Hub API, Authenticated', function() {
 		});
 
 		it('Getting all types of feeds after insertion', function(done) {
-			var reqP = Helper.insertValidAtomicFeed(token).then((atomicArgs) => {
+			var reqP = Helper.insertValidAtomicFeed(token)
+			.then((atomicArgs) => {
 				var atomicId = atomicArgs[0],
 					atomicFieldId = atomicArgs[1];
-				return Helper.insertValidComposedFeed(token).then((composedArgs) => {
+				return Helper.validateFeed(token, {feedType: 'atomic', id: atomicId})
+				.then(() => Helper.insertValidComposedFeed(token))
+				.then((composedArgs) => {
 					var composedId = composedArgs[0],
 						composedFieldId = composedArgs[1];
-					return Helper.insertValidExecutableFeed(token).then((executableId) => {
-						return getAllFeeds(token).then((body) => {
+					return Helper.validateFeed(token, {feedType: 'composed', id: composedId})
+					.then(() => Helper.insertValidExecutableFeed(token))
+					.then((executableId) => {
+						return getAllFeeds(token)
+						.then((body) => {
 							expect(body.count).to.equal(3);
 							expect(body.types).to.have.members(['atomic', 'composed', 'executable']);
 							// AtomicFeed
@@ -476,16 +482,18 @@ describe('Controlling access to feeds for clients', function() {
 	});
 
 	it('users should see only the feeds that they are allowed to access', function (done) {
-		var reqP = Helper.insertValidAtomicFeed(adminToken).then(() => {
-			return Helper.insertValidAtomicFeed(adminToken);
-		}).then((clientArgs) => {
+		var reqP = Helper.insertValidAtomicFeed(adminToken)
+		.then(() => Helper.insertValidAtomicFeed(adminToken))
+		.then((clientArgs) => {
 			var clientAtomicId = clientArgs[0];
 			return insertFeedRoleAcl(adminToken, {
 				feedType: 'atomic',
 				feedId: clientAtomicId,
 				roleId: clientRoleId
-			});
-		}).then(() => {
+			})
+			.then(() => Helper.validateFeed(adminToken, {feedType: 'atomic', id: clientAtomicId}));
+		})
+		.then(() => {
 			return new Promise((resolve, reject) => {
 				request(app)
 				.get('/api/feeds/atomic/filtered/count')
@@ -501,13 +509,16 @@ describe('Controlling access to feeds for clients', function() {
 	});
 
 	it('allowed user should be able to access a feed', function (done) {
-		var reqP = Helper.insertValidAtomicFeed(adminToken).then((args) => {
+		var reqP = Helper.insertValidAtomicFeed(adminToken)
+		.then((args) => {
 			var atomicId = args[0];
 			return insertFeedRoleAcl(adminToken, {
 					feedType: 'atomic',
 					feedId: atomicId,
 					roleId: clientRoleId
-			}).then(() => {
+			})
+			.then(() => Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId}))
+			.then(() => {
 				return new Promise((resolve, reject) => {
 					request(app)
 					.get(`/api/feeds/atomic/filtered/${atomicId}`)

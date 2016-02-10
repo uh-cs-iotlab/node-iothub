@@ -32,10 +32,10 @@ module.exports = (app) => {
 
         validField(options) {
             return Object.assign({
-                name: '',
-                type: '',
+                name: 'testField',
+                type: 'temperature',
                 metadata: '',
-                optional: true,
+                required: false,
                 keywords: []
             }, options);
         },
@@ -70,8 +70,7 @@ module.exports = (app) => {
             return Object.assign({
                 name: 'testFeed',
                 keywords: [],
-                metadata: '',
-                _field: {}
+                metadata: ''
             }, options);
         },
         insertValidAtomicFeed(token, options) {
@@ -114,8 +113,7 @@ module.exports = (app) => {
                 writeable: false,
                 storage: false,
                 keywords: [],
-                metadata: '',
-                _fields: []
+                metadata: ''
             }, options);
         },
         insertValidComposedFeed(token, options) {
@@ -180,6 +178,18 @@ module.exports = (app) => {
         cleanAllExecutableFeeds(token) {
             return this.getFeedsOfType(token, 'executable').then((feeds) => {
                 return Promise.all(feeds.map((feed) => this.deleteFeed(token, {type: 'executable', id: feed.id})));
+            });
+        },
+
+        validateFeed(token, idOptions) {
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post(`/api/feeds/${idOptions.feedType}/${idOptions.id}/validate`)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
             });
         }
     };
