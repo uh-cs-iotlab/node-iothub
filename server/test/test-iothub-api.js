@@ -17,7 +17,7 @@ describe("IoT Hub API, Authentication", function() {
 		.expect(401, done);
 	});
 
-	it("Authenticated request by admin", function(done) {
+	it("Authenticated request by admin", function() {
 
 		var makeRequest = function(token) {
 			return new Promise((resolve, reject) => {
@@ -32,10 +32,11 @@ describe("IoT Hub API, Authentication", function() {
 		};
 
 		var User = app.models.User;
-		var reqP = User.login({username, password}).then((token) => {
-			return makeRequest(token.id).then(() => User.logout(token.id));
+		return User.login({username, password})
+		.then((token) => {
+			return makeRequest(token.id)
+			.then(() => User.logout(token.id));
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 });
 
@@ -44,54 +45,55 @@ describe('IoT Hub API, Authenticated', function() {
 
 	var token;
 
-	before(function(done) {
+	before(function() {
 		var User = app.models.User;
-		var reqP = User.login({username, password}).then((res) => {
+		return User.login({username, password})
+		.then((res) => {
 			token = res.id;
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
-	after(function(done) {
+	after(function() {
 		var User = app.models.User;
-		expect(User.logout(token)).to.be.fulfilled.and.notify(done);
+		return User.logout(token);
 	});
 
-	describe('Fields', function () {
+	describe('Fields', function() {
 
-		beforeEach(function (done) {
-			expect(Helper.cleanAllAtomicFeeds(token)).to.be.fulfilled.and.notify(done);
+		beforeEach(function() {
+			return Helper.cleanAllAtomicFeeds(token);
 		});
 
-		after(function (done) {
-			expect(Helper.cleanAllAtomicFeeds(token)).to.be.fulfilled.and.notify(done);
+		after(function() {
+			return Helper.cleanAllAtomicFeeds(token);
 		});
 
-		it('Should find a previously inserted field', function(done) {
-			var reqP = Helper.insertValidAtomicFeed(token).then((args) => {
+		it('Should find a previously inserted field', function() {
+			return Helper.insertValidAtomicFeed(token)
+			.then((args) => {
 				var fieldId = args[1];
-				return app.models.Field.find().then((fields) => {
+				return app.models.Field.find()
+				.then((fields) => {
 					expect(fields).to.have.length(1);
 					expect(fields[0].getId()).to.equal(fieldId);
 				});
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
 	});
 
 	describe('Atomic feeds', function() {
 
-		beforeEach(function(done) {
-			expect(Helper.cleanAllAtomicFeeds(token)).to.be.fulfilled.and.notify(done);
+		beforeEach(function() {
+			return Helper.cleanAllAtomicFeeds(token);
 		});
 
-		after(function(done) {
-			expect(Helper.cleanAllAtomicFeeds(token)).to.be.fulfilled.and.notify(done);
+		after(function() {
+			return Helper.cleanAllAtomicFeeds(token);
 		});
 
-		it('Valid atomic feed', function(done) {
-			expect(Helper.insertValidAtomicFeed(token)).to.be.fulfilled.and.notify(done);
+		it('Valid atomic feed', function() {
+			return Helper.insertValidAtomicFeed(token);
 		});
 
 		it("Invalid atomic feed (built-in validation mecanism)", function(done) {
@@ -106,8 +108,9 @@ describe('IoT Hub API, Authenticated', function() {
 			.expect(422, done);
 		});
 
-		it('Should find a previously inserted feed', function(done) {
-			var reqP = Helper.insertValidAtomicFeed(token).then((args) => {
+		it('Should find a previously inserted feed', function() {
+			return Helper.insertValidAtomicFeed(token)
+			.then((args) => {
 				var insertedId = args[0],
 					fieldId = args[1];
 				return new Promise((resolve, reject) => {
@@ -124,17 +127,18 @@ describe('IoT Hub API, Authenticated', function() {
 					});
 				});
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
-		it('Should delete a previously inserted feed', function (done) {
-			var reqP = Helper.insertValidAtomicFeed(token).then((args) => {
+		it('Should delete a previously inserted feed', function() {
+			return Helper.insertValidAtomicFeed(token)
+			.then((args) => {
 				var insertedId = args[0];
 				return Helper.deleteFields(token, {
 					feedType: 'atomic',
 					id: insertedId,
 					fieldProperty: 'field'
-				}).then(() => {
+				})
+				.then(() => {
 					return new Promise((resolve, reject) => {
 						request(app)
 						.delete(`/api/feeds/atomic/${insertedId}`)
@@ -145,26 +149,27 @@ describe('IoT Hub API, Authenticated', function() {
 						});
 					});
 				});
-			}).then(() => Helper.getFeedsOfType(token, 'atomic')).then((feeds) => {
+			})
+			.then(() => Helper.getFeedsOfType(token, 'atomic'))
+			.then((feeds) => {
 				expect(feeds).to.have.length(0);
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
 	});
 
 	describe("Composed feeds", function() {
 
-		beforeEach(function(done) {
-			expect(Helper.cleanAllComposedFeeds(token)).to.be.fulfilled.and.notify(done);
+		beforeEach(function() {
+			return Helper.cleanAllComposedFeeds(token);
 		});
 
-		after(function(done) {
-			expect(Helper.cleanAllComposedFeeds(token)).to.be.fulfilled.and.notify(done);
+		after(function() {
+			return Helper.cleanAllComposedFeeds(token);
 		});
 
-		it("Valid composed feed", function(done) {
-			expect(Helper.insertValidComposedFeed(token)).to.be.fulfilled.and.notify(done);
+		it("Valid composed feed", function() {
+			return Helper.insertValidComposedFeed(token);
 		});
 
 		it("Invalid composed feed (built-in validation mecanism)", function(done) {
@@ -179,8 +184,9 @@ describe('IoT Hub API, Authenticated', function() {
 			.expect(422, done);
 		});
 
-		it('Should find a previously inserted feed', function(done) {
-			var reqP = Helper.insertValidComposedFeed(token).then((args) => {
+		it('Should find a previously inserted feed', function() {
+			return Helper.insertValidComposedFeed(token)
+			.then((args) => {
 				var insertedId = args[0],
 					fieldId = args[1];
 				return new Promise((resolve, reject) => {
@@ -199,41 +205,42 @@ describe('IoT Hub API, Authenticated', function() {
 					});
 				});
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
-		it('Should delete a previously inserted feed', function (done) {
-			var reqP = Helper.insertValidComposedFeed(token).then((args) => {
+		it('Should delete a previously inserted feed', function() {
+			return Helper.insertValidComposedFeed(token)
+			.then((args) => {
 				var insertedId = args[0];
 				return new Promise((resolve, reject) => {
 					request(app)
 					.delete(`/api/feeds/composed/${insertedId}`)
 					.set('Authorization', token)
-					.expect(200, function (err, res) {
+					.expect(200, function(err, res) {
 						if (err) reject(err);
 						resolve();
 					});
 				});
-			}).then(() => Helper.getFeedsOfType(token, 'composed')).then((feeds) => {
+			})
+			.then(() => Helper.getFeedsOfType(token, 'composed'))
+			.then((feeds) => {
 				expect(feeds).to.have.length(0);
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
 	});
 
 	describe('Executable feeds', function() {
 
-		beforeEach(function(done) {
-			expect(Helper.cleanAllExecutableFeeds(token)).to.be.fulfilled.and.notify(done);
+		beforeEach(function() {
+			return Helper.cleanAllExecutableFeeds(token);
 		});
 
-		after(function(done) {
-			expect(Helper.cleanAllExecutableFeeds(token)).to.be.fulfilled.and.notify(done);
+		after(function() {
+			return Helper.cleanAllExecutableFeeds(token);
 		});
 
-		it("Valid executable feed", function(done) {
-			expect(Helper.insertValidExecutableFeed(token)).to.be.fulfilled.and.notify(done);
+		it("Valid executable feed", function() {
+			return Helper.insertValidExecutableFeed(token);
 		});
 
 		it("Invalid executable feed (built-in validation mecanism)", function(done) {
@@ -248,8 +255,9 @@ describe('IoT Hub API, Authenticated', function() {
 			.expect(422, done);
 		});
 
-		it('Should find a previously inserted feed', function(done) {
-			var reqP = Helper.insertValidExecutableFeed(token).then((insertedId) => {
+		it('Should find a previously inserted feed', function() {
+			return Helper.insertValidExecutableFeed(token)
+			.then((insertedId) => {
 				return new Promise((resolve, reject) => {
 					request(app)
 					.get(`/api/feeds/executable/${insertedId}`)
@@ -263,11 +271,11 @@ describe('IoT Hub API, Authenticated', function() {
 					});
 				});
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
-		it('Should delete a previously inserted feed', function (done) {
-			var reqP = Helper.insertValidExecutableFeed(token).then((insertedId) => {
+		it('Should delete a previously inserted feed', function() {
+			return Helper.insertValidExecutableFeed(token)
+			.then((insertedId) => {
 				return new Promise((resolve, reject) => {
 					request(app)
 					.delete(`/api/feeds/executable/${insertedId}`)
@@ -277,10 +285,11 @@ describe('IoT Hub API, Authenticated', function() {
 						resolve();
 					});
 				});
-			}).then(() => Helper.getFeedsOfType(token, 'executable')).then((feeds) => {
+			})
+			.then(() => Helper.getFeedsOfType(token, 'executable'))
+			.then((feeds) => {
 				expect(feeds).to.have.length(0);
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
 	});
@@ -307,23 +316,23 @@ describe('IoT Hub API, Authenticated', function() {
 			]);
 		};
 
-		beforeEach(function (done) {
-			expect(cleanAllFeeds(token)).to.be.fulfilled.and.notify(done);
+		beforeEach(function() {
+			return cleanAllFeeds(token);
 		});
 
-		after(function(done) {
-			expect(cleanAllFeeds(token)).to.be.fulfilled.and.notify(done);
+		after(function() {
+			return cleanAllFeeds(token);
 		});
 
-		it('Basic empty response for all feeds', function(done) {
-			var reqP = getAllFeeds(token).then((body) => {
+		it('Basic empty response for all feeds', function() {
+			return getAllFeeds(token)
+			.then((body) => {
 				expect(body).to.eql({count: 0, types: []});
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
-		it('Getting all types of feeds after insertion', function(done) {
-			var reqP = Helper.insertValidAtomicFeed(token)
+		it('Getting all types of feeds after insertion', function() {
+			return Helper.insertValidAtomicFeed(token)
 			.then((atomicArgs) => {
 				var atomicId = atomicArgs[0],
 					atomicFieldId = atomicArgs[1];
@@ -362,7 +371,6 @@ describe('IoT Hub API, Authenticated', function() {
 					});
 				});
 			});
-			expect(reqP).to.be.fulfilled.and.notify(done);
 		});
 
 	});
@@ -376,11 +384,12 @@ describe('Controlling access to feeds for clients', function() {
 	var clientRoleId;
 	var clientToken;
 
-	before(function(done) {
+	before(function() {
 		var User = app.models.User;
 		var Role = app.models.Role;
 		var RoleMapping = app.models.RoleMapping;
-		var reqP = User.login({username, password}).then((res) => {
+		return User.login({username, password})
+		.then((res) => {
 			adminToken = res.id;
 			// Create client role
 			return new Promise((resolve, reject) => {
@@ -389,14 +398,16 @@ describe('Controlling access to feeds for clients', function() {
 					resolve(role);
 				});
 			});
-		}).then((role) => {
+		})
+		.then((role) => {
 			clientRoleId = role.id;
 			// Create a user and associate it to the client role
 			return User.create({
 				username: clientUsername,
 				email: clientUsername+'@hub.fi',
 				password: clientPassword
-			}).then((user) => {
+			})
+			.then((user) => {
 				return new Promise((resolve, reject) => {
 					role.principals.create({
 						principalType: RoleMapping.USER,
@@ -407,31 +418,31 @@ describe('Controlling access to feeds for clients', function() {
 					});
 				});
 			});
-		}).then(() => {
+		})
+		.then(() => {
 			// Log client in
 			return User.login({
 				username: clientUsername,
 				password: clientPassword
 			});
-		}).then((token) => {
+		})
+		.then((token) => {
 			clientToken = token.id;
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
-	beforeEach(function (done) {
-		expect(Helper.cleanAllAtomicFeeds(adminToken)).to.be.fulfilled.and.notify(done);
+	beforeEach(function() {
+		return Helper.cleanAllAtomicFeeds(adminToken);
 	});
 
-	after(function(done) {
+	after(function() {
 		var User = app.models.User;
-		var reqP = Helper.cleanAllAtomicFeeds(adminToken)
+		return Helper.cleanAllAtomicFeeds(adminToken)
 		.then(() => User.logout(clientToken))
 		.then(() => User.logout(adminToken));
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
-	var insertFeedRoleAcl = function (token, options) {
+	var insertFeedRoleAcl = function(token, options) {
 		return new Promise((resolve, reject) => {
 			request(app)
 			.post(`/api/feeds/${options.feedType}/${options.feedId}/role-acl`)
@@ -445,18 +456,21 @@ describe('Controlling access to feeds for clients', function() {
 		});
 	};
 
-	it('feed role ACL should be removed when associated feed is deleted', function (done) {
-		var reqP = Helper.insertValidAtomicFeed(adminToken).then((args) => {
+	it('feed role ACL should be removed when associated feed is deleted', function() {
+		return Helper.insertValidAtomicFeed(adminToken)
+		.then((args) => {
 			var atomicId = args[0];
 			return insertFeedRoleAcl(adminToken, {
 				feedType: 'atomic',
 				feedId: atomicId,
 				roleId: clientRoleId
 			});
-		}).then(() => Helper.cleanAllAtomicFeeds(adminToken)).then(() => app.models.FeedRoleACL.find()).then((acls) => {
+		})
+		.then(() => Helper.cleanAllAtomicFeeds(adminToken))
+		.then(() => app.models.FeedRoleACL.find())
+		.then((acls) => {
 			expect(acls).to.have.length(0);
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
 	it('should be forbidden for non authenticated users', function(done) {
@@ -465,8 +479,9 @@ describe('Controlling access to feeds for clients', function() {
 		.expect(401, done);
 	});
 
-	it('not allowed user shouldn\'t be able to access a feed', function (done) {
-		var reqP = Helper.insertValidAtomicFeed(adminToken).then((args) => {
+	it('not allowed user shouldn\'t be able to access a feed', function() {
+		return Helper.insertValidAtomicFeed(adminToken)
+		.then((args) => {
 			var atomicId = args[0];
 			return new Promise((resolve, reject) => {
 				request(app)
@@ -478,11 +493,10 @@ describe('Controlling access to feeds for clients', function() {
 				});
 			});
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
-	it('users should see only the feeds that they are allowed to access', function (done) {
-		var reqP = Helper.insertValidAtomicFeed(adminToken)
+	it('users should see only the feeds that they are allowed to access', function() {
+		return Helper.insertValidAtomicFeed(adminToken)
 		.then(() => Helper.insertValidAtomicFeed(adminToken))
 		.then((clientArgs) => {
 			var clientAtomicId = clientArgs[0];
@@ -505,11 +519,10 @@ describe('Controlling access to feeds for clients', function() {
 				});
 			});
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
-	it('allowed user should be able to access a feed', function (done) {
-		var reqP = Helper.insertValidAtomicFeed(adminToken)
+	it('allowed user should be able to access a feed', function() {
+		return Helper.insertValidAtomicFeed(adminToken)
 		.then((args) => {
 			var atomicId = args[0];
 			return insertFeedRoleAcl(adminToken, {
@@ -530,7 +543,6 @@ describe('Controlling access to feeds for clients', function() {
 				});
 			});
 		});
-		expect(reqP).to.be.fulfilled.and.notify(done);
 	});
 
 });

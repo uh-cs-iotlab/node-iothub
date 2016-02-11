@@ -13,7 +13,8 @@ module.exports = {
                     if (err) reject(err);
                     resolve(app);
                 });
-            }).then((app) => {
+            })
+            .then((app) => {
                 var fieldDescriptions;
                 switch(createOptions.type) {
                     case FeedTypes.ATOMIC:
@@ -47,8 +48,7 @@ module.exports = {
                 };
 
                 var FeedData = loopback.PersistedModel.extend(createOptions.feedDataCollection, properties, options);
-                FeedData = app.model(FeedData, {dataSource: 'db', public: false});
-                return Promise.resolve(FeedData);
+                return app.model(FeedData, {dataSource: 'db', public: false});
             });
         }
     }

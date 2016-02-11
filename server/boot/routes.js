@@ -43,7 +43,7 @@ module.exports = function(app) {
                 }
             }
             res.status(200).send(feeds);
-        }, (err) => res.status(err.status).send(err.response));
+        }, err => res.status(err.status).send(err.response));
     });
 
 };

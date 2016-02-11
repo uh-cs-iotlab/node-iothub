@@ -86,24 +86,19 @@ module.exports = (app) => {
                     if (err) reject(err);
                     resolve(res.body.id);
                 });
-            }).then((atomicFeedId) => {
+            })
+            .then((atomicFeedId) => {
                 return this.insertValidField(token, {
                     feedType: 'atomic',
                     id: atomicFeedId,
                     fieldProperty: 'field'
-                }).then((fieldId) => Promise.resolve([atomicFeedId, fieldId]));
+                })
+                .then(fieldId => Promise.resolve([atomicFeedId, fieldId]));
             });
         },
         cleanAllAtomicFeeds(token) {
-            return this.getFeedsOfType(token, 'atomic').then((feeds) => {
-                return Promise.all(feeds.map((feed) => {
-                    return this.deleteFields(token, {
-                        feedType: 'atomic',
-                        id: feed.id,
-                        fieldProperty: 'field'
-                    }).then(() => this.deleteFeed(token, {type: 'atomic', id: feed.id}));
-                }));
-            });
+            return this.getFeedsOfType(token, 'atomic')
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'atomic', id: feed.id}))));
         },
 
         validComposedFeed(options) {
@@ -129,24 +124,19 @@ module.exports = (app) => {
                     if (err) reject(err);
                     resolve(res.body.id);
                 });
-            }).then((composedFeedId) => {
+            })
+            .then((composedFeedId) => {
                 return this.insertValidField(token, {
                     feedType: 'composed',
                     id: composedFeedId,
                     fieldProperty: 'fields'
-                }).then((fieldId) => Promise.resolve([composedFeedId, fieldId]));
+                })
+                .then(fieldId => Promise.resolve([composedFeedId, fieldId]));
             });
         },
         cleanAllComposedFeeds(token) {
-            return this.getFeedsOfType(token, 'composed').then((feeds) => {
-                return Promise.all(feeds.map((feed) => {
-                    return this.deleteFields(token, {
-                        feedType: 'composed',
-                        id: feed.id,
-                        fieldProperty: 'fields'
-                    }).then(() => this.deleteFeed(token, {type: 'composed', id: feed.id}));
-                }));
-            });
+            return this.getFeedsOfType(token, 'composed')
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'composed', id: feed.id}))));
         },
 
         validExecutableFeed(options) {
@@ -176,9 +166,8 @@ module.exports = (app) => {
             });
         },
         cleanAllExecutableFeeds(token) {
-            return this.getFeedsOfType(token, 'executable').then((feeds) => {
-                return Promise.all(feeds.map((feed) => this.deleteFeed(token, {type: 'executable', id: feed.id})));
-            });
+            return this.getFeedsOfType(token, 'executable')
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'executable', id: feed.id}))));
         },
 
         validateFeed(token, idOptions) {
