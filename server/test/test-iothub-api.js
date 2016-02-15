@@ -133,26 +133,26 @@ describe('IoT Hub API, Authenticated', function() {
 			return Helper.insertValidAtomicFeed(token)
 			.then((args) => {
 				var insertedId = args[0];
-				return Helper.deleteFields(token, {
-					feedType: 'atomic',
-					id: insertedId,
-					fieldProperty: 'field'
-				})
-				.then(() => {
-					return new Promise((resolve, reject) => {
-						request(app)
-						.delete(`/api/feeds/atomic/${insertedId}`)
-						.set('Authorization', token)
-						.expect(200, (err, res) => {
-							if (err) reject(err);
-							resolve();
-						});
-					});
-				});
+				return Helper.deleteFeed(token, {type: 'atomic', id: insertedId});
 			})
 			.then(() => Helper.getFeedsOfType(token, 'atomic'))
 			.then((feeds) => {
 				expect(feeds).to.have.length(0);
+			});
+		});
+
+		it('should delete associated field on deletion', function () {
+			return Helper.insertValidAtomicFeed(token)
+			.then((args) => {
+				var insertedId = args[0];
+				var insertedFieldId = args[1];
+				return Helper.deleteFeed(token, {type: 'atomic', id: insertedId})
+				.then(() => {
+					return app.models.Field.exists(insertedFieldId);
+				});
+			})
+			.then((fieldExists) => {
+				expect(fieldExists).to.equal(false);
 			});
 		});
 
@@ -211,19 +211,26 @@ describe('IoT Hub API, Authenticated', function() {
 			return Helper.insertValidComposedFeed(token)
 			.then((args) => {
 				var insertedId = args[0];
-				return new Promise((resolve, reject) => {
-					request(app)
-					.delete(`/api/feeds/composed/${insertedId}`)
-					.set('Authorization', token)
-					.expect(200, function(err, res) {
-						if (err) reject(err);
-						resolve();
-					});
-				});
+				return Helper.deleteFeed(token, {type: 'composed', id: insertedId});
 			})
 			.then(() => Helper.getFeedsOfType(token, 'composed'))
 			.then((feeds) => {
 				expect(feeds).to.have.length(0);
+			});
+		});
+
+		it('should delete associated field on deletion', function () {
+			return Helper.insertValidComposedFeed(token)
+			.then((args) => {
+				var insertedId = args[0];
+				var insertedFieldId = args[1];
+				return Helper.deleteFeed(token, {type: 'composed', id: insertedId})
+				.then(() => {
+					return app.models.Field.exists(insertedFieldId);
+				});
+			})
+			.then((fieldExists) => {
+				expect(fieldExists).to.equal(false);
 			});
 		});
 
@@ -276,15 +283,7 @@ describe('IoT Hub API, Authenticated', function() {
 		it('Should delete a previously inserted feed', function() {
 			return Helper.insertValidExecutableFeed(token)
 			.then((insertedId) => {
-				return new Promise((resolve, reject) => {
-					request(app)
-					.delete(`/api/feeds/executable/${insertedId}`)
-					.set('Authorization', token)
-					.expect(200, (err, res) => {
-						if (err) reject(err);
-						resolve();
-					});
-				});
+				return Helper.deleteFeed(token, {type: 'executable', id: insertedId});
 			})
 			.then(() => Helper.getFeedsOfType(token, 'executable'))
 			.then((feeds) => {
@@ -376,10 +375,10 @@ describe('IoT Hub API, Authenticated', function() {
 	});
 });
 
-describe('Controlling access to feeds for clients', function() {
+describe('Admin/Client access', function() {
 
 	var clientUsername = 'client',
-		clientPassword = 'password';
+	clientPassword = 'password';
 	var adminToken;
 	var clientRoleId;
 	var clientToken;
@@ -456,93 +455,238 @@ describe('Controlling access to feeds for clients', function() {
 		});
 	};
 
-	it('feed role ACL should be removed when associated feed is deleted', function() {
-		return Helper.insertValidAtomicFeed(adminToken)
-		.then((args) => {
-			var atomicId = args[0];
-			return insertFeedRoleAcl(adminToken, {
-				feedType: 'atomic',
-				feedId: atomicId,
-				roleId: clientRoleId
-			});
-		})
-		.then(() => Helper.cleanAllAtomicFeeds(adminToken))
-		.then(() => app.models.FeedRoleACL.find())
-		.then((acls) => {
-			expect(acls).to.have.length(0);
-		});
-	});
+	describe('Controlling access to feeds for clients', function () {
 
-	it('should be forbidden for non authenticated users', function(done) {
-		request(app)
-		.get('/api/feeds')
-		.expect(401, done);
-	});
-
-	it('not allowed user shouldn\'t be able to access a feed', function() {
-		return Helper.insertValidAtomicFeed(adminToken)
-		.then((args) => {
-			var atomicId = args[0];
-			return new Promise((resolve, reject) => {
-				request(app)
-				.get(`/api/feeds/atomic/filtered/${atomicId}`)
-				.set('Authorization', clientToken)
-				.expect(404, (err, res) => {
-					if (err) reject(err);
-					resolve();
-				});
-			});
-		});
-	});
-
-	it('users should see only the feeds that they are allowed to access', function() {
-		return Helper.insertValidAtomicFeed(adminToken)
-		.then(() => Helper.insertValidAtomicFeed(adminToken))
-		.then((clientArgs) => {
-			var clientAtomicId = clientArgs[0];
-			return insertFeedRoleAcl(adminToken, {
-				feedType: 'atomic',
-				feedId: clientAtomicId,
-				roleId: clientRoleId
-			})
-			.then(() => Helper.validateFeed(adminToken, {feedType: 'atomic', id: clientAtomicId}));
-		})
-		.then(() => {
-			return new Promise((resolve, reject) => {
-				request(app)
-				.get('/api/feeds/atomic/filtered/count')
-				.set('Authorization', clientToken)
-				.expect(200, (err, res) => {
-					if (err) reject(err);
-					expect(res.body.count).to.equal(1);
-					resolve(res.body.count);
-				});
-			});
-		});
-	});
-
-	it('allowed user should be able to access a feed', function() {
-		return Helper.insertValidAtomicFeed(adminToken)
-		.then((args) => {
-			var atomicId = args[0];
-			return insertFeedRoleAcl(adminToken, {
+		it('feed role ACL should be removed when associated feed is deleted', function() {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return insertFeedRoleAcl(adminToken, {
 					feedType: 'atomic',
 					feedId: atomicId,
 					roleId: clientRoleId
+				});
 			})
-			.then(() => Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId}))
-			.then(() => {
+			.then(() => Helper.cleanAllAtomicFeeds(adminToken))
+			.then(() => app.models.FeedRoleACL.find())
+			.then((acls) => {
+				expect(acls).to.have.length(0);
+			});
+		});
+
+		it('should be forbidden for non authenticated users', function(done) {
+			request(app)
+			.get('/api/feeds')
+			.expect(401, done);
+		});
+
+		it('not allowed user shouldn\'t be able to access a feed', function() {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
 				return new Promise((resolve, reject) => {
 					request(app)
 					.get(`/api/feeds/atomic/filtered/${atomicId}`)
 					.set('Authorization', clientToken)
-					.expect(200, (err, res) => {
+					.expect(404, (err, res) => {
 						if (err) reject(err);
-						resolve(res.body);
+						resolve();
 					});
 				});
 			});
 		});
+
+		it('users should see only the feeds that they are allowed to access', function() {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then(() => Helper.insertValidAtomicFeed(adminToken))
+			.then((clientArgs) => {
+				var clientAtomicId = clientArgs[0];
+				return insertFeedRoleAcl(adminToken, {
+					feedType: 'atomic',
+					feedId: clientAtomicId,
+					roleId: clientRoleId
+				})
+				.then(() => Helper.validateFeed(adminToken, {feedType: 'atomic', id: clientAtomicId}));
+			})
+			.then(() => {
+				return new Promise((resolve, reject) => {
+					request(app)
+					.get('/api/feeds/atomic/filtered/count')
+					.set('Authorization', clientToken)
+					.expect(200, (err, res) => {
+						if (err) reject(err);
+						expect(res.body.count).to.equal(1);
+						resolve(res.body.count);
+					});
+				});
+			});
+		});
+
+		it('allowed user should be able to access a validated feed', function() {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return insertFeedRoleAcl(adminToken, {
+					feedType: 'atomic',
+					feedId: atomicId,
+					roleId: clientRoleId
+				})
+				.then(() => Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId}))
+				.then(() => Helper.getFeedsOfType(clientToken, 'atomic', {id: atomicId, filtered: true}));
+			});
+		});
+
+		it('allowed user should not be able to access a non-validated feed', function() {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return insertFeedRoleAcl(adminToken, {
+					feedType: 'atomic',
+					feedId: atomicId,
+					roleId: clientRoleId
+				})
+				.then(() => {
+					return new Promise((resolve, reject) => {
+						request(app)
+		                .get(`/api/feeds/atomic/filtered/${atomicId}`)
+		                .set('Authorization', clientToken)
+		                .expect(404, (err, res) => {
+		                    if (err) reject(err);
+		                    resolve(res.body);
+		                });
+					});
+				});
+			});
+		});
+
+	});
+
+	describe('Feed validation', function () {
+
+		it('feed validation property should be hidden', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return Helper.getFeedsOfType(adminToken, 'atomic', {id: atomicId});
+			})
+			.then((atomic) => {
+				expect(atomic.validated).to.not.exist;
+			});
+		});
+
+		it('a feed should be not validated by default', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return app.models.AtomicFeed.findById(atomicId);
+			})
+			.then((atomic) => {
+				expect(atomic.validated).to.exist;
+				expect(atomic.validated).to.equal(false);
+			});
+		});
+
+		it('a feed should be forced to be not validated', function () {
+			return Helper.insertValidAtomicFeed(adminToken, {validated: true})
+			.then((args) => {
+				var atomicId = args[0];
+				return app.models.AtomicFeed.findById(atomicId);
+			})
+			.then((atomic) => {
+				expect(atomic.validated).to.exist;
+				expect(atomic.validated).to.equal(false);
+			});
+		});
+
+		it('validating feed should create a data collection', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
+				.then(() => {
+					expect(app.models[`AtomicFeedData${atomicId}`]).to.exist;
+				});
+			});
+		});
+
+		it('each feed\'s field should have a distinct name', function () {
+			return Helper.insertValidComposedFeed(adminToken)
+			.then((args) => {
+				var composedId = args[0];
+				// insert two fields with same name
+				return Helper.insertValidField(adminToken, {
+					feedType: 'composed',
+					id: composedId,
+					fieldProperty: 'fields'
+				}, {name: 'aFieldName'})
+				.then(() => {
+					return Helper.insertValidField(adminToken, {
+						feedType: 'composed',
+						id: composedId,
+						fieldProperty: 'fields'
+					}, {name: 'aFieldName'});
+				})
+				.then(() => {
+					return new Promise((resolve, reject) => {
+						request(app)
+		                .post(`/api/feeds/composed/${composedId}/validate`)
+		                .set('Authorization', adminToken)
+		                .expect(422, (err, res) => {
+		                    if (err) reject(err);
+		                    resolve(res.body);
+		                });
+					});
+				});
+			});
+		});
+
+		it('modifying a validated feed is allowed', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
+				.then(() => {
+					new Promise((resolve, reject) => {
+						request(app)
+						.put(`/api/feeds/atomic/${atomicId}`)
+						.set('Authorization', adminToken)
+						.type('json')
+						.send(JSON.stringify({name: 'newFeedName'}))
+						.expect(200, (err, res) => {
+							if (err) reject(err);
+							resolve(res.body);
+						});
+					});
+				})
+				.then(() => Helper.getFeedsOfType(adminToken, 'atomic', {id: atomicId}))
+				.then((atomic) => {
+					expect(atomic.name).to.equal('newFeedName');
+				});
+			});
+		});
+
+		it('modifying a validated feed\'s fields is forbidden', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				var atomicFieldId = args[1];
+				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
+				.then(() => {
+					new Promise((resolve, reject) => {
+						request(app)
+						.put(`/api/feeds/atomic/${atomicId}/${atomicFieldId}`)
+						.set('Authorization', adminToken)
+						.type('json')
+						.send(JSON.stringify({name: 'newFieldName'}))
+						.expect(401, (err, res) => {
+							if (err) reject(err);
+							resolve(res.body);
+						});
+					});
+				});
+			});
+		});
+
 	});
 
 });

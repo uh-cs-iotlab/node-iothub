@@ -73,7 +73,9 @@ module.exports = function (Model, mixinOptions) {
             if (!model.validated) {
                 var feedFieldsValid = validateFeedFields(model);
                 if (typeof feedFieldsValid === 'object') {
-                    return Promise.reject(new Error(`Duplicate field names: ${JSON.stringify(feedFieldsValid)}`));
+                    var err = new Error(`Duplicate field names: ${JSON.stringify(feedFieldsValid)}`);
+                    err.statusCode = err.status = 422;
+                    return Promise.reject(err);
                 }
                 var createOptions = Object.assign({}, mixinOptions, {
                     feedDataCollection
@@ -114,7 +116,7 @@ module.exports = function (Model, mixinOptions) {
                 // CASE 1:
                 // This is executed when the action is updateAttributes()
                 // That means what we can simply remove modifications that are related to fields
-                delete data[fieldPropertyName()];
+                delete ctx.data[fieldPropertyName()];
             } else if (ctx.instance && ctx.instance.validated) {
                 // CASE 2:
                 // This is executed in all cases where one instance is modified
@@ -125,7 +127,9 @@ module.exports = function (Model, mixinOptions) {
                     var oldFields = oldInstance[fieldPropertyName()];
                     var newFields = ctx.instance[fieldPropertyName()];
                     if (oldFields.toJSON() !== newFields.toJSON()) {
-                        return Promise.reject(new Error(`Fields property can't be modified on validated "${Model.modelName}" id "${ctx.instance.getId()}"`));
+                        var err = new Error(`Fields property can't be modified on validated "${Model.modelName}" id "${ctx.instance.getId()}"`);
+                        err.statusCode = err.status = 401;
+                        return Promise.reject(err);
                     }
                 });
             } else if (!ctx.instance) {
@@ -138,7 +142,9 @@ module.exports = function (Model, mixinOptions) {
                     hookP = Model.findOne({where: {validated: true}})
                     .then((validatedInstance) => {
                         if (validatedInstance) {
-                            return Promise.reject(new Error(`Update has failed. One or more instances of "${Model.modelName}" are validated.`));
+                            var err = new Error(`Update has failed. One or more instances of "${Model.modelName}" are validated.`);
+                            err.statusCode = err.status = 401;
+                            return Promise.reject(err);
                         }
                     });
                 }

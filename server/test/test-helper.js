@@ -7,10 +7,18 @@ var expect = chai.expect;
 module.exports = (app) => {
 
     return {
-        getFeedsOfType(token, type) {
+        getFeedsOfType(token, type, options) {
+            options = options || {};
+            var url = `/api/feeds/${type}`;
+            if (options.filtered) {
+                url += '/filtered';
+            }
+            if (options.id) {
+                url += `/${options.id}`;
+            }
             return new Promise((resolve, reject) => {
                 request(app)
-                .get(`/api/feeds/${type}`)
+                .get(url)
                 .set('Authorization', token)
                 .expect(200, (err, res) => {
                     if (err) reject(err);

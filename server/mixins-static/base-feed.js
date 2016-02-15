@@ -75,7 +75,7 @@ module.exports = function(Model, mixinOptions) {
                     var dynamicRoles = [Role.OWNER, Role.AUTHENTICATED, Role.UNAUTHENTICATED, Role.EVERYONE];
                     var roleIds = roles.filter(roleId => dynamicRoles.indexOf(roleId) < 0);
                     return Promise.all(models.map((model) => {
-                        if (model.hasOwnProperty('validated') && !model.validated) return null;
+                        if (model.validated === false) return null;
                         // The ACL has to be associated with one of the user's roles...
                         var whereFilter = {
                             roleId: {inq: roleIds},
