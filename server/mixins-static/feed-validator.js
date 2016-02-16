@@ -34,7 +34,7 @@ module.exports = function (Model, mixinOptions) {
     };
 
     Model.getDataFormat = function (modelId, cb) {
-        Model.filteredFindById(modelId)
+        var reqP = Model.filteredFindById(modelId)
         .then((model) => {
             var fields = [].concat(model[fieldPropertyName()]);
             var format = {};
@@ -45,8 +45,9 @@ module.exports = function (Model, mixinOptions) {
                 };
             }
             return format;
-        })
-        .then((format) => cb(null, format), (err) => cb(err));
+        });
+        if (cb) return reqP.then((format) => cb(null, format), (err) => cb(err));
+        return reqP;
     };
     Model.remoteMethod(
         'getDataFormat',
@@ -60,9 +61,10 @@ module.exports = function (Model, mixinOptions) {
     );
 
     Model.getData = function (modelId, filter, cb) {
-        Model.filteredFindById(modelId)
-        .then((model) => FeedData.get(Model, {modelId, filter}))
-        .then((data) => cb(null, data), (err) => cb(err));
+        var reqP = Model.filteredFindById(modelId)
+        .then((model) => FeedData.get(Model, {modelId, filter}));
+        if (cb) return reqP.then((data) => cb(null, data), (err) => cb(err));
+        return reqP;
     };
     Model.remoteMethod(
         'getData',
@@ -79,9 +81,10 @@ module.exports = function (Model, mixinOptions) {
     );
 
     Model.postData = function (modelId, data, cb) {
-        Model.filteredFindById(modelId)
-        .then((model) => FeedData.insert(Model, data, {modelId}))
-        .then((createdData) => cb(null, createdData), (err) => cb(err));
+        var reqP = Model.filteredFindById(modelId)
+        .then((model) => FeedData.insert(Model, data, {modelId}));
+        if (cb) return reqP.then((createdData) => cb(null, createdData), (err) => cb(err));
+        return reqP;
     };
     Model.remoteMethod(
         'postData',
@@ -98,11 +101,12 @@ module.exports = function (Model, mixinOptions) {
     );
 
     Model.isValidated = function (modelId, cb) {
-        Model.findById(modelId)
+        var reqP = Model.findById(modelId)
         .then((model) => {
             return model.validated;
-        })
-        .then((validated) => cb(null, validated), (err) => cb(err));
+        });
+        if (cb) return reqP.then((validated) => cb(null, validated), (err) => cb(err));
+        return reqP;
     };
     Model.remoteMethod(
         'isValidated',
@@ -142,14 +146,20 @@ module.exports = function (Model, mixinOptions) {
 
     Model.validate = function (modelId, cb) {
         var validatedChanged = false;
-        Model.findById(modelId)
+        var reqP = Model.findById(modelId)
         .then((model) => {
             if (!model.validated) {
                 var feedFieldsValid = validateFeedFields(model);
                 if (typeof feedFieldsValid === 'object') {
-                    var err = new Error(`Duplicate field names: ${JSON.stringify(feedFieldsValid)}`);
-                    err.statusCode = err.status = 422;
-                    return Promise.reject(err);
+                    var duplErr = new Error(`Duplicate field names: ${JSON.stringify(feedFieldsValid)}`);
+                    duplErr.statusCode = duplErr.status = 422;
+                    return Promise.reject(duplErr);
+                }
+                var dataCollectionName = FeedData.feedDataCollectionName(Model, model.getId());
+                if (Model.registry.findModel(dataCollectionName)) {
+                    var existsErr = new Error(`A data collection already exists for this model instance: ${dataCollectionName}`);
+                    existsErr.statusCode = existsErr.status = 422;
+                    return Promise.reject(existsErr);
                 }
                 return FeedData.create(Model, model, mixinOptions)
                 .then((FeedData) => {
@@ -160,8 +170,9 @@ module.exports = function (Model, mixinOptions) {
                     });
                 });
             }
-        })
-        .then(FeedData => cb(null, {changed: validatedChanged}), err => cb(err));
+        });
+        if (cb) return reqP.then(FeedData => cb(null, {changed: validatedChanged}), err => cb(err));
+        return reqP;
     };
     Model.remoteMethod(
         'validate',

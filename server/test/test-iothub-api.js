@@ -689,4 +689,108 @@ describe('Admin/Client access', function() {
 
 	});
 
+	describe('Feed data collection', function () {
+
+		var FieldTypes = require('../field-types');
+
+		var composedId;
+		var composedFieldName = 'aRequiredComposedField';
+		var composedData = {[composedFieldName]: {unit: 'c', val: 4}};
+
+		beforeEach(function () {
+			return Helper.cleanAllComposedFeeds(adminToken)
+			.then(() => Helper.insertValidComposedFeed(adminToken))
+			.then((args) => {
+				composedId = args[0];
+				return Helper.insertValidField(adminToken, {
+					feedType: 'composed',
+					id: composedId,
+					fieldProperty: 'fields'
+				}, {
+					name: composedFieldName,
+					type: FieldTypes.TEMPERATURE,
+					required: true
+				})
+				.then(() => {
+					return insertFeedRoleAcl(adminToken, {
+						feedType: 'composed',
+						feedId: composedId,
+						roleId: clientRoleId
+					});
+				});
+			});
+		});
+
+		after(function () {
+			return Helper.cleanAllComposedFeeds(adminToken);
+		});
+
+		it('should find previously inserted data', function () {
+			return Helper.validateFeed(adminToken, {
+				feedType: 'composed',
+				id: composedId
+			})
+			.then(() => {
+				return Helper.insertData(clientToken, composedData, {
+					feedType: 'composed',
+					id: composedId
+				});
+			})
+			.then((insertedData) => {
+				return Helper.getData(clientToken, {
+					feedType: 'composed',
+					id: composedId
+				})
+				.then((data) => {
+					expect(data[0]).to.eql(insertedData);
+				});
+			});
+		});
+
+		it('required fields inclusion should be verified in data', function () {
+			return Helper.validateFeed(adminToken, {
+				feedType: 'composed',
+				id: composedId
+			})
+			.then(() => {
+				var validField = Helper.validField();
+				var incorrectData = {[validField.name]: {unit: 'c', val: 4}};
+				return new Promise((resolve, reject) => {
+					request(app)
+					.post(`/api/feeds/composed/${composedId}/data`)
+					.set('Authorization', clientToken)
+					.type('json')
+					.send(JSON.stringify(incorrectData))
+					.expect(422, (err, res) => {
+						if (err) reject(err);
+						resolve(err);
+					});
+				});
+			});
+		});
+
+		it('complex field types should be validated', function () {
+			return Helper.validateFeed(adminToken, {
+				feedType: 'composed',
+				id: composedId
+			})
+			.then(() => {
+				var validField = Helper.validField();
+				var incorrectData = {[composedFieldName]: {unit: 'c', val: 'notANumber'}};
+				return new Promise((resolve, reject) => {
+					request(app)
+					.post(`/api/feeds/composed/${composedId}/data`)
+					.set('Authorization', clientToken)
+					.type('json')
+					.send(JSON.stringify(incorrectData))
+					.expect(422, (err, res) => {
+						if (err) reject(err);
+						resolve(err);
+					});
+				});
+			});
+		});
+
+	});
+
 });

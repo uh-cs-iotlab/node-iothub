@@ -188,6 +188,35 @@ module.exports = (app) => {
                     resolve(res.body);
                 });
             });
+        },
+
+        getData(token, idOptions, options) {
+            options = options || {};
+            var url = `/api/feeds/${idOptions.feedType}/${idOptions.id}/data`;
+            if (options.filter) url += `?filter=${JSON.stringify(options.filter)}`;
+            return new Promise((resolve, reject) => {
+                request(app)
+                .get(url)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
+        },
+
+        insertData(token, data, idOptions) {
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post(`/api/feeds/${idOptions.feedType}/${idOptions.id}/data`)
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(data))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
         }
     };
 };

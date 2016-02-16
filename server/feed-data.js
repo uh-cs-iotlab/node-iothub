@@ -62,7 +62,7 @@ module.exports = {
                     if (ctx.isNewInstance && ctx.instance) {
                         for (var prop in ctx.instance) {
                             var fieldDesc = fieldDescriptionsByName[prop];
-                            if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop]))
+                            if (fieldDesc && ctx.instance[prop] && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop]))
                             {
                                 var err = new Error(`Invalid data. Wrong type for "${prop}" field. "${JSON.stringify(FieldTypes.dataFormat(fieldDesc.type))}" expected.`);
                                 err.statusCode = err.status = 422;
