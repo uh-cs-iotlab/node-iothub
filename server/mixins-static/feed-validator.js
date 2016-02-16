@@ -1,12 +1,28 @@
 var loopback = require('loopback');
 var FeedData = require('../feed-data');
 var FeedTypes = require('../feed-types.json');
+var FieldTypes = require('../field-types');
 
 module.exports = function (Model, mixinOptions) {
 
     Model.defineProperty('validated', { type: 'boolean', default: false });
     if (Model.settings.hidden) Model.settings.hidden.push('validated');
     else Model.settings.hidden = ['validated'];
+    if (Model.settings.acls) {
+        Model.settings.acls.push({
+            accessType: 'READ',
+            property: ['getData', 'getDataFormat'],
+            principalType: 'ROLE',
+            principalId: '$authenticated',
+            permission: 'ALLOW'
+        }, {
+            accessType: 'WRITE',
+            property: 'postData',
+            principalType: 'ROLE',
+            principalId: '$authenticated',
+            permission: 'ALLOW'
+        });
+    }
 
     var fieldPropertyName = function () {
         switch (mixinOptions.type) {
@@ -17,17 +33,76 @@ module.exports = function (Model, mixinOptions) {
         }
     };
 
+    Model.getDataFormat = function (modelId, cb) {
+        Model.filteredFindById(modelId)
+        .then((model) => {
+            var fields = [].concat(model[fieldPropertyName()]);
+            var format = {};
+            for (var field of fields) {
+                format[field.name] = {
+                    format: FieldTypes.dataFormat(field.type),
+                    required: field.required
+                };
+            }
+            return format;
+        })
+        .then((format) => cb(null, format), (err) => cb(err));
+    };
+    Model.remoteMethod(
+        'getDataFormat',
+        {
+            description: 'Get accepted data format for this feed',
+            accessType: 'READ',
+            accepts: {arg: 'id', type: 'string', required: true},
+            returns: {arg: 'format', type: 'object', root: true},
+            http: {verb: 'get', path: '/:id/data-format'}
+        }
+    );
+
+    Model.getData = function (modelId, filter, cb) {
+        Model.filteredFindById(modelId)
+        .then((model) => FeedData.get(Model, {modelId, filter}))
+        .then((data) => cb(null, data), (err) => cb(err));
+    };
+    Model.remoteMethod(
+        'getData',
+        {
+            description: 'Get feed data with optional limit',
+            accessType: 'READ',
+            accepts: [
+                {arg: 'id', type: 'string', required: true},
+                {arg: 'filter', type: 'object', description: 'Filter defining fields, where, include, order, offset, and limit'}
+            ],
+            returns: {arg: 'data', type: ['object'], root: true},
+            http: {verb: 'get', path: '/:id/data'}
+        }
+    );
+
+    Model.postData = function (modelId, data, cb) {
+        Model.filteredFindById(modelId)
+        .then((model) => FeedData.insert(Model, data, {modelId}))
+        .then((createdData) => cb(null, createdData), (err) => cb(err));
+    };
+    Model.remoteMethod(
+        'postData',
+        {
+            description: 'Post feed data',
+            accessType: 'WRITE',
+            accepts: [
+                {arg: 'id', type: 'string', required: true},
+                {arg: 'data', type: 'object', http: {source: 'body'}}
+            ],
+            returns: {arg: 'created-data', type: 'object', root: true},
+            http: {verb: 'post', path: '/:id/data'}
+        }
+    );
+
     Model.isValidated = function (modelId, cb) {
         Model.findById(modelId)
         .then((model) => {
             return model.validated;
         })
-        .then((validated) => {
-            cb(null, validated);
-        })
-        .catch((err) => {
-            cb(err);
-        });
+        .then((validated) => cb(null, validated), (err) => cb(err));
     };
     Model.remoteMethod(
         'isValidated',
@@ -69,7 +144,6 @@ module.exports = function (Model, mixinOptions) {
         var validatedChanged = false;
         Model.findById(modelId)
         .then((model) => {
-            var feedDataCollection = `${Model.modelName}Data${model.getId()}`;
             if (!model.validated) {
                 var feedFieldsValid = validateFeedFields(model);
                 if (typeof feedFieldsValid === 'object') {
@@ -77,10 +151,7 @@ module.exports = function (Model, mixinOptions) {
                     err.statusCode = err.status = 422;
                     return Promise.reject(err);
                 }
-                var createOptions = Object.assign({}, mixinOptions, {
-                    feedDataCollection
-                });
-                return FeedData.create(Model, model, createOptions)
+                return FeedData.create(Model, model, mixinOptions)
                 .then((FeedData) => {
                     return model.updateAttribute('validated', true)
                     .then(() => {
@@ -88,8 +159,6 @@ module.exports = function (Model, mixinOptions) {
                         return FeedData;
                     });
                 });
-            } else {
-                return Model.registry.findModel(feedDataCollection);
             }
         })
         .then(FeedData => cb(null, {changed: validatedChanged}), err => cb(err));
@@ -127,7 +196,7 @@ module.exports = function (Model, mixinOptions) {
                     var oldFields = oldInstance[fieldPropertyName()];
                     var newFields = ctx.instance[fieldPropertyName()];
                     if (oldFields.toJSON() !== newFields.toJSON()) {
-                        var err = new Error(`Fields property can't be modified on validated "${Model.modelName}" id "${ctx.instance.getId()}"`);
+                        var err = new Error(`Fields property can't be modified on validated "${Model.modelName}" id "${ctx.instance.getId()}".`);
                         err.statusCode = err.status = 401;
                         return Promise.reject(err);
                     }
