@@ -27,9 +27,11 @@ module.exports = (app) => {
             });
         },
         deleteFeed(token, options) {
+            var url = `/api/feeds/${options.type}/${options.id}`;
+            if (options.force) url += '/force';
             return new Promise((resolve, reject) => {
                 request(app)
-                .delete(`/api/feeds/${options.type}/${options.id}`)
+                .delete(url)
                 .set('Authorization', token)
                 .expect(200, (err, res) => {
                     if (err) reject(err);
@@ -104,9 +106,10 @@ module.exports = (app) => {
                 .then(fieldId => Promise.resolve([atomicFeedId, fieldId]));
             });
         },
-        cleanAllAtomicFeeds(token) {
+        cleanAllAtomicFeeds(token, options) {
+            options = options || {};
             return this.getFeedsOfType(token, 'atomic')
-            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'atomic', id: feed.id}))));
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'atomic', id: feed.id, force: options.force}))));
         },
 
         validComposedFeed(options) {
@@ -142,9 +145,10 @@ module.exports = (app) => {
                 .then(fieldId => Promise.resolve([composedFeedId, fieldId]));
             });
         },
-        cleanAllComposedFeeds(token) {
+        cleanAllComposedFeeds(token, options) {
+            options = options || {};
             return this.getFeedsOfType(token, 'composed')
-            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'composed', id: feed.id}))));
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'composed', id: feed.id, force: options.force}))));
         },
 
         validExecutableFeed(options) {

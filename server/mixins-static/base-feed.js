@@ -108,6 +108,7 @@ module.exports = function(Model, mixinOptions) {
                 cb = query;
                 query = {};
             }
+            query.limit = 1;
             var reqP = Model.filteredFind(query)
             .then(models => models.length > 0 ? models[0] : null);
             if (cb) reqP.then(model => cb(null, model), err => cb(err));

@@ -61,11 +61,11 @@ describe('IoT Hub API, Authenticated', function() {
 	describe('Fields', function() {
 
 		beforeEach(function() {
-			return Helper.cleanAllAtomicFeeds(token);
+			return Helper.cleanAllAtomicFeeds(token, {force: true});
 		});
 
 		after(function() {
-			return Helper.cleanAllAtomicFeeds(token);
+			return Helper.cleanAllAtomicFeeds(token, {force: true});
 		});
 
 		it('Should find a previously inserted field', function() {
@@ -85,11 +85,11 @@ describe('IoT Hub API, Authenticated', function() {
 	describe('Atomic feeds', function() {
 
 		beforeEach(function() {
-			return Helper.cleanAllAtomicFeeds(token);
+			return Helper.cleanAllAtomicFeeds(token, {force: true});
 		});
 
 		after(function() {
-			return Helper.cleanAllAtomicFeeds(token);
+			return Helper.cleanAllAtomicFeeds(token, {force: true});
 		});
 
 		it('Valid atomic feed', function() {
@@ -161,11 +161,11 @@ describe('IoT Hub API, Authenticated', function() {
 	describe("Composed feeds", function() {
 
 		beforeEach(function() {
-			return Helper.cleanAllComposedFeeds(token);
+			return Helper.cleanAllComposedFeeds(token, {force: true});
 		});
 
 		after(function() {
-			return Helper.cleanAllComposedFeeds(token);
+			return Helper.cleanAllComposedFeeds(token, {force: true});
 		});
 
 		it("Valid composed feed", function() {
@@ -307,20 +307,21 @@ describe('IoT Hub API, Authenticated', function() {
 			});
 		};
 
-		var cleanAllFeeds = function(token) {
+		var cleanAllFeeds = function(token, options) {
+			options = options || {};
 			return Promise.all([
-				Helper.cleanAllAtomicFeeds(token),
-				Helper.cleanAllComposedFeeds(token),
+				Helper.cleanAllAtomicFeeds(token, {force: options.force}),
+				Helper.cleanAllComposedFeeds(token, {force: options.force}),
 				Helper.cleanAllExecutableFeeds(token)
 			]);
 		};
 
 		beforeEach(function() {
-			return cleanAllFeeds(token);
+			return cleanAllFeeds(token, {force: true});
 		});
 
 		after(function() {
-			return cleanAllFeeds(token);
+			return cleanAllFeeds(token, {force: true});
 		});
 
 		it('Basic empty response for all feeds', function() {
@@ -431,12 +432,12 @@ describe('Admin/Client access', function() {
 	});
 
 	beforeEach(function() {
-		return Helper.cleanAllAtomicFeeds(adminToken);
+		return Helper.cleanAllAtomicFeeds(adminToken, {force: true});
 	});
 
 	after(function() {
 		var User = app.models.User;
-		return Helper.cleanAllAtomicFeeds(adminToken)
+		return Helper.cleanAllAtomicFeeds(adminToken, {force: true})
 		.then(() => User.logout(clientToken))
 		.then(() => User.logout(adminToken));
 	});
@@ -467,7 +468,7 @@ describe('Admin/Client access', function() {
 					roleId: clientRoleId
 				});
 			})
-			.then(() => Helper.cleanAllAtomicFeeds(adminToken))
+			.then(() => Helper.cleanAllAtomicFeeds(adminToken, {force: true}))
 			.then(() => app.models.FeedRoleACL.find())
 			.then((acls) => {
 				expect(acls).to.have.length(0);
@@ -687,6 +688,38 @@ describe('Admin/Client access', function() {
 			});
 		});
 
+		// TODO: find how to make this test pass
+		xit('force-deleting a validated feed should delete associated data collection', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
+				.then(() => Helper.deleteFeed(adminToken, {type: 'atomic', id: atomicId, force: true}))
+				.then(() => {
+					expect(app.models[`AtomicFeedData${atomicId}`]).to.not.exist;
+				});
+			});
+		});
+
+		it('deleting a validated feed should be forbidden', function () {
+			return Helper.insertValidAtomicFeed(adminToken)
+			.then((args) => {
+				var atomicId = args[0];
+				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
+				.then(() => {
+					return new Promise((resolve, reject) => {
+						request(app)
+						.delete(`/api/feeds/atomic/${atomicId}`)
+						.set('Authorization', adminToken)
+						.expect(422, (err, res) => {
+							if (err) reject(err);
+							resolve(res.body);
+						});
+					});
+				});
+			});
+		});
+
 	});
 
 	describe('Feed data collection', function () {
@@ -698,7 +731,7 @@ describe('Admin/Client access', function() {
 		var composedData = {[composedFieldName]: {unit: 'c', val: 4}};
 
 		beforeEach(function () {
-			return Helper.cleanAllComposedFeeds(adminToken)
+			return Helper.cleanAllComposedFeeds(adminToken, {force: true})
 			.then(() => Helper.insertValidComposedFeed(adminToken))
 			.then((args) => {
 				composedId = args[0];
@@ -722,7 +755,7 @@ describe('Admin/Client access', function() {
 		});
 
 		after(function () {
-			return Helper.cleanAllComposedFeeds(adminToken);
+			return Helper.cleanAllComposedFeeds(adminToken, {force: true});
 		});
 
 		it('should find previously inserted data', function () {

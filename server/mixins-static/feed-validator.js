@@ -184,6 +184,23 @@ module.exports = function (Model, mixinOptions) {
         }
     );
 
+    Model.forceDeleteById = function (modelId, cb) {
+        loopback.getCurrentContext().set('forceDelete', true);
+        var reqP = Model.destroyById(modelId);
+        if (cb) reqP.then((data) => cb(null, data), (err) => cb(err));
+        return reqP;
+    };
+    Model.remoteMethod(
+        'forceDeleteById',
+        {
+            description: 'Force-delete a model instance by id from the data source.',
+            accessType: 'WRITE',
+            accepts: {arg: 'id', type: 'any', description: 'Model id', required: true, http: {source: 'path'}},
+            http: {verb: 'del', path: '/:id/force'},
+            returns: {arg: 'count', type: 'object', root: true}
+        }
+    );
+
     Model.observe('before save', function (ctx, next) {
         var hookP = Promise.resolve();
         // By default, a new instance is not validated
@@ -230,7 +247,73 @@ module.exports = function (Model, mixinOptions) {
                 }
             }
         }
-        hookP.then(() => next(), (err => next(err)));
+        hookP.then(() => next(), (err) => next(err));
+    });
+
+    Model.observe('before delete', function (ctx, next) {
+
+        var validatedErr = function (modelName, modelId) {
+            var err = new Error(`"${modelName}" id "${modelId}" is validated. Use force-delete instead.`);
+            err.statusCode = err.status = 422;
+            return err;
+        };
+
+        var getModelsP;
+        if (ctx.instance) {
+            getModelsP = Promise.resolve([ctx.instance]);
+        } else {
+            getModelsP = Model.find({where: ctx.where})
+            .then(models => models);
+        }
+        var hookP = getModelsP.then((models) => {
+            if (models.length === 1) {
+                var model = models[0];
+                if (model.validated) {
+                    var currCtx = loopback.getCurrentContext();
+                    var forced = currCtx.get('forceDelete');
+                    if (forced) {
+                        currCtx.set('forceDelete', false);
+                        var collectionName = FeedData.feedDataCollectionName(Model, model.getId());
+                        if (Model.registry.findModel(collectionName)) {
+                            ctx.hookState.dataCollectionName = collectionName;
+                        } else {
+                            var dcNotFoundErr = new Error(`Data collection "${collectionName}" not found for feed "${Model.modelName}" id "${model.getId()}".`);
+                            dcNotFoundErr.statusCode = dcNotFoundErr.status = 422;
+                            return Promise.reject(dcNotFoundErr);
+                        }
+                    } else {
+                        return Promise.reject(validatedErr(Model.modelName, model.getId()));
+                    }
+                }
+            } else {
+                return Promise.all(models.map((model) => {
+                    if (model.validated) {
+                        return Promise.reject(validatedErr(Model.modelName, model.getId()));
+                    } else {
+                        return Promise.resolve();
+                    }
+                }));
+            }
+            return Promise.resolve();
+        });
+        hookP.then(() => next(), (err) => next(err));
+    });
+
+    Model.observe('after delete', function (ctx, next) {
+        var hookP = Promise.resolve();
+        if (ctx.instance && 'dataCollectionName' in ctx.hookState) {
+            var dataColName = ctx.hookState.dataCollectionName;
+            var DataCollection = Model.registry.findModel(dataColName);
+            if (DataCollection) {
+                // TODO: find how to remove the model
+                hookP = DataCollection.destroyAll();
+            } else {
+                var dcNotFoundErr = new Error(`Data collection "${dataColName}" not found for feed "${Model.modelName}" id "${ctx.instance.getId()}".`);
+                dcNotFoundErr.statusCode = dcNotFoundErr.status = 422;
+                hookP = Promise.reject(dcNotFoundErr);
+            }
+        }
+        hookP.then(() => next(), (err) => next(err));
     });
 
 };
