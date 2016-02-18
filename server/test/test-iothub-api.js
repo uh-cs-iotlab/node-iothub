@@ -411,7 +411,7 @@ describe('Admin/Client access', function() {
 			adminToken = adminTokenId;
 			// Create client role
 			return new Promise((resolve, reject) => {
-				app.models.Role.create({name: 'client'}, (err, role) => {
+				app.models.HubRole.create({name: 'client'}, (err, role) => {
 					if (err) reject(err);
 					resolve(role);
 				});

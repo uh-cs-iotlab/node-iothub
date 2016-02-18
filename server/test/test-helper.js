@@ -12,7 +12,7 @@ module.exports = (app) => {
             .then((user) => {
                 if (roleWhere) {
                     return new Promise((resolve, reject) => {
-                        app.models.Role.findOne({where: roleWhere}, (err, role) => {
+                        app.models.HubRole.findOne({where: roleWhere}, (err, role) => {
                             if (err) reject(err);
                             resolve(role);
                         });

@@ -28,7 +28,7 @@ module.exports = function(Model, mixinOptions) {
 
         Model.sharedClass.http.path = `/feeds/${mixinOptions.type}`;
 
-        var Role = Model.registry.findModel('Role');
+        var Role = Model.registry.findModel('HubRole');
         var RoleMapping = Model.registry.findModel('RoleMapping');
         var FeedRoleACL = Model.registry.findModel('FeedRoleACL');
         var Field = Model.registry.findModel('Field');

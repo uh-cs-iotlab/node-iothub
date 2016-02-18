@@ -43,6 +43,10 @@
         "dataSource": "db",
         "public": true
     },
+    "HubRole": {
+        "dataSource": "db",
+        "public": true
+    },
     "HubUser": {
         "dataSource": "db",
         "public": true

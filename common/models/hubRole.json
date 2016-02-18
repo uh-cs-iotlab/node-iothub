@@ -1,0 +1,23 @@
+{
+    "name": "HubRole",
+    "base": "Role",
+    "http": {"path": "/roles"},
+    "strict": true,
+    "idInjection": true,
+    "acls": [
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$everyone",
+            "permission": "DENY"
+        },
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "admin",
+            "permission": "ALLOW"
+        }
+    ]
+}

@@ -9,7 +9,7 @@
     "relations": {
         "role": {
             "type": "belongsTo",
-            "model": "Role",
+            "model": "HubRole",
             "foreignKey": "roleId"
         },
         "atomic": {

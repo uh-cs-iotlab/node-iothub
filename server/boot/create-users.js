@@ -1,6 +1,6 @@
 module.exports = function(app) {
 
-    var Role        = app.models.Role;
+    var Role        = app.models.HubRole;
     var User        = app.models.HubUser;
     var RoleMapping = app.models.RoleMapping;
 
