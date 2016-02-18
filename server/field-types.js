@@ -1,5 +1,9 @@
 var FieldTypes = {
-    TEMPERATURE: 'temperature'
+    GENERIC_SENSOR: 'generic-sensor',
+    ILLUMINANCE: 'illuminance',
+    PRESENCE: 'presence',
+    TEMPERATURE: 'temperature',
+    HUMIDITY: 'humidity'
 };
 
 Object.defineProperty(FieldTypes, 'loopback', {
@@ -44,11 +48,18 @@ Object.defineProperty(FieldTypes, 'dataFormat', {
 });
 
 var LoopbackTypes = {
-    [FieldTypes.TEMPERATURE]: 'object'
+    [FieldTypes.GENERIC_SENSOR]: 'object',
+    [FieldTypes.ILLUMINANCE]: 'object',
+    [FieldTypes.PRESENCE]: 'boolean',
+    [FieldTypes.TEMPERATURE]: 'object',
+    [FieldTypes.HUMIDITY]: 'object'
 };
 
 var TypeValidator = {
-    [FieldTypes.TEMPERATURE]: {unit: 'string', val: 'number'}
+    [FieldTypes.GENERIC_SENSOR]: {unit: 'string', val: 'number'},
+    [FieldTypes.ILLUMINANCE]: {unit: 'string', val: 'number'},
+    [FieldTypes.TEMPERATURE]: {unit: 'string', val: 'number'},
+    [FieldTypes.HUMIDITY]: {unit: 'string', val: 'number'}
 };
 
 module.exports = FieldTypes;
