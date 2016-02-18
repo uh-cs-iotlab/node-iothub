@@ -7,6 +7,46 @@ var expect = chai.expect;
 module.exports = (app) => {
 
     return {
+        createUser(userCreds, roleWhere) {
+            return app.models.HubUser.create(userCreds)
+            .then((user) => {
+                if (roleWhere) {
+                    return new Promise((resolve, reject) => {
+                        app.models.Role.findOne({where: roleWhere}, (err, role) => {
+                            if (err) reject(err);
+                            resolve(role);
+                        });
+                    })
+                    .then((role) => {
+                        return new Promise((resolve, reject) => {
+                            role.principals.create({
+                                principalType: app.models.RoleMapping.USER,
+                                principalId: user.id
+                            }, (err, principal) => {
+                                if (err) reject(err);
+                                resolve(principal);
+                            });
+                        });
+                    })
+                    .then(() => user);
+                } else {
+                    return user;
+                }
+            });
+        },
+        login(userCreds) {
+            return app.models.HubUser.login(userCreds)
+            .then(token => token.id);
+        },
+        removeUser(userId, tokenId) {
+            var userP = Promise.resolve();
+            if (tokenId) {
+                userP = app.models.HubUser.logout(tokenId);
+            }
+            userP
+            .then(() => app.models.HubUser.destroyById(userId));
+        },
+
         getFeedsOfType(token, type, options) {
             options = options || {};
             var url = `/api/feeds/${type}`;

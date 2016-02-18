@@ -1,64 +1,91 @@
 module.exports = function(app) {
 
-    var User        = app.models.User,
-	    Role        = app.models.Role,
-        RoleMapping = app.models.RoleMapping;
+    var Role        = app.models.Role;
+    var User        = app.models.HubUser;
+    var RoleMapping = app.models.RoleMapping;
 
-    User.create(
-        {username: 'username', email: 'username@hub.fi', password: 'password' },
-        function(err, user) {
-            if(err) return console.error(err);
-            console.log('User created: ', user.username);
-            //I need to get the admin role
-            Role.findOne(
-                {where: {name: 'admin'}},
-                function(err, role) {
-                    if(err) return console.error(err);
-                    //Assign our user to the role
-                    role.principals.create(
-                        {
-                            principalType: RoleMapping.USER,
-                            principalId: user.id
-                        },
-                        function(err, principal) {
-                            if(err) return console.error(err);
-                            console.log('User %s granted as admin', user.username);
-                            user.createAccessToken(0, function(err, accessToken) {
-                                console.log('The access token for %s is %s', user.username, accessToken.id);
+    var getAdmins = function () {
+        return new Promise((resolve, reject) => {
+            Role.findOrCreate({name: 'admin'}, {name: 'admin'}, (err, role) => {
+                if (err) reject(err);
+                resolve(role);
+            });
+        })
+        .then((role) => {
+            return new Promise((resolve, reject) => {
+                role.principals((err, principals) => {
+                    if (err) reject(err);
+                    resolve({role, principals});
+                });
+            });
+        });
+    };
+
+    var isAdminCredentialsValid = function (creds) {
+        var keys = Object.keys(creds);
+        return keys.length >= 2 && keys.length <= 3;
+    };
+
+    var adminCredentialsVar = app.get('adminCredentials') || 'ADMINCRED';
+    var adminCredentials = process.env[adminCredentialsVar];
+
+    getAdmins()
+    .then((adminInfos) => {
+        if (!adminCredentials) {
+            return Promise.reject(new Error(`No admin credentials found in environment.`));
+        } else {
+            var adminCredentialsParsed = JSON.parse(adminCredentials);
+            if (!isAdminCredentialsValid(adminCredentialsParsed)) {
+                return Promise.reject(new Error(`The provided admin credentials are invalid.`));
+            } else {
+                var where = {};
+                if (adminCredentialsParsed.username) where.username = adminCredentialsParsed.username;
+                if (adminCredentialsParsed.email) where.email = adminCredentialsParsed.email;
+                return User.findOrCreate(where, adminCredentialsParsed)
+                .then((user) => {
+                    var adminRoleMapping = {
+                        principalType: RoleMapping.USER,
+                        principalId: user[0].id
+                    };
+                    return new Promise((resolve, reject) => {
+                        adminInfos.role.principals(adminRoleMapping, (err, adminPrincipals) => {
+                            if (err) reject(err);
+                            resolve(adminPrincipals);
+                        });
+                    })
+                    .then((adminPrincipals) => {
+                        if (adminPrincipals.length === 0) {
+                            return new Promise((resolve, reject) => {
+                                adminInfos.role.principals.create(adminRoleMapping, (err, principal) => {
+                                    if (err) reject(err);
+                                    resolve();
+                                });
                             });
+                        } else {
+                            resolve();
                         }
-                    );
-                }
-            );
+                    })
+                    .then(() => user[0]);
+                });
+            }
         }
-    );
-    User.create(
-        {username: 'clientUsername', email: 'clientusername@hub.fi', password: 'password' },
-        function(err, user) {
-            if(err) return console.error(err);
-            console.log('User created: ', user.username);
-            //I need to get the admin role
-            Role.findOne(
-                {where: {name: 'client'}},
-                function(err, role) {
-                    if(err) return console.error(err);
-                    //Assign our user to the role
-                    role.principals.create(
-                        {
-                            principalType: RoleMapping.USER,
-                            principalId: user.id
-                        },
-                        function(err, principal) {
-                            if(err) return console.error(err);
-                            console.log('User %s granted as client', user.username);
-                            user.createAccessToken(0, function(err, accessToken) {
-                                console.log('The access token for %s is %s', user.username, accessToken.id);
-                            });
-                        }
-                    );
-                }
-            );
+    })
+    .then((user) => {
+        var username = user.username || user.email;
+        console.log(`User ${username} granted ad admin.`);
+        if (process.env.DEV) {
+            // Auto-login admin
+            user.createAccessToken(0)
+            .then((token) => {
+                console.log(`User "${username}" logged in with token "${token.id}".`);
+            }, (err) => {
+                console.error(`[ERROR] Couldn't log in user "${username}": ${err.message}`);
+            });
         }
-    );
+    }, (err) => {
+        console.error('[ERROR] During admin authentication:');
+        console.error(err.message);
+        process.exit(1);
+    });
 
 };

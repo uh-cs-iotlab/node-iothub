@@ -7,9 +7,23 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
-var username = 'username', password = 'password';
+var testUserCreds = {email: 'testuser@hub.fi', password: 'testPassword'};
 
 describe("IoT Hub API, Authentication", function() {
+
+	var userId;
+	var userToken;
+
+	before(function () {
+		return Helper.createUser(testUserCreds, {name: 'admin'})
+		.then((user) => {
+			userId = user.id;
+		});
+	});
+
+	after(function () {
+		return Helper.removeUser(userId, userToken);
+	});
 
 	it("Non autenticated request should be rejected by default", function(done) {
 		request(app)
@@ -31,11 +45,10 @@ describe("IoT Hub API, Authentication", function() {
 			});
 		};
 
-		var User = app.models.User;
-		return User.login({username, password})
-		.then((token) => {
-			return makeRequest(token.id)
-			.then(() => User.logout(token.id));
+		return Helper.login(testUserCreds)
+		.then((tokenId) => {
+			userToken = tokenId;
+			return makeRequest(tokenId);
 		});
 	});
 });
@@ -44,18 +57,21 @@ describe("IoT Hub API, Authentication", function() {
 describe('IoT Hub API, Authenticated', function() {
 
 	var token;
+	var testUserId;
 
 	before(function() {
-		var User = app.models.User;
-		return User.login({username, password})
-		.then((res) => {
-			token = res.id;
+		return Helper.createUser(testUserCreds, {name: 'admin'})
+		.then((user) => {
+			testUserId = user.id;
+			return Helper.login(testUserCreds);
+		})
+		.then((tokenId) => {
+			token = tokenId;
 		});
 	});
 
 	after(function() {
-		var User = app.models.User;
-		return User.logout(token);
+		return Helper.removeUser(testUserId, token);
 	});
 
 	describe('Fields', function() {
@@ -378,22 +394,24 @@ describe('IoT Hub API, Authenticated', function() {
 
 describe('Admin/Client access', function() {
 
-	var clientUsername = 'client',
-	clientPassword = 'password';
+	var adminId;
 	var adminToken;
+	var clientCreds = {email: 'testClient@hub.fi', password: 'testClientPassword'};
 	var clientRoleId;
+	var clientId;
 	var clientToken;
 
 	before(function() {
-		var User = app.models.User;
-		var Role = app.models.Role;
-		var RoleMapping = app.models.RoleMapping;
-		return User.login({username, password})
-		.then((res) => {
-			adminToken = res.id;
+		return Helper.createUser(testUserCreds, {name: 'admin'})
+		.then((testUser) => {
+			adminId = testUser.id;
+			return Helper.login(testUserCreds);
+		})
+		.then((adminTokenId) => {
+			adminToken = adminTokenId;
 			// Create client role
 			return new Promise((resolve, reject) => {
-				Role.create({name: 'client'}, (err, role) => {
+				app.models.Role.create({name: 'client'}, (err, role) => {
 					if (err) reject(err);
 					resolve(role);
 				});
@@ -402,32 +420,15 @@ describe('Admin/Client access', function() {
 		.then((role) => {
 			clientRoleId = role.id;
 			// Create a user and associate it to the client role
-			return User.create({
-				username: clientUsername,
-				email: clientUsername+'@hub.fi',
-				password: clientPassword
-			})
-			.then((user) => {
-				return new Promise((resolve, reject) => {
-					role.principals.create({
-						principalType: RoleMapping.USER,
-						principalId: user.id
-					}, (err, principal) => {
-						if (err) reject(err);
-						resolve();
-					});
-				});
-			});
+			return Helper.createUser(clientCreds, {name: 'client'});
 		})
-		.then(() => {
+		.then((clientUser) => {
+			clientId = clientUser.id;
 			// Log client in
-			return User.login({
-				username: clientUsername,
-				password: clientPassword
-			});
+			return Helper.login(clientCreds);
 		})
-		.then((token) => {
-			clientToken = token.id;
+		.then((tokenId) => {
+			clientToken = tokenId;
 		});
 	});
 
@@ -436,10 +437,9 @@ describe('Admin/Client access', function() {
 	});
 
 	after(function() {
-		var User = app.models.User;
 		return Helper.cleanAllAtomicFeeds(adminToken, {force: true})
-		.then(() => User.logout(clientToken))
-		.then(() => User.logout(adminToken));
+		.then(() => Helper.removeUser(clientId, clientToken))
+		.then(() => Helper.removeUser(adminId, adminToken));
 	});
 
 	var insertFeedRoleAcl = function(token, options) {
