@@ -1,0 +1,58 @@
+{
+    "_meta": {
+        "sources": [
+            "../common/models"
+        ],
+        "mixins": [
+            "./mixins"
+        ]
+    },
+    "User": {
+        "dataSource": "db",
+        "public": false
+    },
+    "AccessToken": {
+        "dataSource": "db",
+        "public": false
+    },
+    "ACL": {
+        "dataSource": "db",
+        "public": false
+    },
+    "RoleMapping": {
+        "dataSource": "db",
+        "public": false
+    },
+    "Role": {
+        "dataSource": "db",
+        "public": false
+    },
+    "Field": {
+        "dataSource": "db",
+        "public": false
+    },
+    "AtomicFeed": {
+        "dataSource": "db",
+        "public": true
+    },
+    "ComposedFeed": {
+        "dataSource": "db",
+        "public": true
+    },
+    "ExecutableFeed": {
+        "dataSource": "db",
+        "public": true
+    },
+    "HubRole": {
+        "dataSource": "db",
+        "public": true
+    },
+    "HubUser": {
+        "dataSource": "db",
+        "public": true
+    },
+    "FeedRoleACL": {
+        "dataSource": "db",
+        "public": false
+    }
+}

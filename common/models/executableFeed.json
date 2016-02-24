@@ -1,0 +1,45 @@
+{
+    "name": "ExecutableFeed",
+    "base": "PersistedModel",
+    "strict": true,
+    "idInjection": true,
+    "properties": {
+        "source": { "type": "string", "default": "" },
+        "params": { "type": ["string"], "default": [] },
+        "readable": { "type": "boolean", "default": false },
+        "writeable": { "type": "boolean", "default": false }
+    },
+    "validations": [],
+    "relations": {},
+    "acls": [
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$everyone",
+            "permission": "DENY"
+        },
+        {
+            "accessType": "READ",
+            "property": [
+                "filteredExists",
+                "filteredFind",
+                "filteredFindOne",
+                "filteredFindById",
+                "filteredCount"
+            ],
+            "principalType": "ROLE",
+            "principalId": "$authenticated",
+            "permission": "ALLOW"
+        },
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "admin",
+            "permission": "ALLOW"
+        }
+    ],
+    "mixins": {},
+    "methods": []
+}

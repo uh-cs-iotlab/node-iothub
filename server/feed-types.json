@@ -1,0 +1,5 @@
+{
+    "ATOMIC": "atomic",
+    "COMPOSED": "composed",
+    "EXECUTABLE": "executable"
+}

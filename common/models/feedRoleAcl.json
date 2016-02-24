@@ -1,0 +1,48 @@
+{
+    "name": "FeedRoleACL",
+    "base": "PersistedModel",
+    "strict": true,
+    "idInjection": true,
+    "http": {"path": "/feeds/acl"},
+    "properties": {},
+    "validations": [],
+    "relations": {
+        "role": {
+            "type": "belongsTo",
+            "model": "HubRole",
+            "foreignKey": "roleId"
+        },
+        "atomic": {
+            "type": "belongsTo",
+            "model": "AtomicFeed",
+            "foreignKey": "atomicId"
+        },
+        "composed": {
+            "type": "belongsTo",
+            "model": "ComposedFeed",
+            "foreignKey": "composedId"
+        },
+        "executable": {
+            "type": "belongsTo",
+            "model": "ExecutableFeed",
+            "foreignKey": "executableId"
+        }
+    },
+    "acls": [
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$everyone",
+            "permission": "DENY"
+        },
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "admin",
+            "permission": "ALLOW"
+        }
+    ],
+    "methods": []
+}
