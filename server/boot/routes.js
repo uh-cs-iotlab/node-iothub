@@ -7,6 +7,10 @@ module.exports = function(app) {
         res.send('Hello World!!!');
     });
 
+    app.get('/doc', function (req, res) {
+        res.render('doc');
+    });
+
     var redirectRoute = function(req, newRoute) {
         return new Promise((resolve, reject) => {
             var url = req.protocol + '://' + req.get('host') + newRoute;
