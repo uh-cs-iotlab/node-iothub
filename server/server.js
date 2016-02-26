@@ -1,4 +1,3 @@
-
 var loopback = require('loopback');
 var boot = require('loopback-boot');
 var FileStreamRotator = require('file-stream-rotator');

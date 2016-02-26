@@ -43,7 +43,7 @@ module.exports = (app) => {
             if (tokenId) {
                 userP = app.models.HubUser.logout(tokenId);
             }
-            userP
+            return userP
             .then(() => app.models.HubUser.destroyById(userId));
         },
 

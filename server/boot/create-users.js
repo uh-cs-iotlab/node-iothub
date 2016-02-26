@@ -61,8 +61,6 @@ module.exports = function(app) {
                                     resolve();
                                 });
                             });
-                        } else {
-                            resolve();
                         }
                     })
                     .then(() => user[0]);

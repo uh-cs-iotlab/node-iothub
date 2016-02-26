@@ -18,6 +18,10 @@ describe("IoT Hub API, Authentication", function() {
 		return Helper.createUser(testUserCreds, {name: 'admin'})
 		.then((user) => {
 			userId = user.id;
+			return Helper.login(testUserCreds);
+		})
+		.then((tokenId) => {
+			userToken = tokenId;
 		});
 	});
 
@@ -32,23 +36,14 @@ describe("IoT Hub API, Authentication", function() {
 	});
 
 	it("Authenticated request by admin", function() {
-
-		var makeRequest = function(token) {
-			return new Promise((resolve, reject) => {
-				request(app)
-				.get('/api/feeds')
-				.set('Authorization', token)
-				.expect(200, (err, res) => {
-					if (err) reject(err);
-					resolve(res.body);
-				});
+		return new Promise((resolve, reject) => {
+			request(app)
+			.get('/api/feeds')
+			.set('Authorization', userToken)
+			.expect(200, (err, res) => {
+				if (err) reject(err);
+				resolve(res.body);
 			});
-		};
-
-		return Helper.login(testUserCreds)
-		.then((tokenId) => {
-			userToken = tokenId;
-			return makeRequest(tokenId);
 		});
 	});
 });
@@ -91,7 +86,7 @@ describe('IoT Hub API, Authenticated', function() {
 				return app.models.Field.find()
 				.then((fields) => {
 					expect(fields).to.have.length(1);
-					expect(fields[0].getId()).to.equal(fieldId);
+					expect(fields[0].getId() + '').to.equal(fieldId + '');
 				});
 			});
 		});
@@ -439,7 +434,15 @@ describe('Admin/Client access', function() {
 	after(function() {
 		return Helper.cleanAllAtomicFeeds(adminToken, {force: true})
 		.then(() => Helper.removeUser(clientId, clientToken))
-		.then(() => Helper.removeUser(adminId, adminToken));
+		.then(() => Helper.removeUser(adminId, adminToken))
+		.then(() => {
+			return new Promise((resolve, reject) => {
+				app.models.HubRole.destroyById(clientRoleId, function (err) {
+					if (err) reject(err);
+					resolve();
+				});
+			});
+		});
 	});
 
 	var insertFeedRoleAcl = function(token, options) {
@@ -647,7 +650,7 @@ describe('Admin/Client access', function() {
 				var atomicId = args[0];
 				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
 				.then(() => {
-					new Promise((resolve, reject) => {
+					return new Promise((resolve, reject) => {
 						request(app)
 						.put(`/api/feeds/atomic/${atomicId}`)
 						.set('Authorization', adminToken)
@@ -670,12 +673,11 @@ describe('Admin/Client access', function() {
 			return Helper.insertValidAtomicFeed(adminToken)
 			.then((args) => {
 				var atomicId = args[0];
-				var atomicFieldId = args[1];
 				return Helper.validateFeed(adminToken, {feedType: 'atomic', id: atomicId})
 				.then(() => {
-					new Promise((resolve, reject) => {
+					return new Promise((resolve, reject) => {
 						request(app)
-						.put(`/api/feeds/atomic/${atomicId}/${atomicFieldId}`)
+						.put(`/api/feeds/atomic/${atomicId}/field`)
 						.set('Authorization', adminToken)
 						.type('json')
 						.send(JSON.stringify({name: 'newFieldName'}))

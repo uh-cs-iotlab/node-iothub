@@ -301,7 +301,7 @@ module.exports = function (Model, mixinOptions) {
 
     Model.observe('after delete', function (ctx, next) {
         var hookP = Promise.resolve();
-        if (ctx.instance && 'dataCollectionName' in ctx.hookState) {
+        if ('dataCollectionName' in ctx.hookState) {
             var dataColName = ctx.hookState.dataCollectionName;
             var DataCollection = Model.registry.findModel(dataColName);
             if (DataCollection) {
