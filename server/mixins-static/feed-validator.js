@@ -1,3 +1,5 @@
+'use strict';
+
 var loopback = require('loopback');
 var FeedData = require('../feed-data');
 var FeedTypes = require('../feed-types.json');

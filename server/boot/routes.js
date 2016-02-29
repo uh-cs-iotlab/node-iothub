@@ -1,3 +1,5 @@
+'use strict';
+
 var request = require('superagent');
 var FeedTypes = require('../feed-types.json');
 

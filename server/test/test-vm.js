@@ -1,3 +1,5 @@
+'use strict';
+
 var expect = require('chai').expect,
     util = require('util'),
     express = require('express'),
