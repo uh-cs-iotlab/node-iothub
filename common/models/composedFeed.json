@@ -4,9 +4,18 @@
     "strict": true,
     "idInjection": true,
     "properties": {
-        "storage": { "type": "boolean", "default": false },
-        "readable": { "type": "boolean", "default": false },
-        "writeable": { "type": "boolean", "default": false }
+        "storage": {
+            "type": "boolean",
+            "default": false
+        },
+        "readable": {
+            "type": "boolean",
+            "default": false
+        },
+        "writeable": {
+            "type": "boolean",
+            "default": false
+        }
     },
     "validations": [],
     "relations": {

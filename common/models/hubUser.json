@@ -1,7 +1,9 @@
 {
     "name": "HubUser",
     "base": "User",
-    "http": {"path": "/users"},
+    "http": {
+        "path": "/users"
+    },
     "strict": true,
     "idInjection": true,
     "acls": [

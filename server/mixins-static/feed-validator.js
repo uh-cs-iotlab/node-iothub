@@ -5,7 +5,7 @@ var FieldTypes = require('../field-types');
 
 module.exports = function (Model, mixinOptions) {
 
-    Model.defineProperty('validated', { type: 'boolean', default: false });
+    Model.defineProperty('validated', {type: 'boolean', default: false});
     if (Model.settings.hidden) Model.settings.hidden.push('validated');
     else Model.settings.hidden = ['validated'];
     if (Model.settings.acls) {
@@ -73,7 +73,11 @@ module.exports = function (Model, mixinOptions) {
             accessType: 'READ',
             accepts: [
                 {arg: 'id', type: 'string', required: true},
-                {arg: 'filter', type: 'object', description: 'Filter defining fields, where, include, order, offset, and limit'}
+                {
+                    arg: 'filter',
+                    type: 'object',
+                    description: 'Filter defining fields, where, include, order, offset, and limit'
+                }
             ],
             returns: {arg: 'data', type: ['object'], root: true},
             http: {verb: 'get', path: '/:id/data'}

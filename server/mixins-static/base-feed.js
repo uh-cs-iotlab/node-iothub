@@ -2,11 +2,11 @@ var async = require('async');
 var loopback = require('loopback');
 var FeedTypes = require('../feed-types.json');
 
-module.exports = function(Model, mixinOptions) {
+module.exports = function (Model, mixinOptions) {
 
     Model.defineProperty('name', {type: 'string', required: true});
     Model.defineProperty('metadata', {type: 'string', default: ''});
-    Model.defineProperty('keywords', { type: ['string'], default: [] });
+    Model.defineProperty('keywords', {type: ['string'], default: []});
 
     /*!
      * Convert null callbacks to 404 error objects.
@@ -34,10 +34,10 @@ module.exports = function(Model, mixinOptions) {
         var Field = Model.registry.findModel('Field');
 
         /** ===================================================================
-        *
-        *   Client methods
-        *
-        *   ================================================================= */
+         *
+         *   Client methods
+         *
+         *   ================================================================= */
 
         Model.filteredFind = function (query, cb) {
             if (typeof query === 'function' && cb === undefined) {
@@ -49,10 +49,10 @@ module.exports = function(Model, mixinOptions) {
             .then((models) => {
                 if (models.length === 0) return [];
                 /**
-                * This manner to get the token is not documented but you can get infos here:
-                * - https://github.com/strongloop/loopback/issues/569
-                * - https://github.com/strongloop/loopback/pull/775
-                */
+                 * This manner to get the token is not documented but you can get infos here:
+                 * - https://github.com/strongloop/loopback/issues/569
+                 * - https://github.com/strongloop/loopback/pull/775
+                 */
                 var accessToken = loopback.getCurrentContext().get('accessToken');
                 if (!accessToken || !accessToken.userId) {
                     var err = new Error(`Access token not found.`);
@@ -96,7 +96,11 @@ module.exports = function(Model, mixinOptions) {
             {
                 description: 'Find all instances of the feed matched by filter from the data source and filtered by feed ACL.',
                 accessType: 'READ',
-                accepts: {arg: 'query', type: 'object', description: 'Filter defining fields, where, include, order, offset, and limit'},
+                accepts: {
+                    arg: 'query',
+                    type: 'object',
+                    description: 'Filter defining fields, where, include, order, offset, and limit'
+                },
                 returns: {arg: 'data', type: [Model], root: true},
                 http: {verb: 'get', path: '/filtered/'}
             }
@@ -119,7 +123,11 @@ module.exports = function(Model, mixinOptions) {
             {
                 description: 'Find first instance of the feed matched by filter from the data source and filtered by feed ACL.',
                 accessType: 'READ',
-                accepts: {arg: 'query', type: 'object', description: 'Filter defining fields, where, include, order, offset, and limit'},
+                accepts: {
+                    arg: 'query',
+                    type: 'object',
+                    description: 'Filter defining fields, where, include, order, offset, and limit'
+                },
                 returns: {arg: 'data', type: Model, root: true},
                 http: {verb: 'get', path: '/filtered/findOne'},
                 rest: {after: convertNullToNotFoundError}
@@ -145,8 +153,8 @@ module.exports = function(Model, mixinOptions) {
                 description: 'Find a feed instance by id from the data source and filtered by feed ACL.',
                 accessType: 'READ',
                 accepts: [
-                    { arg: 'id', type: 'any', description: 'Feed id', required: true, http: {source: 'path'}},
-                    { arg: 'query', type: 'object', description: 'Filter defining fields and include'}
+                    {arg: 'id', type: 'any', description: 'Feed id', required: true, http: {source: 'path'}},
+                    {arg: 'query', type: 'object', description: 'Filter defining fields and include'}
                 ],
                 returns: {arg: 'data', type: Model, root: true},
                 http: {verb: 'get', path: '/filtered/:id'},
@@ -194,10 +202,10 @@ module.exports = function(Model, mixinOptions) {
         );
 
         /** ===================================================================
-        *
-        *   Admin methods
-        *
-        *   ================================================================= */
+         *
+         *   Admin methods
+         *
+         *   ================================================================= */
 
         Model.createRoleAcl = function (modelId, body, cb) {
             var reqP;
@@ -208,7 +216,7 @@ module.exports = function(Model, mixinOptions) {
                 reqP = Promise.reject(err);
             } else {
                 reqP = Model.exists(modelId)
-                .then(function(modelExists) {
+                .then(function (modelExists) {
                     if (modelExists === false) {
                         var err = new Error(`Unknown '${Model.modelName}' id '${modelId}'`);
                         err.statusCode = err.status = 404;
@@ -216,7 +224,7 @@ module.exports = function(Model, mixinOptions) {
                     }
                 })
                 .then(() => Role.exists(body.roleId))
-                .then(function(roleExists) {
+                .then(function (roleExists) {
                     if (roleExists === false) {
                         var err = new Error(`Unknown 'Role' id '${body.roleId}'`);
                         err.statusCode = err.status = 404;
@@ -251,7 +259,7 @@ module.exports = function(Model, mixinOptions) {
 
         Model.getRoleAcls = function (modelId, cb) {
             var reqP = Model.exists(modelId)
-            .then(function(modelExists) {
+            .then(function (modelExists) {
                 if (modelExists === false) {
                     var err = new Error(`Unknown '${Model.modelName}' id '${modelId}'`);
                     err.statusCode = err.status = 404;
@@ -278,10 +286,10 @@ module.exports = function(Model, mixinOptions) {
         );
 
         /** ===================================================================
-        *
-        *   Operation hooks
-        *
-        *   ================================================================= */
+         *
+         *   Operation hooks
+         *
+         *   ================================================================= */
 
         Model.observe('after save', function (ctx, next) {
             var hookP = Promise.resolve();

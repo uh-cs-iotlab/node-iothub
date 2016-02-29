@@ -3,7 +3,9 @@
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
-    "http": {"path": "/feeds/acl"},
+    "http": {
+        "path": "/feeds/acl"
+    },
     "properties": {},
     "validations": [],
     "relations": {

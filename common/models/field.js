@@ -1,6 +1,6 @@
 var FieldTypes = require('../../server/field-types');
 
-module.exports = function(Field) {
+module.exports = function (Field) {
 
     var typeValues = [];
     for (var type in FieldTypes) {

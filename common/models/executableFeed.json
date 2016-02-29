@@ -4,10 +4,24 @@
     "strict": true,
     "idInjection": true,
     "properties": {
-        "source": { "type": "string", "default": "" },
-        "params": { "type": ["string"], "default": [] },
-        "readable": { "type": "boolean", "default": false },
-        "writeable": { "type": "boolean", "default": false }
+        "source": {
+            "type": "string",
+            "default": ""
+        },
+        "params": {
+            "type": [
+                "string"
+            ],
+            "default": []
+        },
+        "readable": {
+            "type": "boolean",
+            "default": false
+        },
+        "writeable": {
+            "type": "boolean",
+            "default": false
+        }
     },
     "validations": [],
     "relations": {},
