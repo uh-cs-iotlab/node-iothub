@@ -1,8 +1,17 @@
-module.exports = function(app) {
+var fs = require('fs');
+var path = require('path');
 
-    var Role        = app.models.HubRole;
-    var User        = app.models.HubUser;
+module.exports = function (app) {
+
+    var Role = app.models.HubRole;
+    var User = app.models.HubUser;
     var RoleMapping = app.models.RoleMapping;
+
+    var printErrorAndExit = function (message) {
+        console.error('[ERROR] During admin authentication:');
+        console.error(message);
+        process.exit(1);
+    };
 
     var getAdmins = function () {
         return new Promise((resolve, reject) => {
@@ -26,22 +35,31 @@ module.exports = function(app) {
         return keys.length >= 2 && keys.length <= 3;
     };
 
-    var adminCredentialsVar = app.get('adminCredentials') || 'ADMINCRED';
-    var adminCredentials = process.env[adminCredentialsVar];
-
-    getAdmins()
-    .then((adminInfos) => {
-        if (!adminCredentials) {
-            return Promise.reject(new Error(`No admin credentials found in environment.`));
-        } else {
-            var adminCredentialsParsed = JSON.parse(adminCredentials);
-            if (!isAdminCredentialsValid(adminCredentialsParsed)) {
+    var adminCredsConfFile = app.get('adminCredentials') || 'admin-creds.json';
+    if (!path.isAbsolute(adminCredsConfFile)) {
+        adminCredsConfFile = path.join(__dirname, '..', '..', adminCredsConfFile);
+    }
+    var existsP = new Promise((resolve, reject) => {
+        fs.access(adminCredsConfFile, fs.R_OK, (err) => {
+            if (err) reject(err);
+            resolve();
+        });
+    });
+    existsP
+    .catch(err => printErrorAndExit(err.message));
+    existsP
+    .then(() => fs.readFileSync(adminCredsConfFile, 'utf8'))
+    .then((adminCredsStr) => {
+        return getAdmins()
+        .then((adminInfos) => {
+            var adminCreds = JSON.parse(adminCredsStr);
+            if (!isAdminCredentialsValid(adminCreds)) {
                 return Promise.reject(new Error(`The provided admin credentials are invalid.`));
             } else {
                 var where = {};
-                if (adminCredentialsParsed.username) where.username = adminCredentialsParsed.username;
-                if (adminCredentialsParsed.email) where.email = adminCredentialsParsed.email;
-                return User.findOrCreate(where, adminCredentialsParsed)
+                if (adminCreds.username) where.username = adminCreds.username;
+                if (adminCreds.email) where.email = adminCreds.email;
+                return User.findOrCreate(where, adminCreds)
                 .then((user) => {
                     var adminRoleMapping = {
                         principalType: RoleMapping.USER,
@@ -56,7 +74,7 @@ module.exports = function(app) {
                     .then((adminPrincipals) => {
                         if (adminPrincipals.length === 0) {
                             return new Promise((resolve, reject) => {
-                                adminInfos.role.principals.create(adminRoleMapping, (err, principal) => {
+                                adminInfos.role.principals.create(adminRoleMapping, (err) => {
                                     if (err) reject(err);
                                     resolve();
                                 });
@@ -66,7 +84,7 @@ module.exports = function(app) {
                     .then(() => user[0]);
                 });
             }
-        }
+        });
     })
     .then((user) => {
         var username = user.username || user.email;
@@ -81,9 +99,6 @@ module.exports = function(app) {
             });
         }
     }, (err) => {
-        console.error('[ERROR] During admin authentication:');
-        console.error(err.message);
-        process.exit(1);
+        printErrorAndExit(err.message);
     });
-
 };

@@ -3,9 +3,10 @@ var boot = require('loopback-boot');
 var FileStreamRotator = require('file-stream-rotator');
 var morgan = require('morgan');
 var fs = require('fs');
+var path = require('path');
 var app = module.exports = loopback();
 
-var logDirectory = __dirname + '/../logs';
+var logDirectory = path.join(__dirname, '..', 'logs');
 // ensure log directory exists
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 // create a rotating write stream
