@@ -1,3 +1,5 @@
+'use strict';
+
 var loopback = require('loopback');
 var FeedTypes = require('./feed-types.json');
 var FieldTypes = require('./field-types');
@@ -21,7 +23,7 @@ module.exports = {
             })
             .then((app) => {
                 var fieldDescriptions;
-                switch(createOptions.type) {
+                switch (createOptions.type) {
                     case FeedTypes.ATOMIC:
                         if (!feedInstance._field) {
                             var atomicErr = new Error(`Model "${Model.modelName}" can't be validated, invalid "field" property (${feedInstance._field}).`);
@@ -64,8 +66,7 @@ module.exports = {
                         for (var prop in properties) {
                             if (properties[prop]) {
                                 var fieldDesc = fieldDescriptionsByName[prop];
-                                if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop]))
-                                {
+                                if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop])) {
                                     var err = new Error(`Invalid data. Wrong type for "${prop}" field. "${JSON.stringify(FieldTypes.dataFormat(fieldDesc.type))}" expected.`);
                                     err.statusCode = err.status = 422;
                                     return next(err);

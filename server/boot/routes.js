@@ -1,9 +1,11 @@
+'use strict';
+
 var request = require('superagent');
 var FeedTypes = require('../feed-types.json');
 
-module.exports = function(app) {
+module.exports = function (app) {
 
-    app.get('/', function(req, res) {
+    app.get('/', function (req, res) {
         res.send('Hello World!!!');
     });
 
@@ -11,7 +13,7 @@ module.exports = function(app) {
         res.render('doc');
     });
 
-    var redirectRoute = function(req, newRoute) {
+    var redirectRoute = function (req, newRoute) {
         return new Promise((resolve, reject) => {
             var url = req.protocol + '://' + req.get('host') + newRoute;
             request(req.method, url)
@@ -26,7 +28,7 @@ module.exports = function(app) {
     };
 
     var restApiRoot = app.get('restApiRoot');
-    app.get(restApiRoot + '/feeds', function(req, res) {
+    app.get(restApiRoot + '/feeds', function (req, res) {
         var feeds = {
             count: 0,
             types: []

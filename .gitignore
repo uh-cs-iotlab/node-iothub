@@ -29,6 +29,12 @@ node_modules
 # Bower components
 client/lib
 
+# Editor
+.idea
+
+# Admin credentials config file
+admin-creds.json
+
 *~
 *.tgz
 *.sublime-project

@@ -1,28 +1,30 @@
+'use strict';
 
 var loopback = require('loopback');
 var boot = require('loopback-boot');
 var FileStreamRotator = require('file-stream-rotator');
 var morgan = require('morgan');
 var fs = require('fs');
+var path = require('path');
 var app = module.exports = loopback();
 
-var logDirectory = __dirname + '/../logs';
+var logDirectory = path.join(__dirname, '..', 'logs');
 // ensure log directory exists
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 // create a rotating write stream
 var accessLogStream = FileStreamRotator.getStream({
-  filename: logDirectory + '/access-%DATE%.log',
-  frequency: 'daily',
-  verbose: false
+    filename: logDirectory + '/access-%DATE%.log',
+    frequency: 'daily',
+    verbose: false
 });
 // setup the logger
 app.use(morgan('combined', {stream: accessLogStream}));
 
 app.set('view engine', 'jade');
 
-app.start = function() {
+app.start = function () {
     // start the web server
-    return app.listen(function() {
+    return app.listen(function () {
         app.emit('started');
         var baseUrl = app.get('url').replace(/\/$/, '');
         console.log('Web server listening at: %s', baseUrl);
@@ -40,9 +42,9 @@ boot(app, {
     // Normally, mixins are ignored if they are not referenced by any model in JSON definition.
     // Here we force mixins in these directories to be loaded so we can apply them programatically.
     mixinDirs: ['./mixins-static']
-}, function(err) {
+}, function (err) {
     if (err) throw err;
     // start the server if `$ node server.js`
     if (require.main === module)
-    app.start();
+        app.start();
 });

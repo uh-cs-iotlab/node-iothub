@@ -1,8 +1,6 @@
+'use strict';
+
 var request = require('supertest');
-var chai = require('chai');
-var chaiAsPromised = require('chai-as-promised');
-chai.use(chaiAsPromised);
-var expect = chai.expect;
 
 module.exports = (app) => {
 
@@ -43,7 +41,7 @@ module.exports = (app) => {
             if (tokenId) {
                 userP = app.models.HubUser.logout(tokenId);
             }
-            userP
+            return userP
             .then(() => app.models.HubUser.destroyById(userId));
         },
 
@@ -149,7 +147,11 @@ module.exports = (app) => {
         cleanAllAtomicFeeds(token, options) {
             options = options || {};
             return this.getFeedsOfType(token, 'atomic')
-            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'atomic', id: feed.id, force: options.force}))));
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {
+                type: 'atomic',
+                id: feed.id,
+                force: options.force
+            }))));
         },
 
         validComposedFeed(options) {
@@ -188,7 +190,11 @@ module.exports = (app) => {
         cleanAllComposedFeeds(token, options) {
             options = options || {};
             return this.getFeedsOfType(token, 'composed')
-            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {type: 'composed', id: feed.id, force: options.force}))));
+            .then(feeds => Promise.all(feeds.map(feed => this.deleteFeed(token, {
+                type: 'composed',
+                id: feed.id,
+                force: options.force
+            }))));
         },
 
         validExecutableFeed(options) {

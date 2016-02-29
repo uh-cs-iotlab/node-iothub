@@ -1,7 +1,9 @@
 {
     "name": "HubRole",
     "base": "Role",
-    "http": {"path": "/roles"},
+    "http": {
+        "path": "/roles"
+    },
     "strict": true,
     "idInjection": true,
     "acls": [

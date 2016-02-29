@@ -1,3 +1,5 @@
+'use strict';
+
 var FieldTypes = {
     GENERIC_SENSOR: 'generic-sensor',
     ILLUMINANCE: 'illuminance',
