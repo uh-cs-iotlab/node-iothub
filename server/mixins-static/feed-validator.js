@@ -13,7 +13,7 @@ module.exports = function (Model, mixinOptions) {
     if (Model.settings.acls) {
         Model.settings.acls.push({
             accessType: 'READ',
-            property: ['getData', 'getDataFormat'],
+            property: ['getData', 'getDataFormat', 'createDataChangeStream'],
             principalType: 'ROLE',
             principalId: '$authenticated',
             permission: 'ALLOW'
@@ -83,6 +83,27 @@ module.exports = function (Model, mixinOptions) {
             ],
             returns: {arg: 'data', type: ['object'], root: true},
             http: {verb: 'get', path: '/:id/data'}
+        }
+    );
+
+    Model.createDataChangeStream = function (modelId, cb) {
+        var reqP = Model.filteredExists(modelId)
+        .then((exists) => {
+            if (!exists) return null;
+            return FeedData.getChangeStream(Model, {modelId});
+        });
+        if (cb) reqP.then((changes) => cb(null, changes), (err) => cb(err));
+        return reqP;
+    };
+    Model.remoteMethod(
+        'createDataChangeStream',
+        {
+            description: 'Create a data change stream.',
+            accessType: 'READ',
+            accepts: {arg: 'id', type: 'any', description: 'Model id', required: true, http: {source: 'path'}},
+            http: {verb: 'get', path: '/:id/data-stream'},
+            returns: {arg: 'changes', type: 'ReadableStream', json: true},
+            rest: {after: Model.convertNullToNotFoundError}
         }
     );
 

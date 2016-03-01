@@ -15,7 +15,7 @@ module.exports = function (Model, mixinOptions) {
      * @param  {HttpContext} ctx
      * @param  {Function} cb
      */
-    var convertNullToNotFoundError = function (ctx, cb) {
+    Model.convertNullToNotFoundError = function (ctx, cb) {
         if (ctx.result !== null) return cb();
 
         var modelName = ctx.method.sharedClass.name;
@@ -132,7 +132,7 @@ module.exports = function (Model, mixinOptions) {
                 },
                 returns: {arg: 'data', type: Model, root: true},
                 http: {verb: 'get', path: '/filtered/findOne'},
-                rest: {after: convertNullToNotFoundError}
+                rest: {after: Model.convertNullToNotFoundError}
             }
         );
 
@@ -160,7 +160,7 @@ module.exports = function (Model, mixinOptions) {
                 ],
                 returns: {arg: 'data', type: Model, root: true},
                 http: {verb: 'get', path: '/filtered/:id'},
-                rest: {after: convertNullToNotFoundError}
+                rest: {after: Model.convertNullToNotFoundError}
             }
         );
 
@@ -345,9 +345,7 @@ module.exports = function (Model, mixinOptions) {
                     if (mixinOptions.type === FeedTypes.ATOMIC && ctx.instance._field) {
                         return Field.deleteById(ctx.instance._field.getId());
                     } else if (mixinOptions.type === FeedTypes.COMPOSED && ctx.instance._fields) {
-                        return Promise.all(ctx.instance._fields.map((field) => {
-                            retP = Field.deleteById(field.getId());
-                        }));
+                        return Promise.all(ctx.instance._fields.map((field) => Field.deleteById(field.getId())));
                     }
                 });
             } else {

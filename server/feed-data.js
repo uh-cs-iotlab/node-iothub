@@ -64,7 +64,7 @@ module.exports = {
                     if (ctx.isNewInstance && ctx.instance) {
                         var properties = ctx.instance.toJSON();
                         for (var prop in properties) {
-                            if (properties[prop]) {
+                            if (prop != 'date' && properties[prop]) {
                                 var fieldDesc = fieldDescriptionsByName[prop];
                                 if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop])) {
                                     var err = new Error(`Invalid data. Wrong type for "${prop}" field. "${JSON.stringify(FieldTypes.dataFormat(fieldDesc.type))}" expected.`);
@@ -73,7 +73,7 @@ module.exports = {
                                 }
                             }
                         }
-                        ctx.instance.date = new Date();
+                        ctx.instance.date = (ctx.instance.date ? new Date(ctx.instance.date) : new Date());
                     }
                     next();
                 });
@@ -93,6 +93,18 @@ module.exports = {
         var DataCollection = Model.registry.findModel(this.feedDataCollectionName(Model, options.modelId));
         if (!DataCollection) return Promise.reject(new Error(`No data collection found for "${Model.modelName}" id "${options.modelId}".`));
         return DataCollection.find(options.filter);
+    },
+
+    getChangeStream(Model, options) {
+        var DataCollection = Model.registry.findModel(this.feedDataCollectionName(Model, options.modelId));
+        if (!DataCollection) return Promise.reject(new Error(`No data collection found for "${Model.modelName}" id "${options.modelId}".`));
+        return new Promise((resolve, reject) => {
+            DataCollection.createChangeStream((err, changes) => {
+                if (err) reject(err);
+                resolve(changes);
+            });
+        });
+
     }
 
 };
