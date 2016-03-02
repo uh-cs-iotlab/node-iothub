@@ -11,7 +11,7 @@
 ## Run the IoT Hub
 
 ### Create a file for the admin credentials
-```json
+```javascript
 {
   "username": "ADMIN_USERNAME", //optional
   "email": "ADMIN_EMAIL",
