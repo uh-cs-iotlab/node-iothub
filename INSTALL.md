@@ -1,10 +1,10 @@
-# Installation of the Node.js version of the IoT Hub
+# Install
 
 ## Requirements
 
 * node >= 4.1
 
-## Installation
+## Install node dependencies
 
 `npm install`
 
