@@ -13,7 +13,7 @@
 ### Create a file for the admin credentials
 ```json
 {
-  "username": "ADMIN_USERNAME",
+  "username": "ADMIN_USERNAME", //optional
   "email": "ADMIN_EMAIL",
   "password": "ADMIN_PASSWORD"
 }
