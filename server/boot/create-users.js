@@ -91,7 +91,7 @@ module.exports = function (app) {
     .then((user) => {
         var username = user.username || user.email;
         console.log(`User ${username} granted ad admin.`);
-        if (process.env.DEV) {
+        if (app.get('env') === 'development') {
             // Auto-login admin
             user.createAccessToken(0)
             .then((token) => {
