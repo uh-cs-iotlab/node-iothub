@@ -20,6 +20,8 @@ var accessLogStream = FileStreamRotator.getStream({
 // setup the logger
 app.use(morgan('combined', {stream: accessLogStream}));
 
+app.set('view engine', 'jade');
+
 app.start = function () {
     // start the web server
     return app.listen(function () {
