@@ -263,7 +263,7 @@ describe('IoT Hub API, Authenticated', function () {
             return Helper.insertValidExecutableFeed(token);
         });
 
-        it("Invalid executable feed (built-in validation mecanism)", function (done) {
+        it("Invalid executable feed (built-in validation mechanism)", function (done) {
             // the name field is missing
             var invalidFeed = Helper.validExecutableFeed();
             delete invalidFeed.name;

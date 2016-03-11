@@ -14,6 +14,16 @@
             ],
             "default": []
         },
+        "data": {
+            "type": [
+                "string"
+            ],
+            "default": []
+        },
+        "description": {
+            "type": "string",
+            "default": ""
+        },
         "readable": {
             "type": "boolean",
             "default": false
@@ -42,6 +52,13 @@
                 "filteredFindById",
                 "filteredCount"
             ],
+            "principalType": "ROLE",
+            "principalId": "$authenticated",
+            "permission": "ALLOW"
+        },
+        {
+            "accessType": "EXECUTE",
+            "property": "runScript",
             "principalType": "ROLE",
             "principalId": "$authenticated",
             "permission": "ALLOW"
