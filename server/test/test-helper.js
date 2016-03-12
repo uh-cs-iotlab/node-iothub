@@ -204,6 +204,9 @@ module.exports = (app) => {
                 keywords: [],
                 source: '',
                 params: [],
+                data: [],
+                description: '',
+                returnType: 'json',
                 readable: false,
                 writeable: false
             }, options);

@@ -304,6 +304,41 @@ describe('IoT Hub API, Authenticated', function () {
             });
         });
 
+        it('Should execute a simple script', function () {
+            return Helper.insertValidExecutableFeed(token)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', token)
+                    .type('json')
+                    .send(JSON.stringify({script: '5;'}))
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.body.result).to.eql(5);
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        it('Should execute a function call script', function () {
+            return Helper.insertValidExecutableFeed(token)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', token)
+                    .type('json')
+                    .send(JSON.stringify({script: 'var t=function(){return \'Done\'};t();'}))
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.body.result).to.eql('Done');
+                        resolve();
+                    });
+                });
+            });
+        });
     });
 
     describe('General querying', function () {
