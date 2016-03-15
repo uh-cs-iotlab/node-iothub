@@ -40,13 +40,16 @@ module.exports = function (Model, mixinOptions) {
         .then((model) => {
             var fields = [].concat(model[fieldPropertyName()]);
             var format = {};
-            for (var field of fields) {
-                format[field.name] = {
-                    format: FieldTypes.dataFormat(field.type),
-                    required: field.required
-                };
-            }
-            return format;
+            return Promise.all(fields.map((field) => {
+                return FieldTypes.dataFormat(field.type)
+                .then((schema) => {
+                    format[field.name] = {
+                        format: schema,
+                        required: field.required
+                    };
+                });
+            }))
+            .then(() => format);
         });
         if (cb) return reqP.then((format) => cb(null, format), (err) => cb(err));
         return reqP;
