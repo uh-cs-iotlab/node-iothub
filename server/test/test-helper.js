@@ -33,8 +33,7 @@ module.exports = (app) => {
             });
         },
         login(userCreds) {
-            return app.models.HubUser.login(userCreds)
-            .then(token => token.id);
+            return app.models.HubUser.login(userCreds);
         },
         removeUser(userId, tokenId) {
             var userP = Promise.resolve();

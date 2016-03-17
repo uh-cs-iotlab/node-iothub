@@ -1,6 +1,5 @@
 'use strict';
 
-var async = require('async');
 var loopback = require('loopback');
 var FeedTypes = require('../feed-types.json');
 
