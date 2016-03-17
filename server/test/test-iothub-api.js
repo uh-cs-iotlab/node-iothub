@@ -708,11 +708,9 @@ describe('Admin/Client access', function () {
 
     describe('Feed data collection', function () {
 
-        var FieldTypes = require('../field-types');
-
         var composedId;
         var composedFieldName = 'aRequiredComposedField';
-        var composedData = {[composedFieldName]: {unit: 'c', val: 4}};
+        var composedData = {[composedFieldName]: {unit: 'cel', value: 4}};
 
         beforeEach(function () {
             return Helper.cleanAllComposedFeeds(testUserToken, {force: true})
@@ -725,7 +723,7 @@ describe('Admin/Client access', function () {
                     fieldProperty: 'fields'
                 }, {
                     name: composedFieldName,
-                    type: FieldTypes.TEMPERATURE,
+                    type: 'root/temperature',
                     required: true
                 })
                 .then(() => {
@@ -792,7 +790,7 @@ describe('Admin/Client access', function () {
                 id: composedId
             })
             .then(() => {
-                var incorrectData = {[composedFieldName]: {unit: 'c', val: 'notANumber'}};
+                var incorrectData = {[composedFieldName]: {unit: 'cel', value: 'notANumber'}};
                 return new Promise((resolve, reject) => {
                     request(app)
                     .post(`/api/feeds/composed/${composedId}/data`)

@@ -80,7 +80,7 @@ module.exports = (app) => {
         validField(options) {
             return Object.assign({
                 name: 'testField',
-                type: 'temperature',
+                type: 'root/temperature',
                 metadata: '',
                 required: false,
                 keywords: []
