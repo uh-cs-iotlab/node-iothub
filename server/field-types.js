@@ -10,14 +10,14 @@ var _formatId = (id) => {
     if (id.charAt(0) === '/') id = id.substr(1);
     return id.split('/');
 };
-var _getSchemaHelper = (levels, subtree) => {
+var _getSchema = (levels, subtree) => {
     var currLevel = levels.shift();
     if (subtree.hasOwnProperty(currLevel)) {
         if (levels.length === 0) {
             // this is the end
             return subtree[currLevel];
         } else {
-            return _getSchemaHelper(levels, subtree[currLevel]);
+            return _getSchema(levels, subtree[currLevel]);
         }
     } else {
         return null;
@@ -74,8 +74,11 @@ var importNextSchema = (validator) => {
 };
 
 var FieldTypes = module.exports = {
+    exists(id) {
+        return (this.get(id) !== null);
+    },
     get(id) {
-        return _getSchemaHelper(_formatId(id), schemasDb);
+        return _getSchema(_formatId(id), schemasDb);
     },
     isValid(id, value) {
         var v = new Validator();
@@ -89,8 +92,7 @@ var FieldTypes = module.exports = {
         return false;
     },
     dataFormat(id) {
-        var self = this;
-        var schema = self.get(id);
+        var schema = this.get(id);
         if (schema == null) return null;
         /*var parser = new $RefParser();
         return parser.bundle(schema);*/
