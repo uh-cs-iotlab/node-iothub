@@ -94,8 +94,14 @@ var FieldTypes = module.exports = {
     dataFormat(id) {
         var schema = this.get(id);
         if (schema == null) return null;
-        /*var parser = new $RefParser();
-        return parser.bundle(schema);*/
+        var parser = new $RefParser();
+        return parser.bundle(schema, {
+            $refs: {
+                read$RefFile: ($ref) => {
+                    return Promise.resolve(JSON.stringify(_getSchema(_formatId($ref.path), schemasDb)));
+                }
+            }
+        });
         return Promise.resolve({err: 'Not implemented yet.'});
     }
 };

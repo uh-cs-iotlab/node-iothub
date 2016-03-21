@@ -9,6 +9,7 @@
   ],
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "watch": "gulp watch",
     "build": "gulp",
     "prepublish": "gulp",
@@ -21,7 +22,7 @@
     "file-stream-rotator": "0.0.6",
     "inquirer": "^0.12.0",
     "jade": "^1.11.0",
-    "json-schema-ref-parser": "^2.2.0",
+    "json-schema-ref-parser": "https://github.com/xaka/json-schema-ref-parser.git#features/override-internal-reader",
     "jsonschema": "^1.1.0",
     "loopback": "^2.26.0",
     "loopback-boot": "^2.6.5",
