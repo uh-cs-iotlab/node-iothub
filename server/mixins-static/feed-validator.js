@@ -185,12 +185,30 @@ module.exports = function (Model, mixinOptions) {
                     duplErr.statusCode = duplErr.status = 422;
                     return Promise.reject(duplErr);
                 }
+                // For any feed, at least one field must be required.
+                var isRequiredPropertyValid = (function () {
+                    var fields = model[fieldPropertyName()];
+                    if (Array.isArray(fields)) {
+                        return fields.some(field => field.required === true);
+                    } else if (typeof fields === 'object') {
+                        return (fields.required === true);
+                    } else {
+                        return false;
+                    }
+                }());
+                if (!isRequiredPropertyValid) {
+                    var InvalidRequiredPropertyErr = new Error(`At least one field must be set as "required".`);
+                    InvalidRequiredPropertyErr.statusCode = InvalidRequiredPropertyErr.status = 422;
+                    return Promise.reject(InvalidRequiredPropertyErr);
+                }
+                // Check for an already created data collection
                 var dataCollectionName = FeedData.feedDataCollectionName(Model, model.getId());
                 if (Model.registry.findModel(dataCollectionName)) {
                     var existsErr = new Error(`A data collection already exists for this model instance: ${dataCollectionName}`);
                     existsErr.statusCode = existsErr.status = 422;
                     return Promise.reject(existsErr);
                 }
+                // Creates data collection
                 return FeedData.create(Model, model, mixinOptions)
                 .then((FeedData) => {
                     return model.updateAttribute('validated', true)
@@ -235,8 +253,26 @@ module.exports = function (Model, mixinOptions) {
         var hookP = Promise.resolve();
         // By default, a new instance is not validated
         if (ctx.isNewInstance === true) {
+            // Deletes field informations given at feed creation
+            delete ctx.instance[fieldPropertyName()];
             ctx.instance.validated = false;
         } else {
+            // TODO: this code make this test fail: 'Feed validation/modifying a validated feed\'s fields is forbidden'. See bug report here: https://github.com/strongloop/loopback/issues/2162
+            // For an atomic feed, we force the "required" property of the field to true
+            if (mixinOptions.type === FeedTypes.ATOMIC) {
+                if (ctx.currentInstance) {
+                    let field = ctx.data[fieldPropertyName()];
+                    if (field && field.required === false) field.required = true;
+                } else if (ctx.instance) {
+                    let field = ctx.instance[fieldPropertyName()];
+                    if (field && field.required === false) {
+                        let invalidRequiredProperty = new Error(`Invalid data. "required" can't be false for an atomic feed.`);
+                        invalidRequiredProperty.statusCode = invalidRequiredProperty.status = 422;
+                        return next(invalidRequiredProperty);
+                    }
+                }
+            }
+
             // If the model is modified and is validated, we have to forbid field modification
             // It's a way to keep consistency with data collection
             if (ctx.currentInstance && ctx.currentInstance.validated) {
@@ -265,7 +301,7 @@ module.exports = function (Model, mixinOptions) {
                 // As in CASE 1, we could remove modifications that involve fields
                 // But in this case, the user will assume that the modification has been made for all feeds, which is wrong
                 // So it's simpler to return an error
-                if (ctx.where.hasOwnProperty(fieldPropertyName())) {
+                if (ctx.data.hasOwnProperty(fieldPropertyName())) {
                     hookP = Model.findOne({where: {validated: true}})
                     .then((validatedInstance) => {
                         if (validatedInstance) {

@@ -44,7 +44,9 @@ Body:
 }
 ```
 
-Now your atomic feed is created and has a field attached to it, but you still can't send data to it. You must first **validate** it. Validating a feed creates the background data collection that will keep all the data you will send to it. Let's validate our feed.
+### Sending data to a feed
+
+Now your atomic feed is created and has a field attached to it, but you still can't send data to it. You must first **validate** it. Validating a feed creates the background data collection that will keep all the data you will send to it. Let's validate your feed.
 
 ```
 POST http://localhost:3000/api/feeds/atomic/[YOUR FEED ID]/validate

@@ -67,13 +67,9 @@ module.exports = {
                             if (prop != 'date' && properties[prop]) {
                                 var fieldDesc = fieldDescriptionsByName[prop];
                                 if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop])) {
-                                    return FieldTypes.dataFormat(fieldDesc.type)
-                                    .then((schema) => {
-                                        var errValidation = new Error(`Invalid data. Wrong type for "${prop}" field. "${JSON.stringify(schema)}" expected.`);
-                                        errValidation.statusCode = errValidation.status = 422;
-                                        next(errValidation);
-
-                                    }, (err) => next(err));
+                                    var errValidation = new Error(`Invalid data. Wrong type for "${prop}" field. "${fieldDesc.type}" expected.`);
+                                    errValidation.statusCode = errValidation.status = 422;
+                                    return next(errValidation);
                                 }
                             }
                         }

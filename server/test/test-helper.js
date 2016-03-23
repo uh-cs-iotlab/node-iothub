@@ -139,7 +139,7 @@ module.exports = (app) => {
                     feedType: 'atomic',
                     id: atomicFeedId,
                     fieldProperty: 'field'
-                })
+                }, {required: true})
                 .then(fieldId => Promise.resolve([atomicFeedId, fieldId]));
             });
         },
@@ -156,15 +156,17 @@ module.exports = (app) => {
         validComposedFeed(options) {
             return Object.assign({
                 name: 'testFeed',
-                readable: false,
-                writeable: false,
-                storage: false,
                 keywords: [],
                 metadata: ''
             }, options);
         },
         insertValidComposedFeed(token, options) {
             options = options || {};
+            var fields = null;
+            if(options.hasOwnProperty('fields')) {
+                fields = options.fields;
+                delete options.fields;
+            }
             var feed = this.validComposedFeed(options);
             return new Promise((resolve, reject) => {
                 request(app)
@@ -178,12 +180,22 @@ module.exports = (app) => {
                 });
             })
             .then((composedFeedId) => {
-                return this.insertValidField(token, {
+                var fieldIdOptions = {
                     feedType: 'composed',
                     id: composedFeedId,
                     fieldProperty: 'fields'
-                })
-                .then(fieldId => Promise.resolve([composedFeedId, fieldId]));
+                };
+                if (Array.isArray(fields)) {
+                    return Promise.all(fields.map((fieldOptions) => {
+                        return this.insertValidField(token, fieldIdOptions, fieldOptions);
+                    }))
+                    .then(fieldIds => Promise.resolve([composedFeedId, fieldIds]));
+                } else {
+                    var fieldOptions = (typeof fields === 'object' && fields != null ? fields : {});
+                    if (!fieldOptions.hasOwnProperty('required')) fieldOptions.required = true;
+                    return this.insertValidField(token, fieldIdOptions, fieldOptions)
+                    .then(fieldId => Promise.resolve([composedFeedId, fieldId]));
+                }
             });
         },
         cleanAllComposedFeeds(token, options) {

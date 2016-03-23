@@ -102,6 +102,5 @@ var FieldTypes = module.exports = {
                 }
             }
         });
-        return Promise.resolve({err: 'Not implemented yet.'});
     }
 };
