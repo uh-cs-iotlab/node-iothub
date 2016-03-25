@@ -206,7 +206,6 @@ module.exports = (app) => {
                 params: [],
                 data: [],
                 description: '',
-                returnType: 'json',
                 readable: false,
                 writeable: false
             }, options);

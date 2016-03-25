@@ -24,10 +24,6 @@
             "type": "string",
             "default": ""
         },
-        "returnType": {
-            "type": "string",
-            "default": "json"
-        },
         "readable": {
             "type": "boolean",
             "default": false
