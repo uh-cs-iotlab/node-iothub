@@ -312,7 +312,7 @@ describe('IoT Hub API, Authenticated', function () {
                     .post(`/api/feeds/executable/${insertedId}/run`)
                     .set('Authorization', token)
                     .type('json')
-                    .send(JSON.stringify({script: '5;'}))
+                    .send(JSON.stringify({"source": "5;"}))
                     .expect(200, (err, res) => {
                         if (err) reject(err);
                         expect(res.body.result).to.eql(5);
@@ -330,10 +330,48 @@ describe('IoT Hub API, Authenticated', function () {
                     .post(`/api/feeds/executable/${insertedId}/run`)
                     .set('Authorization', token)
                     .type('json')
-                    .send(JSON.stringify({script: 'var t=function(){return \'Done\'};t();'}))
+                    .send(JSON.stringify({"source": "var t=function(){return \'Done\'};t();"}))
                     .expect(200, (err, res) => {
                         if (err) reject(err);
                         expect(res.body.result).to.eql('Done');
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        it('Should execute script POSTed as plain text', function () {
+            return Helper.insertValidExecutableFeed(token)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', token)
+                    .type('text/plain')
+                    .send("var s=function(){return 'Done';};s();")
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.body.result).to.eql('Done');
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        it('Should return text/plain response', function () {
+            return Helper.insertValidExecutableFeed(token)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', token)
+                    .set('Accept', 'text/plain')
+                    .type('json')
+                    .send(JSON.stringify({source: "var s=function(){return 5;};s();"}))
+                    .expect('Content-Type', /text/)
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.text).to.eql('5');
                         resolve();
                     });
                 });
