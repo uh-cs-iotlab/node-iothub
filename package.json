@@ -17,6 +17,7 @@
   "dependencies": {
     "express": "^4.13.4",
     "async": "^1.5.2",
+    "body-parser": "^1.15.0",
     "chai": "^3.4.1",
     "chai-as-promised": "^5.2.0",
     "file-stream-rotator": "0.0.6",

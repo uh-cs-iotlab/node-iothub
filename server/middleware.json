@@ -5,7 +5,13 @@
     "initial": {},
     "session": {},
     "auth": {},
-    "parse": {},
+    "parse": {
+        "body-parser#json": {},
+        "body-parser#text": {
+            "methods":["post"],
+            "paths":["/api/feeds/executable"]
+        }
+    },
     "routes": {
         "loopback#rest": {
             "paths": [
