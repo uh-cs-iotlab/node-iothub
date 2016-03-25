@@ -16,7 +16,18 @@ var testUserToken;
 var server;
 
 before(function () {
-    return app.boot({adminCredentials: testUserCreds})
+    var config = {
+        "restApiRoot": "/api",
+        "host": "0.0.0.0",
+        "port": 0,
+        "legacyExplorer": false,
+        "remoting": {
+            "context": {
+                "enableHttpContext": true
+            }
+        }
+    };
+    return app.boot({adminCredentials: testUserCreds, config: config})
     .then(() => {
         return new Promise((resolve) => {
             server = app.listen(resolve);
