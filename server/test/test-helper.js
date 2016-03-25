@@ -1,6 +1,7 @@
 'use strict';
 
 var request = require('supertest');
+var fs = require('fs');
 
 module.exports = (app) => {
 
@@ -76,7 +77,6 @@ module.exports = (app) => {
                 });
             });
         },
-
         validField(options) {
             return Object.assign({
                 name: 'testField',
@@ -112,7 +112,6 @@ module.exports = (app) => {
                 });
             });
         },
-
         validAtomicFeed(options) {
             return Object.assign({
                 name: 'testFeed',
@@ -152,7 +151,6 @@ module.exports = (app) => {
                 force: options.force
             }))));
         },
-
         validComposedFeed(options) {
             return Object.assign({
                 name: 'testFeed',
@@ -278,6 +276,67 @@ module.exports = (app) => {
                     resolve(res.body);
                 });
             });
+        }, 
+
+        // Adding helpers for IoT Hub Plugins
+        getPlugins(token, options) {
+            options = options || {};
+            var url = `/api/plugins`;
+            if (options.filtered) {
+                url += '/filtered';
+            }
+            if (options.id) {
+                url += `/${options.id}`;
+            }
+            return new Promise((resolve, reject) => {
+                request(app)
+                .get(url)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
+        },
+        deletePlugin(token, options) {
+            var url = `/api/plugins/${options.id}`;
+            if (options.force) url += '/force';
+            return new Promise((resolve, reject) => {
+                request(app)
+                .delete(url)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
+        },
+        cleanAllPlugins(token, options) {
+            options = options || {};
+            return this.getPlugins(token, {})
+            .then(plugins => Promise.all(plugins.map(plugin => this.deletePlugin(token, {
+                id: plugin.id
+            }))));
+        },
+        helloWorldPlugin() {
+            var data = fs.readFileSync('server/test/resources/hello-world-plugin.js');
+            var base64data = new Buffer(data).toString('base64');
+            return {
+                "name": "HelloWorldPlugin", // It has to match with the global object provided in the plugin
+                "type": "iothub",
+                "script": base64data, // The base64String of the code
+                "isService": false
+            };
+        },
+        invalidHelloWorldPlugin() {
+            var data = fs.readFileSync('server/test/resources/invalid-hello-world-plugin.js');
+            var base64data = new Buffer(data).toString('base64');
+            return {
+                "name": "HelloWorldPlugin", // It has to match with the global object provided in the plugin
+                "type": "iothub",
+                "script": base64data, // The base64String of the code
+                "isService": false
+            };
         }
     };
 };

@@ -1,0 +1,58 @@
+{
+    "name": "HubPlugin",
+    "base": "PersistedModel",
+    "strict": true,
+    "http": {
+        "path": "/plugins"
+    },
+    "idInjection": true,
+    "properties": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "type": {
+            "type": "string",
+            "required": true
+        },
+        "script": {
+            "type": "string",
+            "required": true
+        },
+        "isService": {
+        	"type": "boolean",
+        	"default": false,
+        	"required": true
+        },
+        "metadata": {
+            "type": "string",
+            "default": ""
+        },
+        "keywords": {
+            "type": [
+                "string"
+            ],
+            "default": []
+        }
+    },
+    "validations": [],
+    "relations": {},
+    "acls": [
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "$everyone",
+            "permission": "DENY"
+        },
+        {
+            "accessType": "*",
+            "property": "*",
+            "principalType": "ROLE",
+            "principalId": "admin",
+            "permission": "ALLOW"
+        }
+    ],
+    "mixins": {},
+    "methods": []
+}

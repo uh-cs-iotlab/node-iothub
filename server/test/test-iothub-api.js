@@ -16,7 +16,18 @@ var testUserToken;
 var server;
 
 before(function () {
-    return app.boot({adminCredentials: testUserCreds})
+    var config = {
+        "restApiRoot": "/api",
+        "host": "0.0.0.0",
+        "port": 0,
+        "legacyExplorer": false,
+        "remoting": {
+            "context": {
+                "enableHttpContext": true
+            }
+        }
+    };
+    return app.boot({adminCredentials: testUserCreds, config: config})
     .then(() => {
         return new Promise((resolve) => {
             server = app.listen(resolve);
@@ -85,6 +96,94 @@ describe('IoT Hub API, Authenticated', function () {
                     expect(fields[0].getId() + '').to.equal(fieldId + '');
                 });
             });
+        });
+
+    });
+
+    describe("Plugins", function () {
+    
+        // We clean the database from plugins before making our test to ensure the validity of the tests
+        beforeEach(function () {
+            return Helper.cleanAllPlugins(testUserToken, {force: true});
+        });
+
+        after(function () {
+            return Helper.cleanAllPlugins(testUserToken, {force: true});
+        });
+
+        describe("Authentication", function() {
+            it("Authenticated request by admin", function () {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .get('/api/plugins')
+                    .set('Authorization', testUserToken)
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        resolve(res.body);
+                    });
+                });
+            });
+
+            it("Non admin request should be rejected by default", function () {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .get('/api/plugins')
+                    .expect(401, (err) => {
+                        if (err) reject(err);
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        describe("POST new plugin to the API", function() {
+
+            it("Valid HelloWord plugin", function() {
+                var plugin = Helper.helloWorldPlugin();
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post('/api/plugins')
+                    .set('Authorization', testUserToken)
+                    .type('json')
+                    .send(JSON.stringify(plugin))
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        resolve(res.body);
+                    });
+                });
+            });
+
+            it("Invalid plugin type", function () {
+                var plugin = Helper.helloWorldPlugin();
+                plugin.type = "somethingelse"; 
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post('/api/plugins')
+                    .set('Authorization', testUserToken)
+                    .type('json')
+                    .send(JSON.stringify(plugin))
+                    .expect(422, (err, res) => {
+                        if (err) reject(err);
+                        resolve(res.body);
+                    });
+                });
+            });
+
+            it("Invalid plugin script", function () {
+                var plugin = Helper.invalidHelloWorldPlugin();
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post('/api/plugins')
+                    .set('Authorization', testUserToken)
+                    .type('json')
+                    .send(JSON.stringify(plugin))
+                    .expect(422, (err, res) => {
+                        if (err) reject(err);
+                        resolve(res.body);
+                    });
+                });
+            });
+
         });
 
     });
