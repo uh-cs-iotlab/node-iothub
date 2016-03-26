@@ -47,7 +47,7 @@ module.exports = {
                 var properties = {date: {type: 'Date', required: true}};
                 for (var field of fieldDescriptions) {
                     properties[field.name] = {
-                        type: FieldTypes.loopback(field.type),
+                        type: 'object',
                         required: field.required
                     };
                     fieldDescriptionsByName[field.name] = {
@@ -67,9 +67,9 @@ module.exports = {
                             if (prop != 'date' && properties[prop]) {
                                 var fieldDesc = fieldDescriptionsByName[prop];
                                 if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop])) {
-                                    var err = new Error(`Invalid data. Wrong type for "${prop}" field. "${JSON.stringify(FieldTypes.dataFormat(fieldDesc.type))}" expected.`);
-                                    err.statusCode = err.status = 422;
-                                    return next(err);
+                                    var errValidation = new Error(`Invalid data. Wrong type for "${prop}" field. "${fieldDesc.type}" expected.`);
+                                    errValidation.statusCode = errValidation.status = 422;
+                                    return next(errValidation);
                                 }
                             }
                         }

@@ -26,14 +26,14 @@ build/Release
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 
-# Bower components
-client/lib
-
 # Editor
 .idea
 
 # Admin credentials config file
 admin-creds.json
+
+# Client application
+client
 
 *~
 *.tgz

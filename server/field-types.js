@@ -1,67 +1,106 @@
 'use strict';
 
-var FieldTypes = {
-    GENERIC_SENSOR: 'generic-sensor',
-    ILLUMINANCE: 'illuminance',
-    PRESENCE: 'presence',
-    TEMPERATURE: 'temperature',
-    HUMIDITY: 'humidity'
-};
+var fs = require('fs');
+var path = require('path');
+var Validator = require('jsonschema').Validator;
+var $RefParser = require('json-schema-ref-parser');
 
-Object.defineProperty(FieldTypes, 'loopback', {
-    enumerable: false,
-    value: (type) => {
-        if (LoopbackTypes[type] !== 'object' || typeof value !== 'object') return false;
-        var validator = TypeValidator[type];
-        if (!validator) return false;
-        var valueKeys = Object.keys(value);
-        var validatorKeys = Object.keys(validator);
-        if (valueKeys.length !== validatorKeys.length) return false;
-        for (var key of validatorKeys) {
-            if (!value[key] || typeof value[key] !== validator[key]) return false;
-        }
-        return true;
-    }
-});
-Object.defineProperty(FieldTypes, 'isValid', {
-    enumerable: false,
-    value: (type, value) => {
-        if (LoopbackTypes[type] !== 'object' || typeof value !== 'object') return false;
-        var validator = TypeValidator[type];
-        if (!validator) return false;
-        var valueKeys;
-        // Workaround because sometimes loopback sets the value as a Model
-        if ('__data' in value) {
-            valueKeys = Object.keys(value.__data);
+var schemasDb = {};
+var _formatId = (id) => {
+    if (id.charAt(0) === '/') id = id.substr(1);
+    return id.split('/');
+};
+var _getSchema = (levels, subtree) => {
+    var currLevel = levels.shift();
+    if (subtree.hasOwnProperty(currLevel)) {
+        if (levels.length === 0) {
+            // this is the end
+            return subtree[currLevel];
         } else {
-            valueKeys = Object.keys(value);
+            return _getSchema(levels, subtree[currLevel]);
         }
-        var validatorKeys = Object.keys(validator);
-        if (valueKeys.length !== validatorKeys.length) return false;
-        for (var key of validatorKeys) {
-            if (!value[key] || typeof value[key] !== validator[key]) return false;
-        }
-        return true;
+    } else {
+        return null;
     }
-});
-Object.defineProperty(FieldTypes, 'dataFormat', {
-    enumerable: false,
-    value: type => TypeValidator[type] || this.loopback(type)
-});
-
-var LoopbackTypes = {
-    [FieldTypes.GENERIC_SENSOR]: 'object',
-    [FieldTypes.ILLUMINANCE]: 'object',
-    [FieldTypes.PRESENCE]: 'boolean',
-    [FieldTypes.TEMPERATURE]: 'object',
-    [FieldTypes.HUMIDITY]: 'object'
 };
 
-var TypeValidator = {
-    [FieldTypes.GENERIC_SENSOR]: {unit: 'string', val: 'number'},
-    [FieldTypes.ILLUMINANCE]: {unit: 'string', val: 'number'},
-    [FieldTypes.TEMPERATURE]: {unit: 'string', val: 'number'},
-    [FieldTypes.HUMIDITY]: {unit: 'string', val: 'number'}
+var _setSchemaHelper = (levels, subtree, schema) => {
+    var currLevel = levels.shift();
+    if (levels.length === 0) {
+        // this is the end
+        if (subtree.hasOwnProperty(currLevel)) {
+            return false;
+        } else {
+            subtree[currLevel] = schema;
+            return true;
+        }
+    } else {
+        if (!subtree.hasOwnProperty(currLevel)) subtree[currLevel] = {};
+        return _setSchemaHelper(levels, subtree[currLevel], schema);
+    }
+};
+var setSchema = (schema) => {
+    return _setSchemaHelper(_formatId(schema.id), schemasDb, schema);
 };
 
-module.exports = FieldTypes;
+var schemasDir = path.join(__dirname, 'schemas');
+var _loadSchemas = (schemaPath) => {
+    var files = fs.readdirSync(schemaPath);
+    for (var filename of files) {
+        var filePath = path.join(schemaPath, filename);
+        var stats = fs.statSync(filePath);
+        if (stats.isDirectory()) {
+            _loadSchemas(filePath);
+        } else {
+            if (filename.endsWith('.json')) {
+                try {
+                    var schema = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                    setSchema(schema);
+                } catch (err) {}
+            }
+        }
+    }
+};
+_loadSchemas(schemasDir);
+
+var importNextSchema = (validator) => {
+    var nextSchemaId = validator.unresolvedRefs.shift();
+    if (!nextSchemaId) return;
+    var schema = FieldTypes.get(nextSchemaId);
+    if (schema != null) {
+        validator.addSchema(schema);
+        importNextSchema(validator);
+    }
+};
+
+var FieldTypes = module.exports = {
+    exists(id) {
+        return (this.get(id) !== null);
+    },
+    get(id) {
+        return _getSchema(_formatId(id), schemasDb);
+    },
+    isValid(id, value) {
+        var v = new Validator();
+        var schema = this.get(id);
+        if (schema != null) {
+            v.addSchema(schema);
+            importNextSchema(v);
+            var result = v.validate(value, schema);
+            return result.valid;
+        }
+        return false;
+    },
+    dataFormat(id) {
+        var schema = this.get(id);
+        if (schema == null) return null;
+        var parser = new $RefParser();
+        return parser.bundle(schema, {
+            $refs: {
+                read$RefFile: ($ref) => {
+                    return Promise.resolve(JSON.stringify(_getSchema(_formatId($ref.path), schemasDb)));
+                }
+            }
+        });
+    }
+};
