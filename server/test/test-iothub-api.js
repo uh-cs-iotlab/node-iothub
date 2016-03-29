@@ -310,12 +310,12 @@ describe('IoT Hub API, Authenticated', function () {
         });
 
         it('Should execute a simple script', function () {
-            return Helper.insertValidExecutableFeed(token)
+            return Helper.insertValidExecutableFeed(testUserToken)
             .then((insertedId) => {
                 return new Promise((resolve, reject) => {
                     request(app)
                     .post(`/api/feeds/executable/${insertedId}/run`)
-                    .set('Authorization', token)
+                    .set('Authorization', testUserToken)
                     .type('json')
                     .send(JSON.stringify({"source": "5;"}))
                     .expect(200, (err, res) => {
@@ -328,12 +328,12 @@ describe('IoT Hub API, Authenticated', function () {
         });
 
         it('Should execute a function call script', function () {
-            return Helper.insertValidExecutableFeed(token)
+            return Helper.insertValidExecutableFeed(testUserToken)
             .then((insertedId) => {
                 return new Promise((resolve, reject) => {
                     request(app)
                     .post(`/api/feeds/executable/${insertedId}/run`)
-                    .set('Authorization', token)
+                    .set('Authorization', testUserToken)
                     .type('json')
                     .send(JSON.stringify({"source": "var t=function(){return \'Done\'};t();"}))
                     .expect(200, (err, res) => {
@@ -346,12 +346,12 @@ describe('IoT Hub API, Authenticated', function () {
         });
 
         it('Should execute script POSTed as plain text', function () {
-            return Helper.insertValidExecutableFeed(token)
+            return Helper.insertValidExecutableFeed(testUserToken)
             .then((insertedId) => {
                 return new Promise((resolve, reject) => {
                     request(app)
                     .post(`/api/feeds/executable/${insertedId}/run`)
-                    .set('Authorization', token)
+                    .set('Authorization', testUserToken)
                     .type('text/plain')
                     .send("var s=function(){return 'Done';};s();")
                     .expect(200, (err, res) => {
@@ -364,12 +364,12 @@ describe('IoT Hub API, Authenticated', function () {
         });
 
         it('Should return text/plain response', function () {
-            return Helper.insertValidExecutableFeed(token)
+            return Helper.insertValidExecutableFeed(testUserToken)
             .then((insertedId) => {
                 return new Promise((resolve, reject) => {
                     request(app)
                     .post(`/api/feeds/executable/${insertedId}/run`)
-                    .set('Authorization', token)
+                    .set('Authorization', testUserToken)
                     .set('Accept', 'text/plain')
                     .type('json')
                     .send(JSON.stringify({source: "var s=function(){return 5;};s();"}))
