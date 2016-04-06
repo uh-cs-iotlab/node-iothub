@@ -100,6 +100,7 @@ describe('IoT Hub API, Authenticated', function () {
 
     });
 
+    // Tests related to plugins
     describe("Plugins", function () {
     
         // We clean the database from plugins before making our test to ensure the validity of the tests
@@ -184,6 +185,56 @@ describe('IoT Hub API, Authenticated', function () {
                 });
             });
 
+        });
+
+    });
+
+    // Tests related to enablers
+    describe("Enablers", function () {
+    
+        // We clean the database from plugins before making our test to ensure the validity of the tests
+        beforeEach(function () {
+            // We need to clean first all the enablers, then the plugin
+            return Helper.cleanAllEnablers(testUserToken, {force: true})
+            .then(() => Helper.cleanAllPlugins(testUserToken, {force: true}));
+        });
+
+        after(function () {
+            return Helper.cleanAllEnablers(testUserToken, {force: true})
+            .then(() => Helper.cleanAllPlugins(testUserToken, {force: true}));
+        });
+
+        describe("Authentication", function() {
+            it("Authenticated request by admin", function () {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .get('/api/enablers')
+                    .set('Authorization', testUserToken)
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        resolve(res.body);
+                    });
+                });
+            });
+
+            it("Non admin request should be rejected by default", function () {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .get('/api/enablers')
+                    .expect(401, (err) => {
+                        if (err) reject(err);
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        describe("Post enabler", function() {
+
+            it("Valid HelloWord plugin", function() {
+                return Helper.insertEnablerForHelloWorldPlugin(testUserToken)
+            });
+            
         });
 
     });

@@ -328,6 +328,16 @@ module.exports = (app) => {
                 "isService": false
             };
         },
+        helloWorldPluginWithConfiguration() {
+            var data = fs.readFileSync('server/test/resources/hello-world-plugin-config.js');
+            var base64data = new Buffer(data).toString('base64');
+            return {
+                "name": "HelloWorldPluginConfiguration", // It has to match with the global object provided in the plugin
+                "type": "iothub",
+                "script": base64data, // The base64String of the code
+                "isService": false
+            };
+        },
         invalidHelloWorldPlugin() {
             var data = fs.readFileSync('server/test/resources/invalid-hello-world-plugin.js');
             var base64data = new Buffer(data).toString('base64');
@@ -337,6 +347,110 @@ module.exports = (app) => {
                 "script": base64data, // The base64String of the code
                 "isService": false
             };
+        },
+        insertHelloWorldPlugin(token, options) {
+            options = options || {};
+            var plugin = this.helloWorldPlugin(options);
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/plugins')
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(plugin))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
+                });
+            });
+        },
+        insertHelloWorldPluginWithConfiguration(token, options) {
+            options = options || {};
+            var plugin = this.helloWorldPluginWithConfiguration(options);
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/plugins')
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(plugin))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
+                });
+            });
+        },
+        // Adding helpers for IoT Hub Enablers
+        getEnablers(token, options) {
+            options = options || {};
+            var url = `/api/enablers`;
+            if (options.filtered) {
+                url += '/filtered';
+            }
+            if (options.id) {
+                url += `/${options.id}`;
+            }
+            return new Promise((resolve, reject) => {
+                request(app)
+                .get(url)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
+        },
+        deleteEnabler(token, options) {
+            var url = `/api/enablers/${options.id}`;
+            if (options.force) url += '/force';
+            return new Promise((resolve, reject) => {
+                request(app)
+                .delete(url)
+                .set('Authorization', token)
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body);
+                });
+            });
+        },
+        cleanAllEnablers(token, options) {
+            options = options || {};
+            return this.getEnablers(token, {})
+            .then(enablers => Promise.all(enablers.map(enabler => this.deleteEnabler(token, {
+                id: enabler.id
+            }))));
+        },
+        insertValidEnabler(token, options) {
+            options = options || {};
+            var enabler = options; //Enabler have no required fields but the plugin
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post(`/api/enablers`)
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(enabler))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
+                });
+            });
+        },
+        insertEnablerForHelloWorldPlugin(token, options) {
+            options = options || {};
+            var plugin = this.helloWorldPlugin();
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/plugins')
+                .set('Authorization', token)
+                .type('json')
+                .send(JSON.stringify(plugin))
+                .expect(200, (err, res) => {
+                    if (err) reject(err);
+                    resolve(res.body.id);
+                });
+            })
+            .then((pluginId) => {
+                return this.insertValidEnabler(token, { plugin: pluginId })
+                .then(enablerId => Promise.resolve([pluginId, enablerId]));
+            });
         }
     };
 };
