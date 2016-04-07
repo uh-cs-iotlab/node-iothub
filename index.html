@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Solmuhub by uh-cs-iotlab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Solmuhub</h1>
+      <h2 class="project-tagline">Node.js implementation of the IoT Hub</h2>
+      <a href="https://github.com/uh-cs-iotlab/solmuhub" class="btn">View on GitHub</a>
+      <a href="https://github.com/uh-cs-iotlab/solmuhub/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/uh-cs-iotlab/solmuhub/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="solmuhub" class="anchor" href="#solmuhub" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Solmuhub</h1>
+
+<p>Solmuhub is the Node.js implementation of the IoT Hub. 
+It is currently build upon the <a href="http://loopback.io/">loopback</a>, which is a Node.js REST API framework, to generate the the REST API.</p>
+
+<p>IoT Hubs provides fine-grained access control to IoT devices, data and other resources such as IoT Hub containers to enable remote execution of code (e.g., distributed analytics, edge/fog computing, etc.).</p>
+
+<p>Resources are exposed via the REST API of the hub which enables interactions with other hubs.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<ul>
+<li>Via the sources: <code>git clone https://github.com/uh-cs-iotlab/solmuhub.git</code>
+</li>
+<li>Via npm: Not yet published</li>
+</ul>
+
+<h3>
+<a id="build" class="anchor" href="#build" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build</h3>
+
+<ol>
+<li>
+<code>npm install</code> (Install all the dependencies)</li>
+<li>
+<code>npm run-script build</code> (Compile the client side files with Gulp)
+
+<ul>
+<li>Not mandatory, the client side build is called before <code>npm start</code>
+</li>
+</ul>
+</li>
+<li>
+<code>npm start</code> to start the hub
+
+<ul>
+<li>If it is the first time you run the hub, you will be asked to enter admin credentials. The admin user will be created in database.</li>
+<li>If you run the hub in development environment and if you specified an admin user either with a file or via the assistant, you will be logged in automatically and the access token will be printed in the console. You have to use the access token for authentify yourself for each request. You can use the token either in the <code>Authorization</code> HTTP header or in the <code>access_token</code> URL parameter.</li>
+</ul>
+</li>
+</ol>
+
+<h3>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration</h3>
+
+<p>As Solmuhub is build upon loopback, the configuration of the Hub follows the same structure as any loopback application. 
+The folder <code>server</code> contains a number of files that are used to configure
+the IoT Hub application:</p>
+
+<ul>
+<li>
+<code>server/config.json</code>: the most important file for the configuration of the solmuhub. In this file, you can specify the <strong>port</strong>, <strong>host</strong> and the base url for <strong>API</strong> (default is /api). Additionally, an adminCredential file can be specified to automatically generate a user admin when developping the hub (do not use in production)
+
+<ul>
+<li>Content of the adminCredential file</li>
+</ul>
+
+<div class="highlight highlight-source-json"><pre>{
+    <span class="pl-s"><span class="pl-pds">"</span>email<span class="pl-pds">"</span></span>: <span class="pl-ii">YOUREMAIL</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>username<span class="pl-pds">"</span></span>: <span class="pl-ii">YOURUSERNAME</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>: <span class="pl-ii">YOURPASSWORD</span>
+}</pre></div>
+
+<p>Note that <strong>username</strong> key is optional.</p>
+</li>
+<li>
+<code>server/datasources.json</code>: the second most important configuration file. It is used to let solmuhub knows which data sources can be used to store persistant or non-persistant data. Solmuhub uses mainly the memory (development) and the mongodb connectors of loopback, however others are available to depending on your needs <a href="https://docs.strongloop.com/display/public/LB/Database+connectors">https://docs.strongloop.com/display/public/LB/Database+connectors</a>
+</li>
+<li>
+<code>server/model-config.json</code>: the third most important configuration file. It is used to connect data models (which are defined in <code>common/models</code>) with data sources defined in the previous configuration file. Additionally, you can specify here what models are available via the REST API. Models are described <a href="./models.md">here</a>. More detailed information about the models in loopback can be found here: <a href="https://docs.strongloop.com/display/public/LB/Customizing+models">https://docs.strongloop.com/display/public/LB/Customizing+models</a>
+</li>
+<li>Other loopback config files (limited use in Solmuhub):
+
+<ul>
+<li>
+<code>server/middleware.json</code>: a config file for middleware in loop</li>
+<li>
+<code>server/component-config.json</code>: a JSON description of the component that can be attached to the hub routers. Detailed information about components can be found here: <a href="https://docs.strongloop.com/display/public/LB/LoopBack+components">https://docs.strongloop.com/display/public/LB/LoopBack+components</a>
+</li>
+</ul>
+</li>
+<li>
+<strong>Solmuhub-specific</strong> configuration files:
+
+<ul>
+<li>
+<code>server/feed-types.json</code>: Not really a configuration files, but it describes the types of feed we have in the IoT Hub (<a href="./atomicFeed.md">atomic</a>, <a href="./composedFeed.md">composed</a> and <a href="./executableFeed.md">executable</a>).</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="concept" class="anchor" href="#concept" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Concept</h2>
+
+<p>The IoT Hub includes a few key components that needs to be manipulated to use the hub (models are described in the <a href="./models.md">model documentation</a>):</p>
+
+<ul>
+<li>Hub user: Hub users are a key concept of the IoT Hub. One may create as many users that can connect to the platform. The initial user is the admin user (the creator of the IoT Hub) which has access to all request in the API</li>
+<li>Hub role: Roles can be created to refined the access control to certain API URLs. Roles can be assigned to users to allow access to certain URLS. By default, all users but the admin do not have access to any resources in the IoT Hub.</li>
+<li>Feed: The feed concept is the most important for the IoT Hub. It exposes IoT resources to be used via the REST API. By default, resources are unusable before they have been exposed as feeds. Feeds are of three basic kinds:*
+
+<ul>
+<li>
+<a href="./atomicFeed.md">Atomic feed</a>: Atomic feeds are the basic feed type to connect physical and virtual IoT resources to the IoT Hub (e.g., a temperature sensor, a light bulb, etc.). A core attribute of atomic feed is that they only provide a single type of <a href="#data">data</a>.
+
+<ul>
+<li>
+<a href="./plugin.md">HubPlugin</a>: Plugins are IoT Hub script (i.e., javascript) that are running in the IoT Hub container to enable the communication between the Hub and the devices. The Javascript engine is augmented with a number of communication protocols (e.g., HTTP, TCP sockets, Bluetooth low energy, etc.) depending on the plugin needs. The role of the plugin is to provide a generic access (i.e., generic data model) of the resource to the hub. </li>
+<li>
+<a href="./enabler.md">HubEnabler</a>: Enablers are link to instance of plugins but enable specific configuration of the plugin. For instance, one could install one plugin but have multiple instance of this plugin with specific configurations.</li>
+</ul>
+</li>
+<li>
+<a href="./composedFeed.md">Composed feed</a>: Composed feed are the most traditional feed types and the only type of feed which provides data storage. Unlike atomic feeds, composed feeds can combined multiple data types together.</li>
+<li>
+<a href="./executableFeed.md">Executable feed</a>: The last type of feed which expose computing resources to users with enough permission to run IoT Hub code (note: unlike the container for plugins, the executable feed only can only perform HTTP calls to the IoT Hub API on top of bare javascript code). These instance have no access to the local file system and cannot communicate with devices directly</li>
+</ul>
+</li>
+<li>Service (Not yet ported to solmuhub, only available via Kahvihub):
+
+<ul>
+<li>
+<a href="./plugin.md">HubPlugin</a>: Plugins can be also used to create services. Unlike plugins for atomic feeds, communication protocols but HTTP are not made available. However, it is possible to do period calls via <code>setTimeout</code> to periodically perform some operation.</li>
+<li>Hub Service: Pretty similar to enablers, but services expose different resources via the API (To be discussed later (TODO)).</li>
+</ul>
+</li>
+</ul>
+
+<h3>
+<a id="client-side-documentation" class="anchor" href="#client-side-documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Client-side documentation</h3>
+
+<p>The documentation of the hub API is available on the client side via the URL: <code>/doc</code>. The documentation shows all the possible REST URL that are accessible for a hub.</p>
+
+<h3>
+<a id="data" class="anchor" href="#data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a id="data"></a>Data</h3>
+
+<p>One of key strength of the IoT Hub is that IoT developers and users only manipulate abstraction of IoT devices and the data that they produce to perform operations.</p>
+
+<p>The built-in data models of the IoT Hub are available in the <code>server/schemas</code> folder. They are currently 5 models supported by the IoT Hub natively. But you can also add you own models to expand your IoT Hub implementation. We use <a href="http://json-schema.org/">json-schema</a> to define our data formats.
+1. <code>string</code>: Basic string data
+2. <code>number</code>: Basic number format (equivalent to Javascript number)
+3. <code>boolean</code>: Basic boolean format
+4. <code>integer</code>: Basic integer format
+5. <code>temperature</code>: Temperature data format
+    * Temperature data include a field for <code>value</code> of type <code>Number</code> and a <code>unit</code>field of type <code>String</code>. Unit must be of know types ("cel", "far", "kel")
+    Example of a valid temperature data:
+    <code>json
+    { "value"=40.3, "unit"="cel"}
+</code>
+    Examples of an invalid temperature data:
+    <code>json
+    { "value"=40.3}
+</code>
+    <code>json
+    { "value"=40.3, "unit"="unknown unit"}
+</code></p>
+
+<p>The number of IoT Hub data formats supported natively by Solmuhub will be significantly in the future to cover most usually IoT devices and data types.</p>
+
+<h3>
+<a id="creating-a-feed" class="anchor" href="#creating-a-feed" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Creating a feed</h3>
+
+<p>There are three types of feeds: Atomic, Composed or Executable. You can manage them via a REST API. Let's create your first feed, in this case a composed feed:</p>
+
+<pre><code>POST http://localhost:3000/api/feeds/composed
+Body:
+{
+    "name": "aFeed"
+}
+</code></pre>
+
+<p>You can see that we get in response a JSON object with some properties. One of these is the feed's id that we have to use to identify the feed in future requests.</p>
+
+<p>Now let's create a field that we will attach to this feed. A field must have a type. Let's say we want to store temperature values, so we have to use the type <code>root/temperature</code>.</p>
+
+<pre><code>POST http://localhost:3000/api/feeds/composed/[YOUR FEED ID]/fields
+Body:
+{
+    "name": "aField",
+    "type": "root/temperature",
+    "required": true
+}
+</code></pre>
+
+<h3>
+<a id="sending-data-to-a-feed" class="anchor" href="#sending-data-to-a-feed" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Sending data to a feed</h3>
+
+<p>Now your composed feed is created and has a field attached to it, but you still can't send data to it. You must first <strong>validate</strong> it. Validating a feed creates the background data collection that will keep all the data you will send to it. Let's validate your feed.</p>
+
+<pre><code>POST http://localhost:3000/api/feeds/composed/[YOUR FEED ID]/validate
+</code></pre>
+
+<p>Now you can begin to send data to your feed, but you may ask which format you have to use. The field types define data format following the JSON Schema standard. To get the format to use with your feed, just ask it directly:</p>
+
+<pre><code>GET http://localhost:3000/api/feeds/composed/[YOUR FEED ID]/data-format
+Response:
+{
+    "aField": {
+        "format": {...},
+        "required": true
+    }
+}
+</code></pre>
+
+<p>As you can see, the format for each field is given in JSON Schema. Now you can send your temperature data to the feed:</p>
+
+<pre><code>POST http://localhost:3000/api/feeds/composed/[YOUR FEED ID]/data
+Body:
+{
+    "aField": {
+        "unit": "cel",
+        "value": 4.2
+    }
+}
+</code></pre>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/uh-cs-iotlab/solmuhub">Solmuhub</a> is maintained by <a href="https://github.com/uh-cs-iotlab">uh-cs-iotlab</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
