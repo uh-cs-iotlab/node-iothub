@@ -1,6 +1,6 @@
 'use strict';
 
-var FieldTypes = require('../../server/field-types');
+var FieldTypes = require('../utils/field-types');
 
 module.exports = function (Field) {
 

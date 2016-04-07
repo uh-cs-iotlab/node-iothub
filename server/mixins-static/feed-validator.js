@@ -1,9 +1,9 @@
 'use strict';
 
 var loopback = require('loopback');
-var FeedData = require('../feed-data');
-var FeedTypes = require('../feed-types.json');
-var FieldTypes = require('../field-types');
+var FeedData = require('../../common/utils/feed-data');
+var FeedTypes = require('../../common/utils/feed-types');
+var FieldTypes = require('../../common/utils/field-types');
 
 module.exports = function (Model, mixinOptions) {
 
@@ -295,9 +295,9 @@ module.exports = function (Model, mixinOptions) {
                         return Promise.reject(err);
                     }
                 });
-            } else if (!ctx.instance) {
+            } else if (!ctx.currentInstance && !ctx.instance) {
                 // CASE 3:
-                // This is executed when the action is updataOrCreate() or updateAll()
+                // This is executed when the action is updateOrCreate() or updateAll()
                 // As in CASE 1, we could remove modifications that involve fields
                 // But in this case, the user will assume that the modification has been made for all feeds, which is wrong
                 // So it's simpler to return an error

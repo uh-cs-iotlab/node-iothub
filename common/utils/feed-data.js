@@ -1,7 +1,7 @@
 'use strict';
 
 var loopback = require('loopback');
-var FeedTypes = require('./feed-types.json');
+var FeedTypes = require('./feed-types');
 var FieldTypes = require('./field-types');
 
 module.exports = {

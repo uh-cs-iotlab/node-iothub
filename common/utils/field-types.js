@@ -43,7 +43,7 @@ var setSchema = (schema) => {
     return _setSchemaHelper(_formatId(schema.id), schemasDb, schema);
 };
 
-var schemasDir = path.join(__dirname, 'schemas');
+var schemasDir = path.join(__dirname, '..', 'data-types');
 var _loadSchemas = (schemaPath) => {
     var files = fs.readdirSync(schemaPath);
     for (var filename of files) {
