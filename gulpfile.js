@@ -1,5 +1,6 @@
 'use strict';
 
+var fs = require('fs');
 var path = require('path');
 var browserify = require('browserify');
 var watchify = require('watchify');
@@ -56,6 +57,9 @@ gulp.task('bundle-watch', () => bundleTask(true));
 gulp.task('bundle', () => bundleTask(false));
 
 var SWAGGER_UI_PATH = path.join('.', 'node_modules', 'swagger-ui');
+if (!fs.statSync(SWAGGER_UI_PATH).isDirectory()) {
+    SWAGGER_UI_PATH = path.join('.', 'node_modules', 'swagger-ui-browserify', 'node_modules', 'swagger-ui');
+}
 
 gulp.task('api-doc', () => {
     return gulp.src([
