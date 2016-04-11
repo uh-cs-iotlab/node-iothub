@@ -1,7 +1,7 @@
 'use strict';
 
 var loopback = require('loopback');
-var FeedTypes = require('../feed-types.json');
+var FeedTypes = require('../../common/utils/feed-types');
 
 module.exports = function (Model, mixinOptions) {
 
@@ -17,9 +17,9 @@ module.exports = function (Model, mixinOptions) {
     Model.convertNullToNotFoundError = function (ctx, cb) {
         if (ctx.result !== null) return cb();
 
-        var modelName = ctx.method.sharedClass.name;
-        var id = ctx.getArgByName('id');
-        var error = new Error(`Unknown "${modelName}" id "${id}".`);
+        let modelName = ctx.method.sharedClass.name;
+        let id = ctx.getArgByName('id');
+        let error = new Error(`Unknown "${modelName}" id "${id}".`);
         error.statusCode = error.status = 404;
         error.code = 'MODEL_NOT_FOUND';
         cb(error);
@@ -29,10 +29,10 @@ module.exports = function (Model, mixinOptions) {
 
         Model.sharedClass.http.path = `/feeds/${mixinOptions.type}`;
 
-        var Role = Model.registry.findModel('HubRole');
-        var RoleMapping = Model.registry.findModel('RoleMapping');
-        var FeedRoleACL = Model.registry.findModel('FeedRoleACL');
-        var Field = Model.registry.findModel('Field');
+        let Role = Model.registry.findModel('HubRole');
+        let RoleMapping = Model.registry.findModel('RoleMapping');
+        let FeedRoleACL = Model.registry.findModel('FeedRoleACL');
+        let Field = Model.registry.findModel('Field');
 
         /** ===================================================================
          *
@@ -46,7 +46,7 @@ module.exports = function (Model, mixinOptions) {
                 cb = query;
                 query = {};
             }
-            var reqP = Model.find(query)
+            let reqP = Model.find(query)
             .then((models) => {
                 if (models.length === 0) return [];
                 /**
@@ -54,9 +54,11 @@ module.exports = function (Model, mixinOptions) {
                  * - https://github.com/strongloop/loopback/issues/569
                  * - https://github.com/strongloop/loopback/pull/775
                  */
-                var accessToken = loopback.getCurrentContext().get('accessToken');
+                let context = loopback.getCurrentContext();
+                let accessToken = null;
+                if (context) accessToken = context.get('accessToken');
                 if (!accessToken || !accessToken.userId) {
-                    var err = new Error(`Access token not found.`);
+                    let err = new Error(`Access token not found.`);
                     err.statusCode = err.status = 401;
                     return Promise.reject(err);
                 }
@@ -73,12 +75,12 @@ module.exports = function (Model, mixinOptions) {
                 .then((roles) => {
                     if (roles.length === 0) return [];
                     // We only keep the static roles
-                    var dynamicRoles = [Role.OWNER, Role.AUTHENTICATED, Role.UNAUTHENTICATED, Role.EVERYONE];
-                    var roleIds = roles.filter(roleId => dynamicRoles.indexOf(roleId) < 0);
+                    let dynamicRoles = [Role.OWNER, Role.AUTHENTICATED, Role.UNAUTHENTICATED, Role.EVERYONE];
+                    let roleIds = roles.filter(roleId => dynamicRoles.indexOf(roleId) < 0);
                     return Promise.all(models.map((model) => {
                         if (model.validated === false) return null;
                         // The ACL has to be associated with one of the user's roles...
-                        var whereFilter = {
+                        let whereFilter = {
                             roleId: {inq: roleIds},
                             // ...and also to the current feed id
                             [`${mixinOptions.type}Id`]: model.id
@@ -114,7 +116,7 @@ module.exports = function (Model, mixinOptions) {
                 query = {};
             }
             query.limit = 1;
-            var reqP = Model.filteredFind(query)
+            let reqP = Model.filteredFind(query)
             .then(models => models.length > 0 ? models[0] : null);
             if (cb) reqP.then(model => cb(null, model), err => cb(err));
             return reqP;
@@ -144,7 +146,7 @@ module.exports = function (Model, mixinOptions) {
             if (!query) query = {};
             if (!query.where) query.where = {};
             query.where.id = id;
-            var reqP = Model.filteredFindOne(query);
+            let reqP = Model.filteredFindOne(query);
             if (cb) reqP.then(model => cb(null, model), err => cb(err));
             return reqP;
         };
@@ -164,7 +166,7 @@ module.exports = function (Model, mixinOptions) {
         );
 
         Model.filteredExists = function (id, cb) {
-            var reqP = Model.filteredFindById(id)
+            let reqP = Model.filteredFindById(id)
             .then(model => model !== null);
             if (cb) reqP.then(exists => cb(null, exists), err => cb(err));
             return reqP;
@@ -186,7 +188,7 @@ module.exports = function (Model, mixinOptions) {
                 cb = where;
                 where = {};
             }
-            var reqP = Model.filteredFind({where: where})
+            let reqP = Model.filteredFind({where: where})
             .then(models => models.length);
             if (cb) reqP.then(count => cb(null, count), err => cb(err));
             return reqP;
@@ -209,9 +211,9 @@ module.exports = function (Model, mixinOptions) {
          *   ================================================================= */
 
         Model.createRoleAcl = function (modelId, body, cb) {
-            var reqP;
+            let reqP;
             if (!body || !body.roleId) {
-                var err = new Error(`The request body is not valid. Details: 'roleId' can't be blank`);
+                let err = new Error(`The request body is not valid. Details: 'roleId' can't be blank`);
                 err.name = 'Validation Error';
                 err.statusCode = err.status = 422;
                 reqP = Promise.reject(err);
@@ -219,7 +221,7 @@ module.exports = function (Model, mixinOptions) {
                 reqP = Model.exists(modelId)
                 .then(function (modelExists) {
                     if (modelExists === false) {
-                        var err = new Error(`Unknown '${Model.modelName}' id '${modelId}'`);
+                        let err = new Error(`Unknown '${Model.modelName}' id '${modelId}'`);
                         err.statusCode = err.status = 404;
                         return Promise.reject(err);
                     }
@@ -227,13 +229,13 @@ module.exports = function (Model, mixinOptions) {
                 .then(() => Role.exists(body.roleId))
                 .then(function (roleExists) {
                     if (roleExists === false) {
-                        var err = new Error(`Unknown 'Role' id '${body.roleId}'`);
+                        let err = new Error(`Unknown 'Role' id '${body.roleId}'`);
                         err.statusCode = err.status = 404;
                         return Promise.reject(err);
                     }
                 })
                 .then(() => {
-                    var aclBody = {
+                    let aclBody = {
                         roleId: body.roleId,
                         readAccess: body.readAccess,
                         writeAccess: body.writeAccess,
@@ -259,16 +261,16 @@ module.exports = function (Model, mixinOptions) {
         );
 
         Model.getRoleAcls = function (modelId, cb) {
-            var reqP = Model.exists(modelId)
+            let reqP = Model.exists(modelId)
             .then(function (modelExists) {
                 if (modelExists === false) {
-                    var err = new Error(`Unknown '${Model.modelName}' id '${modelId}'`);
+                    let err = new Error(`Unknown '${Model.modelName}' id '${modelId}'`);
                     err.statusCode = err.status = 404;
                     return Promise.reject(err);
                 }
             })
             .then(() => {
-                var predicate = {
+                let predicate = {
                     [`${mixinOptions.type}Id`]: modelId
                 };
                 return FeedRoleACL.find(predicate, cb);
@@ -293,7 +295,7 @@ module.exports = function (Model, mixinOptions) {
          *   ================================================================= */
 
         Model.observe('after save', function (ctx, next) {
-            var hookP = Promise.resolve();
+            let hookP = Promise.resolve();
             if (ctx.isNewInstance === true) {
                 hookP = new Promise((resolve, reject) => {
                     Role.findOne({where: {name: 'admin'}}, (err, role) => {
@@ -302,7 +304,7 @@ module.exports = function (Model, mixinOptions) {
                     });
                 })
                 .then((role) => {
-                    var aclBody = {
+                    let aclBody = {
                         roleId: role.getId(),
                         [`${mixinOptions.type}Id`]: ctx.instance.getId()
                     };
@@ -314,13 +316,13 @@ module.exports = function (Model, mixinOptions) {
 
 
         Model.observe('before delete', function (ctx, next) {
-            var hookP = Promise.resolve();
+            let hookP = Promise.resolve();
             // Get the ids of fields to delete if the feed is deleted
             // This is made in case of deleteAll() action because we can't access fields through one instance.
             if (!ctx.instance) {
                 hookP = Model.find({where: ctx.where || {}})
                 .then((models) => {
-                    var fieldIds = models.map((model) => {
+                    let fieldIds = models.map((model) => {
                         if (mixinOptions.type === FeedTypes.ATOMIC && model._field) {
                             return model._field.getId();
                         } else if (mixinOptions.type === FeedTypes.COMPOSED && model._fields) {
@@ -336,9 +338,9 @@ module.exports = function (Model, mixinOptions) {
         });
 
         Model.observe('after delete', function (ctx, next) {
-            var hookP = Promise.resolve();
+            let hookP = Promise.resolve();
             if (ctx.instance) {
-                var predicate = {[`${mixinOptions.type}Id`]: ctx.instance.getId()};
+                let predicate = {[`${mixinOptions.type}Id`]: ctx.instance.getId()};
                 hookP = FeedRoleACL.destroyAll(predicate)
                 .then(() => {
                     if (mixinOptions.type === FeedTypes.ATOMIC && ctx.instance._field) {
@@ -351,7 +353,7 @@ module.exports = function (Model, mixinOptions) {
                 hookP = FeedRoleACL.find()
                 .then((acls) => {
                     // Check for RoleACLs that are related to this type of feeds
-                    var filteredAcls = acls.filter(acl => acl[`${mixinOptions.type}Id`] !== undefined);
+                    let filteredAcls = acls.filter(acl => acl[`${mixinOptions.type}Id`] !== undefined);
                     return Promise.all(filteredAcls.map((acl) => {
                         // Check if the related feed still exists, and if not, destroy the ACL
                         return Model.exists(acl[`${mixinOptions.type}Id`])
@@ -362,7 +364,7 @@ module.exports = function (Model, mixinOptions) {
                 })
                 .then(() => {
                     // Delete fields related to feeds that are been destroyed by deleteAll() operation.
-                    var fieldIds = ctx.hookState.fieldIds;
+                    let fieldIds = ctx.hookState.fieldIds;
                     if (fieldIds) {
                         return Promise.all(fieldIds.map(fieldId => Field.destroyById(fieldId)));
                     }

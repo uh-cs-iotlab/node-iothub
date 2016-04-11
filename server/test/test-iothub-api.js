@@ -406,6 +406,21 @@ describe('IoT Hub API, Authenticated', function () {
                 Helper.cleanAllExecutableFeeds(token)
             ]);
         };
+        
+        var postManyFeeds = function (token, feeds, options) {
+            options = options || {expectedStatus: 200};
+            return new Promise((resolve, reject) => {
+                request(app)
+                .post('/api/feeds')
+                .type('json')
+                .send(feeds)
+                .set('Authorization', token)
+                .expect(options.expectedStatus, function (err, res) {
+                    if (err) return reject(err);
+                    resolve(res.body);
+                });
+            });
+        };
 
         beforeEach(function () {
             return cleanAllFeeds(testUserToken, {force: true});
@@ -419,6 +434,55 @@ describe('IoT Hub API, Authenticated', function () {
             return getAllFeeds(testUserToken)
             .then((body) => {
                 expect(body).to.eql({count: 0, types: []});
+            });
+        });
+
+        it('/api/feeds should be only for admin', function () {
+            let notAdminCredentials = {email: 'notAdmin@hub.fi', password: 'password'};
+            let notAdminId = null, notAdminToken = null;
+            let clean = () => {
+                return Helper.removeUser(notAdminId, notAdminToken);
+            };
+            return Helper.createUser(notAdminCredentials)
+            .then((user) => {
+                notAdminId = user.id;
+                return Helper.login(notAdminCredentials)
+            })
+            .then((token) => {
+                notAdminToken = token.id;
+                return postManyFeeds(notAdminToken, [], {expectedStatus: 401});
+            })
+            .then(() => clean())
+            .catch((err) => {
+                return clean()
+                .then(() => Promise.reject(err));
+            });
+        });
+
+        it('/api/feeds should insert feeds whatever their type', function () {
+            let composedFeed1 = Helper.validComposedFeed({
+                name: 'feed1',
+                validate: true,
+                fields: [
+                    Helper.validField({required: true})
+                ]
+            });
+            let composedFeed2 = Helper.validComposedFeed({
+                name: 'feed2',
+                validate: true,
+                fields: [
+                    Helper.validField({required: true})
+                ]
+            });
+            return postManyFeeds(testUserToken, [composedFeed1, composedFeed2])
+            .then((insertedFeeds) => {
+                expect(insertedFeeds).to.have.length(2);
+                return Helper.getFeedsOfType(testUserToken, 'composed')
+                .then((composedFeeds) => {
+                    expect(insertedFeeds.length).to.equal(composedFeeds.length);
+                    expect(insertedFeeds[0]).to.eql(composedFeeds[0]);
+                    expect(insertedFeeds[1]).to.eql(composedFeeds[1]);
+                });
             });
         });
 

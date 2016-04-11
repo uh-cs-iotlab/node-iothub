@@ -1,7 +1,7 @@
 'use strict';
 
-var FeedTypes = require('../../server/feed-types.json');
 var iothubvm = require('../../lib/iothub-vm');
+var FeedTypes = require('../utils/feed-types');
 
 module.exports = function (ExecutableFeed) {
 

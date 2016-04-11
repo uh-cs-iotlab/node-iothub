@@ -1,6 +1,6 @@
 'use strict';
 
-var FeedTypes = require('../../server/feed-types.json');
+var FeedTypes = require('../utils/feed-types');
 
 module.exports = function (ComposedFeed) {
 

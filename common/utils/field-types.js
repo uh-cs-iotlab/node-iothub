@@ -43,7 +43,7 @@ var setSchema = (schema) => {
     return _setSchemaHelper(_formatId(schema.id), schemasDb, schema);
 };
 
-var schemasDir = path.join(__dirname, 'schemas');
+var schemasDir = path.join(__dirname, '..', 'data-types');
 var _loadSchemas = (schemaPath) => {
     var files = fs.readdirSync(schemaPath);
     for (var filename of files) {
@@ -73,6 +73,14 @@ var importNextSchema = (validator) => {
     }
 };
 
+var refResolver = {
+    order: 1,
+    canRead: true,
+    read(ref) {
+        return FieldTypes.get(ref.url);
+    }
+};
+
 var FieldTypes = module.exports = {
     exists(id) {
         return (this.get(id) !== null);
@@ -86,7 +94,7 @@ var FieldTypes = module.exports = {
         if (schema != null) {
             v.addSchema(schema);
             importNextSchema(v);
-            var result = v.validate(value, schema);
+            var result = v.validate(value.valueOf(), schema);
             return result.valid;
         }
         return false;
@@ -95,12 +103,6 @@ var FieldTypes = module.exports = {
         var schema = this.get(id);
         if (schema == null) return null;
         var parser = new $RefParser();
-        return parser.bundle(schema, {
-            $refs: {
-                read$RefFile: ($ref) => {
-                    return Promise.resolve(JSON.stringify(_getSchema(_formatId($ref.path), schemasDb)));
-                }
-            }
-        });
+        return parser.bundle(schema, {resolve: {fieldTypes: refResolver}});
     }
 };

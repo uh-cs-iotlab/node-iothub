@@ -1,7 +1,7 @@
 {
     "adminCredentials": "admin-creds.json",
     "restApiRoot": "/api",
-    "host": "0.0.0.0",
+    "host": "localhost",
     "port": 3000,
     "legacyExplorer": false,
     "enableAuth": true,
