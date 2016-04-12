@@ -40,23 +40,32 @@ module.exports = function (Model, mixinOptions) {
          *
          *   ================================================================= */
 
-        Model.filteredFind = function (query, cb) {
-            if (typeof query === 'function' && cb === undefined) {
+        Model.filteredFind = function (query, options, cb) {
+            if (typeof query === 'function' && options === undefined && cb === undefined) {
                 // filteredFind(cb);
                 cb = query;
+                options = {};
                 query = {};
+            } else if (typeof options === 'function' && cb === undefined) {
+                // filteredFind(query, cb)
+                cb = options;
+                options = {};
             }
             let reqP = Model.find(query)
             .then((models) => {
                 if (models.length === 0) return [];
-                /**
-                 * This manner to get the token is not documented but you can get infos here:
-                 * - https://github.com/strongloop/loopback/issues/569
-                 * - https://github.com/strongloop/loopback/pull/775
-                 */
-                let context = loopback.getCurrentContext();
                 let accessToken = null;
-                if (context) accessToken = context.get('accessToken');
+                if (options && options.accessToken) {
+                    accessToken = options.accessToken;
+                } else {
+                    /**
+                     * This manner to get the token is not documented but you can get infos here:
+                     * - https://github.com/strongloop/loopback/issues/569
+                     * - https://github.com/strongloop/loopback/pull/775
+                     */
+                    let context = loopback.getCurrentContext();
+                    if (context) accessToken = context.get('accessToken');
+                }
                 if (!accessToken || !accessToken.userId) {
                     let err = new Error(`Access token not found.`);
                     err.statusCode = err.status = 401;

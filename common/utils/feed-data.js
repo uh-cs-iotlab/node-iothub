@@ -11,7 +11,7 @@ module.exports = {
     },
 
     create(Model, feedInstance, createOptions) {
-        var self = this;
+        let self = this;
         if (createOptions.type === FeedTypes.EXECUTABLE) {
             return Promise.reject(new Error('ExecutableFeed has no storage capabilities.'));
         } else {
@@ -22,30 +22,30 @@ module.exports = {
                 });
             })
             .then((app) => {
-                var fieldDescriptions;
+                let fieldDescriptions;
                 switch (createOptions.type) {
                     case FeedTypes.ATOMIC:
                         if (!feedInstance._field) {
-                            var atomicErr = new Error(`Model "${Model.modelName}" can't be validated, invalid "field" property (${feedInstance._field}).`);
-                            atomicErr.statusCode = atomicErr.status = 422;
-                            atomicErr.name = 'Validation Error';
-                            return Promise.reject(atomicErr);
+                            let err = new Error(`Model "${Model.modelName}" can't be validated, invalid "field" property (${feedInstance._field}).`);
+                            err.statusCode = err.status = 422;
+                            err.name = 'Validation Error';
+                            return Promise.reject(err);
                         }
                         fieldDescriptions = [feedInstance._field];
                         break;
                     case FeedTypes.COMPOSED:
                         if (!feedInstance._fields || feedInstance._fields.length === 0) {
-                            var composedErr = new Error(`Model "${Model.modelName}" can't be validated, invalid "fields" property (${feedInstance._fields}).`);
-                            composedErr.statusCode = composedErr.status = 422;
-                            composedErr.name = 'Validation Error';
-                            return Promise.reject(composedErr);
+                            let err = new Error(`Model "${Model.modelName}" can't be validated, invalid "fields" property (${feedInstance._fields}).`);
+                            err.statusCode = err.status = 422;
+                            err.name = 'Validation Error';
+                            return Promise.reject(err);
                         }
                         fieldDescriptions = feedInstance._fields;
                         break;
                 }
-                var fieldDescriptionsByName = {};
-                var properties = {date: {type: 'Date', required: true}};
-                for (var field of fieldDescriptions) {
+                let fieldDescriptionsByName = {};
+                let properties = {date: {type: 'Date', required: true}};
+                for (let field of fieldDescriptions) {
                     properties[field.name] = {
                         type: 'object',
                         required: field.required
@@ -55,21 +55,25 @@ module.exports = {
                         required: field.required
                     };
                 }
-                var options = {
-                    strict: true,
+                let options = {
+                    strict: true
                 };
 
-                var FeedData = loopback.PersistedModel.extend(self.feedDataCollectionName(Model, feedInstance.getId()), properties, options);
+                let FeedData = loopback.PersistedModel.extend(self.feedDataCollectionName(Model, feedInstance.getId()), properties, options);
                 FeedData.observe('before save', function (ctx, next) {
                     if (ctx.isNewInstance && ctx.instance) {
-                        var properties = ctx.instance.toJSON();
-                        for (var prop in properties) {
+                        let properties = ctx.instance.toJSON();
+                        for (let prop in properties) {
                             if (prop != 'date' && properties[prop]) {
-                                var fieldDesc = fieldDescriptionsByName[prop];
-                                if (fieldDesc && !FieldTypes.isValid(fieldDesc.type, ctx.instance[prop])) {
-                                    var errValidation = new Error(`Invalid data. Wrong type for "${prop}" field. "${fieldDesc.type}" expected.`);
-                                    errValidation.statusCode = errValidation.status = 422;
-                                    return next(errValidation);
+                                let fieldDesc = fieldDescriptionsByName[prop];
+                                if (fieldDesc) {
+                                    let ret = FieldTypes.isValid(fieldDesc.type, ctx.instance[prop]);
+                                    if (ret.err) return next(ret.err);
+                                    if (!ret.valid) {
+                                        let err = new Error(`Invalid data. Wrong type for "${prop}" field. "${fieldDesc.type}" expected.`);
+                                        err.statusCode = err.status = 422;
+                                        return next(err);
+                                    }
                                 }
                             }
                         }

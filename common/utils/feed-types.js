@@ -20,6 +20,7 @@ Object.defineProperties(FeedTypes, {
         }
     },
     getFeedType: {
+        enumerable: false,
         value: (data) => {
             let keys = Object.keys(data);
             if (keys.length === 0) return null;
