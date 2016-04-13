@@ -1,0 +1,543 @@
+{
+    "/feeds/executable": {
+        "post": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Create a new instance of the model and persist it into the data source.",
+            "operationId": "ExecutableFeed.create",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ExecutableFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Update an existing model instance or insert a new one into the data source.",
+            "operationId": "ExecutableFeed.upsert",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ExecutableFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Find all instances of the model matched by filter from the data source.",
+            "operationId": "ExecutableFeed.find",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ExecutableFeed_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/{id}/exists": {
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "ExecutableFeed.exists__get_feeds_executable_{id}_exists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/{id}": {
+        "head": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "ExecutableFeed.exists__head_feeds_executable_{id}",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Find a model instance by id from the data source.",
+            "operationId": "ExecutableFeed.findById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Delete a model instance by id from the data source.",
+            "operationId": "ExecutableFeed.deleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Update attributes for a model instance and persist it into the data source.",
+            "operationId": "ExecutableFeed.prototype.updateAttributes",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ExecutableFeed_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/findOne": {
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Find first instance of the model matched by filter from the data source.",
+            "operationId": "ExecutableFeed.findOne",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/update": {
+        "post": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Update instances of the model matched by where from the data source.",
+            "operationId": "ExecutableFeed.updateAll",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ExecutableFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "description": "The number of instances updated",
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/count": {
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Count instances of the model matched by where from the data source.",
+            "operationId": "ExecutableFeed.count",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/change-stream": {
+        "post": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Create a change stream.",
+            "operationId": "ExecutableFeed.createChangeStream__post_feeds_executable_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "formData",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Create a change stream.",
+            "operationId": "ExecutableFeed.createChangeStream__get_feeds_executable_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/filtered": {
+        "get": {
+            "tags": ["ExecutableFeed", "Client"],
+            "summary": "Find all instances of the feed matched by filter from the data source and filtered by feed ACL.",
+            "operationId": "ExecutableFeed.filteredFind",
+            "parameters": [{
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ExecutableFeed_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/filtered/findOne": {
+        "get": {
+            "tags": ["ExecutableFeed", "Client"],
+            "summary": "Find first instance of the feed matched by filter from the data source and filtered by feed ACL.",
+            "operationId": "ExecutableFeed.filteredFindOne",
+            "parameters": [{
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/filtered/{id}": {
+        "get": {
+            "tags": ["ExecutableFeed", "Client"],
+            "summary": "Find a feed instance by id from the data source and filtered by feed ACL.",
+            "operationId": "ExecutableFeed.filteredFindById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Feed id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ExecutableFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/filtered/{id}/exists": {
+        "get": {
+            "tags": ["ExecutableFeed", "Client"],
+            "summary": "Check whether a feed instance, filtered by feed ACL, exists in the data source.",
+            "operationId": "ExecutableFeed.filteredExists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Feed id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/filtered/count": {
+        "get": {
+            "tags": ["ExecutableFeed", "Client"],
+            "summary": "Count instances of the feed matched by where from the data source and filtered by feed ACL.",
+            "operationId": "ExecutableFeed.filteredCount",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/executable/{id}/role-acl": {
+        "post": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Associate a role ACL to this model instance.",
+            "operationId": "ExecutableFeed.createRoleAcl",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "body",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/FeedRoleACL"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ExecutableFeed"],
+            "summary": "Find all role ACL associated to this model instance.",
+            "operationId": "ExecutableFeed.getRoleAcls",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/FeedRoleACL"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    }
+}

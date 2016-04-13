@@ -1,0 +1,497 @@
+{
+    "x-any": {
+        "properties": {}
+    },
+    "Field_get": {
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "type": {
+                "type": "string"
+            },
+            "required": {
+                "default": false,
+                "type": "boolean"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "id": {
+                "type": "number",
+                "format": "double"
+            }
+        },
+        "required": ["name", "type"],
+        "additionalProperties": false
+    },
+    "Field_post": {
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "type": {
+                "type": "string"
+            },
+            "required": {
+                "default": false,
+                "type": "boolean"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": [
+            "name",
+            "type"
+        ]
+    },
+    "AtomicFeed_get": {
+        "properties": {
+            "id": {
+                "type": "number",
+                "format": "double"
+            },
+            "_field": {
+                "$ref": "#/definitions/Field"
+            },
+            "name": {
+                "type": "string"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+    },
+    "AtomicFeed_post": {
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": [
+            "name"
+        ]
+    },
+    "ComposedFeed_get": {
+        "properties": {
+            "id": {
+                "type": "number",
+                "format": "double"
+            },
+            "_fields": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/Field"
+                }
+            },
+            "name": {
+                "type": "string"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+    },
+    "ComposedFeed_post": {
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": [
+            "name"
+        ]
+    },
+    "ExecutableFeed_get": {
+        "properties": {
+            "source": {
+                "default": "",
+                "type": "string"
+            },
+            "params": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "readable": {
+                "default": false,
+                "type": "boolean"
+            },
+            "writeable": {
+                "default": false,
+                "type": "boolean"
+            },
+            "id": {
+                "type": "number",
+                "format": "double"
+            },
+            "name": {
+                "type": "string"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+    },
+    "ExecutableFeed_post": {
+        "properties": {
+            "source": {
+                "default": "",
+                "type": "string"
+            },
+            "params": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "readable": {
+                "default": false,
+                "type": "boolean"
+            },
+            "writeable": {
+                "default": false,
+                "type": "boolean"
+            },
+            "name": {
+                "type": "string"
+            },
+            "metadata": {
+                "default": "",
+                "type": "string"
+            },
+            "keywords": {
+                "default": [],
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
+        "required": [
+            "name"
+        ]
+    },
+    "HubRole_get": {
+        "properties": {
+            "id": {
+                "type": "number",
+                "format": "double"
+            },
+            "name": {
+                "type": "string"
+            },
+            "description": {
+                "type": "string"
+            },
+            "created": {
+                "type": "string",
+                "format": "date"
+            },
+            "modified": {
+                "type": "string",
+                "format": "date"
+            }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+    },
+    "HubRole_post": {
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "description": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "name"
+        ]
+    },
+    "HubUser_get": {
+        "properties": {
+            "realm": {
+                "type": "string"
+            },
+            "username": {
+                "type": "string"
+            },
+            "credentials": {
+                "type": "object"
+            },
+            "challenges": {
+                "type": "object"
+            },
+            "email": {
+                "type": "string"
+            },
+            "emailVerified": {
+                "type": "boolean"
+            },
+            "status": {
+                "type": "string"
+            },
+            "created": {
+                "type": "string",
+                "format": "date"
+            },
+            "lastUpdated": {
+                "type": "string",
+                "format": "date"
+            },
+            "id": {
+                "type": "number",
+                "format": "double"
+            }
+        },
+        "required": ["email"],
+        "additionalProperties": false
+    },
+    "HubUser_post": {
+        "properties": {
+            "realm": {
+                "type": "string"
+            },
+            "username": {
+                "type": "string"
+            },
+            "credentials": {
+                "type": "object"
+            },
+            "challenges": {
+                "type": "object"
+            },
+            "email": {
+                "type": "string"
+            },
+            "password": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "email",
+            "password"
+        ]
+    },
+    "FeedRoleACL": {
+        "properties": {
+            "id": {
+                "type": "number",
+                "format": "double"
+            },
+            "roleId": {
+                "type": "number",
+                "format": "double"
+            },
+            "atomicId": {
+                "type": "number",
+                "format": "double"
+            },
+            "composedId": {
+                "type": "number",
+                "format": "double"
+            },
+            "executableId": {
+                "type": "number",
+                "format": "double"
+            }
+        },
+        "additionalProperties": false
+    },
+    "RoleMapping": {
+        "description": "Map principals to roles",
+        "properties": {
+            "id": {
+                "type": "number",
+                "format": "double"
+            },
+            "principalType": {
+                "description": "The principal type, such as user, application, or role",
+                "type": "string"
+            },
+            "principalId": {
+                "type": "string"
+            },
+            "roleId": {
+                "type": "number",
+                "format": "double"
+            }
+        },
+        "additionalProperties": false
+    },
+    "AccessToken": {
+        "properties": {
+            "id": {
+                "type": "string"
+            },
+            "ttl": {
+                "default": 1209600,
+                "description": "time to live in seconds (2 weeks by default)",
+                "type": "number",
+                "format": "double"
+            },
+            "created": {
+                "type": "string",
+                "format": "date"
+            },
+            "userId": {
+                "type": "number",
+                "format": "double"
+            }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+    },
+    "MultipleFeed_get": {
+        "type": "object",
+        "properties": {
+            "count": {
+                "type": "number"
+            },
+            "types": {
+                "type": "array",
+                "description": "The feeds types found. The values of this array indicate which fields are available.",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "atomic",
+                        "composed",
+                        "executable"
+                    ]
+                }
+            },
+            "atomic": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/AtomicFeed"
+                }
+            },
+            "composed": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/ComposedFeed"
+                }
+            },
+            "executable": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/ExecutableFeed"
+                }
+            }
+        },
+        "required": [
+            "count",
+            "types"
+        ]
+    },
+    "GenericFeed_post": {
+        "type": "object",
+        "description": "Can have all properties of a feed of any type plus one of these two (or none)",
+        "properties": {
+            "field": {
+                "description": "Only for AtomicFeed",
+                "$ref": "#/definitions/Field_post"
+            },
+            "fields": {
+                "type": "array",
+                "description": "Only for ComposedFeed",
+                "items": {
+                    "$ref": "#/definitions/Field_post"
+                }
+            }
+        }
+    },
+    "MultipleFeed_post": {
+        "type": "array",
+        "items": {
+            "allOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "validate": {
+                            "type": "boolean",
+                            "defaults": false,
+                            "description": "specify if the feed has to be validated after being created"
+                        }
+                    }
+                },
+                {
+                    "$ref": "#/definitions/GenericFeed_post"
+                }
+            ]
+        }
+    }
+}

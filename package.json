@@ -50,6 +50,7 @@
     "mocha": "^2.3.4",
     "request": "^2.69.0",
     "supertest": "^1.2.0",
+    "through2": "^2.0.1",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0"

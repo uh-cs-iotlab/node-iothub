@@ -14,6 +14,7 @@ var uglify = require('gulp-uglify');
 var gutil = require('gulp-util');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
+var modifyDoc = require('./src/doc/modifyDoc');
 
 var srcDir = path.join('.', 'src');
 var outputDir = path.join('.', 'client');
@@ -65,8 +66,10 @@ gulp.task('api-doc', () => {
     return gulp.src([
         path.join(srcDir, 'doc', 'swagger.json')
     ])
+    .pipe(modifyDoc())
     .pipe(jsonminify())
-    .pipe(gulp.dest(path.join(outputDir, 'doc')));
+    .pipe(gulp.dest(path.join(outputDir, 'doc')))
+    .on('error', gutil.log.bind(gutil, 'API doc Error'));
 });
 
 gulp.task('doc-css-print', () => {

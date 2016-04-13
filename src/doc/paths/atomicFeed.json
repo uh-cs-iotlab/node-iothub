@@ -1,0 +1,832 @@
+{
+    "/feeds/atomic/{id}/field": {
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Fetches hasOne relation field.",
+            "operationId": "AtomicFeed.prototype.__get__field",
+            "parameters": [{
+                "name": "refresh",
+                "in": "query",
+                "required": false,
+                "type": "boolean"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/Field_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": ["AtomicFeed"],
+            "summary": "Creates a new instance in field of this model.",
+            "operationId": "AtomicFeed.prototype.__create__field",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/Field_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/Field_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["AtomicFeed"],
+            "summary": "Update field of this model.",
+            "operationId": "AtomicFeed.prototype.__update__field",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/Field_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/Field_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["AtomicFeed"],
+            "summary": "Deletes field of this model.",
+            "operationId": "AtomicFeed.prototype.__destroy__field",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic": {
+        "post": {
+            "tags": ["AtomicFeed"],
+            "summary": "Create a new instance of the model and persist it into the data source.",
+            "operationId": "AtomicFeed.create",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/AtomicFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["AtomicFeed"],
+            "summary": "Update an existing model instance or insert a new one into the data source.",
+            "operationId": "AtomicFeed.upsert",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/AtomicFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Find all instances of the model matched by filter from the data source.",
+            "operationId": "AtomicFeed.find",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/AtomicFeed_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/exists": {
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "AtomicFeed.exists__get_feeds_atomic_{id}_exists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}": {
+        "head": {
+            "tags": ["AtomicFeed"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "AtomicFeed.exists__head_feeds_atomic_{id}",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Find a model instance by id from the data source.",
+            "operationId": "AtomicFeed.findById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["AtomicFeed"],
+            "summary": "Delete a model instance by id from the data source.",
+            "operationId": "AtomicFeed.deleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["AtomicFeed"],
+            "summary": "Update attributes for a model instance and persist it into the data source.",
+            "operationId": "AtomicFeed.prototype.updateAttributes",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/AtomicFeed_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/findOne": {
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Find first instance of the model matched by filter from the data source.",
+            "operationId": "AtomicFeed.findOne",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/update": {
+        "post": {
+            "tags": ["AtomicFeed"],
+            "summary": "Update instances of the model matched by where from the data source.",
+            "operationId": "AtomicFeed.updateAll",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/AtomicFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "description": "The number of instances updated",
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/count": {
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Count instances of the model matched by where from the data source.",
+            "operationId": "AtomicFeed.count",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/change-stream": {
+        "post": {
+            "tags": ["AtomicFeed"],
+            "summary": "Create a change stream.",
+            "operationId": "AtomicFeed.createChangeStream__post_feeds_atomic_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "formData",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Create a change stream.",
+            "operationId": "AtomicFeed.createChangeStream__get_feeds_atomic_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/data-format": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Get accepted data format for this feed",
+            "operationId": "AtomicFeed.getDataFormat",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/data": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Get feed data with optional limit",
+            "operationId": "AtomicFeed.getData",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Post feed data",
+            "operationId": "AtomicFeed.postData",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "type": "object"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/data-stream": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Create a data change stream.",
+            "operationId": "AtomicFeed.createDataChangeStream",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/validated": {
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Check if the feed has already been validated",
+            "operationId": "AtomicFeed.isValidated",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "validated": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/validate": {
+        "post": {
+            "tags": ["AtomicFeed"],
+            "summary": "Validate feed for use and create data collection",
+            "operationId": "AtomicFeed.validate",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "changed": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/force": {
+        "delete": {
+            "tags": ["AtomicFeed"],
+            "summary": "Force-delete a model instance by id from the data source.",
+            "operationId": "AtomicFeed.forceDeleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/filtered": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Find all instances of the feed matched by filter from the data source and filtered by feed ACL.",
+            "operationId": "AtomicFeed.filteredFind",
+            "parameters": [{
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/AtomicFeed_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/filtered/findOne": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Find first instance of the feed matched by filter from the data source and filtered by feed ACL.",
+            "operationId": "AtomicFeed.filteredFindOne",
+            "parameters": [{
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/filtered/{id}": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Find a feed instance by id from the data source and filtered by feed ACL.",
+            "operationId": "AtomicFeed.filteredFindById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Feed id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AtomicFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/filtered/{id}/exists": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Check whether a feed instance, filtered by feed ACL, exists in the data source.",
+            "operationId": "AtomicFeed.filteredExists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Feed id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/filtered/count": {
+        "get": {
+            "tags": ["AtomicFeed", "Client"],
+            "summary": "Count instances of the feed matched by where from the data source and filtered by feed ACL.",
+            "operationId": "AtomicFeed.filteredCount",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/atomic/{id}/role-acl": {
+        "post": {
+            "tags": ["AtomicFeed"],
+            "summary": "Associate a role ACL to this model instance.",
+            "operationId": "AtomicFeed.createRoleAcl",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "body",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/FeedRoleACL"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["AtomicFeed"],
+            "summary": "Find all role ACL associated to this model instance.",
+            "operationId": "AtomicFeed.getRoleAcls",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/FeedRoleACL"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "/feeds": {
+        "get": {
+            "tags": [
+                "AtomicFeed",
+                "ComposedFeed",
+                "ExecutableFeed",
+                "Client"
+            ],
+            "summary": "Fetches all registered feeds.",
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/MultipleFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": [
+                "AtomicFeed",
+                "ComposedFeed",
+                "ExecutableFeed"
+            ],
+            "summary": "Add several feeds of different types with optional validation",
+            "parameters": [
+                {
+                    "name": "data",
+                    "in": "body",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/MultipleFeed_post"
+                    }
+                }
+            ]
+        }
+    }
+}

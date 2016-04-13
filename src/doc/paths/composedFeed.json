@@ -1,0 +1,939 @@
+{
+    "/feeds/composed/{id}/fields/{fk}": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Find a related item by id for fields.",
+            "operationId": "ComposedFeed.prototype.__findById__fields",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for fields",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/Field_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["ComposedFeed"],
+            "summary": "Delete a related item by id for fields.",
+            "operationId": "ComposedFeed.prototype.__destroyById__fields",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for fields",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["ComposedFeed"],
+            "summary": "Update a related item by id for fields.",
+            "operationId": "ComposedFeed.prototype.__updateById__fields",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for fields",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/Field_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/Field_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/fields": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Queries fields of ComposedFeed.",
+            "operationId": "ComposedFeed.prototype.__get__fields",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/Field_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": ["ComposedFeed"],
+            "summary": "Creates a new instance in fields of this model.",
+            "operationId": "ComposedFeed.prototype.__create__fields",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/Field_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/Field_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["ComposedFeed"],
+            "summary": "Deletes all fields of this model.",
+            "operationId": "ComposedFeed.prototype.__delete__fields",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/fields/count": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Counts fields of ComposedFeed.",
+            "operationId": "ComposedFeed.prototype.__count__fields",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed": {
+        "post": {
+            "tags": ["ComposedFeed"],
+            "summary": "Create a new instance of the model and persist it into the data source.",
+            "operationId": "ComposedFeed.create",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ComposedFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["ComposedFeed"],
+            "summary": "Update an existing model instance or insert a new one into the data source.",
+            "operationId": "ComposedFeed.upsert",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ComposedFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Find all instances of the model matched by filter from the data source.",
+            "operationId": "ComposedFeed.find",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ComposedFeed_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/exists": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "ComposedFeed.exists__get_feeds_composed_{id}_exists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}": {
+        "head": {
+            "tags": ["ComposedFeed"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "ComposedFeed.exists__head_feeds_composed_{id}",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Find a model instance by id from the data source.",
+            "operationId": "ComposedFeed.findById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["ComposedFeed"],
+            "summary": "Delete a model instance by id from the data source.",
+            "operationId": "ComposedFeed.deleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["ComposedFeed"],
+            "summary": "Update attributes for a model instance and persist it into the data source.",
+            "operationId": "ComposedFeed.prototype.updateAttributes",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ComposedFeed_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "PersistedModel id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/findOne": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Find first instance of the model matched by filter from the data source.",
+            "operationId": "ComposedFeed.findOne",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/update": {
+        "post": {
+            "tags": ["ComposedFeed"],
+            "summary": "Update instances of the model matched by where from the data source.",
+            "operationId": "ComposedFeed.updateAll",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/ComposedFeed_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "description": "The number of instances updated",
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/count": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Count instances of the model matched by where from the data source.",
+            "operationId": "ComposedFeed.count",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/change-stream": {
+        "post": {
+            "tags": ["ComposedFeed"],
+            "summary": "Create a change stream.",
+            "operationId": "ComposedFeed.createChangeStream__post_feeds_composed_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "formData",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Create a change stream.",
+            "operationId": "ComposedFeed.createChangeStream__get_feeds_composed_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/data-format": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Get accepted data format for this feed",
+            "operationId": "ComposedFeed.getDataFormat",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/data": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Get feed data with optional limit",
+            "operationId": "ComposedFeed.getData",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Post feed data",
+            "operationId": "ComposedFeed.postData",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "type": "object"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/data-stream": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Create a data change stream.",
+            "operationId": "ComposedFeed.createDataChangeStream",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/validated": {
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Check if the feed has already been validated",
+            "operationId": "ComposedFeed.isValidated",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "validated": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/validate": {
+        "post": {
+            "tags": ["ComposedFeed"],
+            "summary": "Validate feed for use and create data collection",
+            "operationId": "ComposedFeed.validate",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "changed": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/force": {
+        "delete": {
+            "tags": ["ComposedFeed"],
+            "summary": "Force-delete a model instance by id from the data source.",
+            "operationId": "ComposedFeed.forceDeleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/filtered": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Find all instances of the feed matched by filter from the data source and filtered by feed ACL.",
+            "operationId": "ComposedFeed.filteredFind",
+            "parameters": [{
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/ComposedFeed_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/filtered/findOne": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Find first instance of the feed matched by filter from the data source and filtered by feed ACL.",
+            "operationId": "ComposedFeed.filteredFindOne",
+            "parameters": [{
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/filtered/{id}": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Find a feed instance by id from the data source and filtered by feed ACL.",
+            "operationId": "ComposedFeed.filteredFindById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Feed id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "query",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/ComposedFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/filtered/{id}/exists": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Check whether a feed instance, filtered by feed ACL, exists in the data source.",
+            "operationId": "ComposedFeed.filteredExists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Feed id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/filtered/count": {
+        "get": {
+            "tags": ["ComposedFeed", "Client"],
+            "summary": "Count instances of the feed matched by where from the data source and filtered by feed ACL.",
+            "operationId": "ComposedFeed.filteredCount",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/feeds/composed/{id}/role-acl": {
+        "post": {
+            "tags": ["ComposedFeed"],
+            "summary": "Associate a role ACL to this model instance.",
+            "operationId": "ComposedFeed.createRoleAcl",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "body",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/FeedRoleACL"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["ComposedFeed"],
+            "summary": "Find all role ACL associated to this model instance.",
+            "operationId": "ComposedFeed.getRoleAcls",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "type": "string"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/FeedRoleACL"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    }
+}
