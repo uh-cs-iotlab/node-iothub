@@ -415,46 +415,18 @@
         "required": ["id"],
         "additionalProperties": false
     },
-    "MultipleFeed_get": {
-        "type": "object",
-        "properties": {
-            "count": {
-                "type": "number"
+    "GenericFeed_get": {
+        "description": "Can have all properties of a feed of any type",
+        "oneOf": [
+            {
+                "$ref": "#/definitions/AtomicFeed_get"
             },
-            "types": {
-                "type": "array",
-                "description": "The feeds types found. The values of this array indicate which fields are available.",
-                "items": {
-                    "type": "string",
-                    "enum": [
-                        "atomic",
-                        "composed",
-                        "executable"
-                    ]
-                }
+            {
+                "$ref": "#/definitions/ComposedFeed_get"
             },
-            "atomic": {
-                "type": "array",
-                "items": {
-                    "$ref": "#/definitions/AtomicFeed"
-                }
-            },
-            "composed": {
-                "type": "array",
-                "items": {
-                    "$ref": "#/definitions/ComposedFeed"
-                }
-            },
-            "executable": {
-                "type": "array",
-                "items": {
-                    "$ref": "#/definitions/ExecutableFeed"
-                }
+            {
+                "$ref": "#/definitions/ExecutableFeed_get"
             }
-        },
-        "required": [
-            "count",
-            "types"
         ]
     },
     "GenericFeed_post": {
@@ -472,6 +444,12 @@
                     "$ref": "#/definitions/Field_post"
                 }
             }
+        }
+    },
+    "MultipleFeed_get": {
+        "type": "array",
+        "items": {
+            "$ref": "#/definitions/GenericFeed_get"
         }
     },
     "MultipleFeed_post": {

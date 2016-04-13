@@ -12,7 +12,46 @@
                 "200": {
                     "description": "Request was successful",
                     "schema": {
-                        "$ref": "#/definitions/MultipleFeed_get"
+                        "type": "object",
+                        "properties": {
+                            "count": {
+                                "type": "number"
+                            },
+                            "types": {
+                                "type": "array",
+                                "description": "The feeds types found. The values of this array indicate which fields are available.",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "atomic",
+                                        "composed",
+                                        "executable"
+                                    ]
+                                }
+                            },
+                            "atomic": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/AtomicFeed"
+                                }
+                            },
+                            "composed": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/ComposedFeed"
+                                }
+                            },
+                            "executable": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/ExecutableFeed"
+                                }
+                            }
+                        },
+                        "required": [
+                            "count",
+                            "types"
+                        ]
                     }
                 }
             },
@@ -34,7 +73,16 @@
                         "$ref": "#/definitions/MultipleFeed_post"
                     }
                 }
-            ]
+            ],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/MultipleFeed_get"
+                    }
+                }
+            },
+            "deprecated": false
         }
     }
 }
