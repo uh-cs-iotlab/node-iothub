@@ -1,5 +1,5 @@
 # solmuhub
-Node.js implementation of the IoT Hub
+Node.js implementation of the IoT Hub.
 
 Authors
 -------
@@ -9,11 +9,11 @@ Authors
 + https://github.com/jmineraud
 
 **Aurélien Bertron**
-+ http:s//github.com/Nautigsam
++ https://github.com/Nautigsam
 
-Install
+Getting started
 ----------
-Please check install information on [INSTALL.md](INSTALL.md)
+Please check informations right [here](https://uh-cs-iotlab.github.io/solmuhub/#installation).
 
 Licence
 -------
