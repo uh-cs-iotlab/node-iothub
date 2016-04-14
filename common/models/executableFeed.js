@@ -1,11 +1,75 @@
 'use strict';
 
-var iothubvm = require('../../lib/iothub-vm');
+var request = require('request');
 var FeedTypes = require('../utils/feed-types');
+var vmContainer = require('../../lib/vm-container');
+var app = require('../../server/server');
 
 module.exports = function (ExecutableFeed) {
 
     ExecutableFeed.mixin('BaseFeed', {type: FeedTypes.EXECUTABLE});
+
+    var getData = function (element, index, array) {
+        if (element.type) {
+            if (element.type === 'inline') {
+                this.data.push(element);
+            } else if (element.type === 'feed') {
+                this.data.push({name: element.name, data:this.feed.data});
+            } else if (element.type === 'local') {
+                this.data.push(fetchFeed(element));
+            } else if (element.type === 'remote') {
+                this.data.push(fetchFeed(element));
+            } else {
+                throw new Error('Type ' + element.type + ' not supported');
+            }
+        } else {
+            throw new Error('Type must be provided for data');
+        }
+    };
+
+    var fetchFeed = function (element) {
+        var feedId = element.feed || '',
+            feedType = element.feedType || 'atomic';
+
+        if (element.type === 'local') {
+            // Default settings for local feeds
+            var baseUrl = 'https://' + app.get('host') + ':' + app.get('port') + '/api/feeds',
+                feedUrl =  baseUrl + '/' + feedType + '/' + feedId,
+                url = baseUrl + feedUrl;
+        } else if (element.type === 'remote' && element.url) {
+            var url = element.url;
+        } else {
+            var error = new Error(`Type ` + element.type + ` not identified`);
+            Promise.reject(error);
+        }
+            
+        var options = {
+            method: 'GET',
+            uri: url
+        };
+        return new Promise((resolve, reject) => {
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+            request(options, function (error, response, body) {
+                if (error) {
+                    reject(error);
+                } else if (response.statusCode !== 200 && response.statusCode !== 0) {
+                    var err = new Error('Could not fetch defined data for feed : ' 
+                        + element.name);
+                    err.name = 'Data Error';
+                    err.statusCode = err.status = response.statusCode;
+                    delete err.stack;
+                    reject(err);
+                } else {
+                    resolve({name: element.name, data: JSON.parse(body)}); 
+                }
+            });
+        });
+    };
+
+    var mapFeeds = function (element, index, array) {
+        this.data[element.name] = element.data;
+    }
 
     ExecutableFeed.runScript = function (modelId, body, cb) {
     	if (!body.source) {
@@ -16,7 +80,16 @@ module.exports = function (ExecutableFeed) {
         }
 
         var script = body.source;
-        var vm = iothubvm();
+        var vmName = body.vm || 'iothub';
+        var context = {
+            data: []
+        };
+
+        var vmOptions = {
+            XMLHttpRequest: true,
+            data: {}
+        }
+
         var reqP = ExecutableFeed.findById(modelId)
             .then((feed) => {
                 if (!feed) {
@@ -24,23 +97,55 @@ module.exports = function (ExecutableFeed) {
                     err.statusCode = err.status = 404;
                     return Promise.reject(err);
                 } else {
-                    return new Promise((resolve, reject) => {
-                        var start, end, time;
-                        var response = null;
-                        start = new Date().getTime();
-                        vm.runScript(script, (err, res) => {
-                            if (err) reject(err);
-                            end = new Date().getTime();
-                            response = {
-                                time: end - start,
-                                result: res,
-                                feed: feed.name
+                    // If data sources for the feed are defined, fetch data and
+                    // make it available to the script.
+                    if (body.data) {
+                        context.feed = feed;
+                        try {
+                            body.data.forEach(getData, context);
+                        } catch (error) {
+                            return Promise.reject(error);
+                        } 
+                        return Promise.all(context.data)
+                        .then(values => {
+                            if (values) {
+                                var contextObj = {data:{}};
+                                values.forEach(mapFeeds, contextObj);
+                                contextObj.feed = feed;
+                                return Promise.resolve(contextObj);
                             }
+                        }, err => {
+                            return Promise.reject(err);
+                        });
+                    } else {
+                        // Else just return object with feed info
+                        return Promise.resolve({feed: feed});
+                    }
+                }
+            })
+            .then((vmContext) => {
+                vmOptions.data = vmContext.data;
+                return new Promise((resolve, reject) => {
+                    var start, end, time;
+                    var response = null;
+                    var vm = vmContainer.getVM(vmName, vmOptions);
 
-                            resolve(response);
-				        });
-	        		});
-        		}
+                    start = new Date().getTime();
+                    vm.runScript(script, (err, res) => {
+                        if (err) reject(err);
+                        end = new Date().getTime();
+                        // If metadata is desired with the response, return it. Defaults to
+                        // plain result object
+                        response = (body.response && body.response.metadata) ? {
+                            time: end - start,
+                            result: res,
+                            feed: vmContext.feed.name
+                        } : {
+                            result: res
+                        };
+                        resolve(response);
+			        });
+        		});
         	});
 
         if (cb) reqP.then(result => cb(null, result), err => cb(err));
@@ -76,7 +181,7 @@ module.exports = function (ExecutableFeed) {
     ExecutableFeed.afterRemote('runScript', function(context, remoteMethodOutput, next) {
         if (context.req.headers.accept && context.req.headers.accept === 'text/plain') {
             context.res.setHeader('Content-Type', 'text/plain');
-            context.res.end(remoteMethodOutput.result + '');
+            context.res.end(JSON.stringify(remoteMethodOutput.result) + '');
         } else {
             next();
         }

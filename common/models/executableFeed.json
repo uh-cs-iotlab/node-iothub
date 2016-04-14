@@ -16,7 +16,7 @@
         },
         "data": {
             "type": [
-                "string"
+                "object"
             ],
             "default": []
         },
