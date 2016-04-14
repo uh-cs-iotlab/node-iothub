@@ -61,25 +61,31 @@ module.exports = {
 
                 let FeedData = loopback.PersistedModel.extend(self.feedDataCollectionName(Model, feedInstance.getId()), properties, options);
                 FeedData.observe('before save', function (ctx, next) {
+                    let hookP = Promise.resolve();
                     if (ctx.isNewInstance && ctx.instance) {
                         let properties = ctx.instance.toJSON();
-                        for (let prop in properties) {
+                        hookP = Promise.all(Object.keys(properties).map((prop) => {
                             if (prop != 'date' && properties[prop]) {
                                 let fieldDesc = fieldDescriptionsByName[prop];
                                 if (fieldDesc) {
-                                    let ret = FieldTypes.isValid(fieldDesc.type, ctx.instance[prop]);
-                                    if (ret.err) return next(ret.err);
-                                    if (!ret.valid) {
-                                        let err = new Error(`Invalid data. Wrong type for "${prop}" field. "${fieldDesc.type}" expected.`);
-                                        err.statusCode = err.status = 422;
-                                        return next(err);
-                                    }
+                                    return FieldTypes.isValid(fieldDesc.type, ctx.instance[prop])
+                                    .then((valid) => {
+                                        if (!valid) {
+                                            let err = new Error(`Invalid data. Wrong type for "${prop}" field. "${fieldDesc.type}" expected.`);
+                                            err.statusCode = err.status = 422;
+                                            return Promise.reject(err);
+                                        }
+                                    });
                                 }
                             }
-                        }
-                        ctx.instance.date = (ctx.instance.date ? new Date(ctx.instance.date) : new Date());
+                            return Promise.resolve();
+                        }))
+                        .then(() => {
+                            ctx.instance.date = (ctx.instance.date ? new Date(ctx.instance.date) : new Date());
+                        });
                     }
-                    next();
+                    if (typeof next === 'function') hookP.then(() => next(), err => next(err));
+                    else return hookP;
                 });
                 return app.model(FeedData, {dataSource: 'db', public: false});
             });

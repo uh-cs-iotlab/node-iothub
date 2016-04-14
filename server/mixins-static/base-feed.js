@@ -58,11 +58,6 @@ module.exports = function (Model, mixinOptions) {
                 if (options && options.accessToken) {
                     accessToken = options.accessToken;
                 } else {
-                    /**
-                     * This manner to get the token is not documented but you can get infos here:
-                     * - https://github.com/strongloop/loopback/issues/569
-                     * - https://github.com/strongloop/loopback/pull/775
-                     */
                     let context = loopback.getCurrentContext();
                     if (context) accessToken = context.get('accessToken');
                 }
