@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Solmuhub by uh-cs-iotlab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="../stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen"><link rel="stylesheet" type="text/css" href="../stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.3.0/styles/atelier-dune-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.3.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Solmuhub</h1>
+      <h2 class="project-tagline">Node.js implementation of the IoT Hub</h2>
+      <a href="https://github.com/uh-cs-iotlab/solmuhub" class="btn">View on GitHub</a>
+      <a href="https://github.com/uh-cs-iotlab/solmuhub/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/uh-cs-iotlab/solmuhub/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>Integration with the <a href="http://geo2tag.org/?lang=en_US">Geo2Tag platform</a></h1>
+      <p> Geo2Tag is an open-source location-based service platform. It provides API for geodata (queries and filters) that are needed for deploying location-based and location-context services.
+      </p>
+
+      <h2>Steps for integrating the Geo2Tag platform to the IoT Hub</h2>
+      <h3>Development of the Geo2Tag platform plugin for the IoT</h3>
+      <p>IoT Hub plugins are simple Javascript object with a set of defined functions. Here is an example for an hello world plugin which requires to be be configured:
+      <pre>
+<b>Hello world plugin example</b>
+      <code class="js">
+var HelloWorldPluginConfiguration = { 
+  needConfiguration: true,
+  checkConfiguration: function(data) { 
+    var config = JSON.parse(data);
+    if (typeof(config.name) !== 'string') { return false; } 
+    return true; 
+  },
+  configure: function(config) {
+    if (this.checkConfiguration(config)) {
+      var config = JSON.parse(data);
+      var name = config.name;
+      this.config = { name: name }; 
+    }
+  },
+  isFeatureSupported: function(name) { return typeof(this.config) !== "undefined"; },
+  isFeatureAvailable: function(name) { return isFeatureSupported(name); },
+  isFeatureReadable: function(name) { return isFeatureSupported(name); },
+  isFeatureWritable: function(name) { return false; },
+  getNumberOfFeatures: function() { return 1; },
+  postFeatureValue: function(name, data) { return false; },
+  getFeatureDescription: function(index) {
+    if (index == 0) { 
+      return JSON.stringify({name: "message", type: "string"});
+    } else {return null;}
+  },
+  getFeatureValue: function (name) {
+    if (!isFeatureSupported(name) || name !== "message") { return null; }
+    return JSON.stringify('Hello ' + this.config.name);
+  }
+};
+      </code></pre>
+      The functions that need to be available for an IoT Hub plugin are:
+      <ul>
+        <li><em>needConfiguration</em>: a variable that defines if the plugin requires to be configured. In the case of the Geo2Tag plugin, this will be set to <tt>true</tt>.</li>
+        <li><em>checkConfiguration</em>: a function that takes a JSON parsable param that checks whether or not the input configuration is valid. Must return a boolean.
+        </li>
+        <li><em>configure</em>: a function that takes a JSON parsable param that applies the configuration to the running instance of the plugin. In the case of Geo2Tag, we need the <b>url of the Geo2Tag platform</b>. 
+        </li>
+        <li><em>getNumberOfFeatures</em>: a function that returns the number of features provided by the plugin. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>getFeatureDescription</em>: a function that returns the IoT data type description of the feature provided by the plugin. As the Geo2Tag and the IoT Hub use <tt>jsonschema</tt> for their data type definition. The plugin could either use the IoT hub data format or add to the IoT Hub the schema provided by the Geo2Tag platform. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>isFeatureSupported</em>: a function that returns if the feature is supported on the current IoT platform. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>isFeatureAvailable</em>: a function that returns if the feature is available on the current IoT platform. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>isFeatureReadable</em>: a function that returns if the feature is readable on the current IoT platform. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>isFeatureWritable</em>: a function that returns if the feature is writable on the current IoT platform. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>getFeatureValue</em>: a function that returns the content provided by the feature if the feature is available and readable. This function will be only called when the plugin would have been configured.
+        </li>
+        <li><em>postFeatureValue</em>: a function that post content provided to the feature if the feature is available and writable. This function will be only called when the plugin would have been configured.
+        </li>
+      </ul>
+<!--            <pre>
+<b>Geo2Tag IoT Hub plugin example</b>
+      <code class="js">
+var Geo2Tag = { 
+  needConfiguration: true,
+  checkConfiguration: function(data) { 
+    var config = JSON.parse(data);
+    if (typeof(config.url) !== 'string') { return false; }
+    if (typeof(config.jwt) !== 'object') { return false; } 
+    return true; 
+  },
+  configure: function(config) {
+    if (this.checkConfiguration(config)) {
+      var config = JSON.parse(data);
+      this.config = { 
+        url: config.url,
+        jwt: config.jwt
+      };
+    }
+  },
+  isFeatureSupported: function(name) { return true; },
+  isFeatureAvailable: function(name) { return true; },
+  isFeatureReadable: function(name) { return isFeatureSupported(name); },
+  isFeatureWritable: function(name) { return false; },
+  getNumberOfFeatures: function() { return 1; },
+  postFeatureValue: function(name, data) { return false; },
+  getFeatureDescription: function(index) {
+    if (index == 0) { 
+      return JSON.stringify({name: "message", type: "string"});
+    } else {return null;}
+  },
+  getFeatureValue: function (name) {
+    if (!isFeatureSupported(name) || name !== "message") { return null; }
+    return JSON.stringify('Hello ' + this.config.name);
+  }
+};
+      </code></pre>
+-->
+      </p>
+      <p>In the case of the Geo2Tag plugin, the configuration includes the <a href="https://developers.google.com/identity/protocols/OAuth2ServiceAccount#callinganapi">JSON Web Signature</a> to enable to Google OAuth 2.0 authentication of the plugin to the Geo2Tag platform and then listing the features available via a GET request on either 
+      <a href="http://geo2tag.org/?page_id=692&lang=en_US">//channel</a> for the channels,
+      <a href="http://geo2tag.org/?page_id=692&lang=en_US">//service</a> for the services</p>
+      <h3>Deploying the Geo2Tag plugin in the IoT Hub</h3>
+      <p>Deploying the plugin on the IoT Hub platform is easy and can be done with
+      <b><tt>POST</tt></b> <tt>/plugins</tt>
+      <pre>
+<b>Data</b>
+      <code class="json">
+{
+  "plugin": "Geo2Tag",
+  "type": "iothub",
+  "file": a base64 string of the Geo2Tag plugin,
+  "isService": false
+}
+      </code>
+      </pre>  
+      </p>
+      <h3>Configuring the Geo2Tag plugin via the Hub enabler</h3>
+      <p>Create an enabler for the plugin via the REST API:
+      <b><tt>POST</tt></b> <tt>/enablers</tt>
+      <pre>
+<b>Data</b>
+      <code class="json">
+{
+  "plugin": Geo2TagPluginId,
+  "configuration": the configuration of the Geo2Tag plugin for this enabler
+}
+      </code>
+      </pre>  
+      </p>  
+
+      </p>
+      <h3>Exposing Geo2Tag features as IoT Hub atomic feeds</h3>
+      <p>
+      Once the GeoTag enabler has been created in the IoT Hub, the hub admin can expose the
+      selected features of the plugin via the hub REST API. It requires just a simple POST request to the IoT Hub API
+      <b><tt>POST</tt></b> <tt>/enablers/${enabler_id}/feature/${feature_name}/atomic</tt>
+      <p>The function will return the description of the created atomic feed for the feature ${feature_name} of the enabler ${enabler_id}. If it did not exist, the atomic feed will be created</p>
+      </p>
+      <h3>Interacting with Geo2Tag via the IoT Hub API</h3>
+      <p>The Hub users can interact with the Geo2Tag platform via the created atomic feeds if they have the necessary permissions to do so</p>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/uh-cs-iotlab/solmuhub">Solmuhub</a> is maintained by <a href="https://github.com/uh-cs-iotlab">uh-cs-iotlab</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  </body>
+</html>
+
