@@ -61,7 +61,19 @@ module.exports = function (ExecutableFeed) {
                     delete err.stack;
                     reject(err);
                 } else {
-                    resolve({name: element.name, data: JSON.parse(body)}); 
+                    try {
+                        if (element.dataType === 'binary') {
+                            let data = new Buffer(body).toString('base64');
+                            resolve({name:element.name, data:data}); 
+                        } else {
+                            resolve({name:element.name, data:JSON.parse(body)}); 
+                        }
+                    } catch (err) {
+                        var error = new Error('Could not parse data.');
+                        error.name = 'Data Error';
+                        error.statusCode = 400;
+                        reject(error);
+                    }
                 }
             });
         });
