@@ -20,6 +20,10 @@
             ],
             "default": []
         },
+        "lib": {
+            "type": "object",
+            "default": {}
+        },
         "description": {
             "type": "string",
             "default": ""

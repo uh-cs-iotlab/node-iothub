@@ -47,6 +47,11 @@ module.exports = function (ExecutableFeed) {
             method: 'GET',
             uri: url
         };
+
+        // request for plain binary data
+        if (element.dataType === 'binary') {
+            options.encoding = null;
+        }
         return new Promise((resolve, reject) => {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
@@ -63,7 +68,7 @@ module.exports = function (ExecutableFeed) {
                 } else {
                     try {
                         if (element.dataType === 'binary') {
-                            let data = new Buffer(body).toString('base64');
+                            let data = new Buffer(body);
                             resolve({name:element.name, data:data}); 
                         } else {
                             resolve({name:element.name, data:JSON.parse(body)}); 
@@ -83,8 +88,64 @@ module.exports = function (ExecutableFeed) {
         this.data[element.name] = element.data;
     }
 
+    ExecutableFeed.registerLib = function (modelId, libName, body, cb) {
+
+        if (!body.source) {
+            var err = new Error("The request body is not valid. Details: 'script' can't be blank");
+            err.name = 'Validation Error';
+            err.statusCode = err.status = 422;
+            reqP = Promise.reject(err);
+        }
+
+        var reqP = ExecutableFeed.findById(modelId)
+            .then((feed) => {
+                if (!feed) {
+                    var err = new Error(`Feed not found.`);
+                    err.statusCode = err.status = 404;
+                    return Promise.reject(err);
+                } else {
+                    var libs = feed.lib;
+                    if (libs[libName]) {
+                        libs[libName].description = body.description || libs[libName].description || '';
+                        libs[libName].source = body.source || libs[libName].source || '';
+                    } else {
+                        libs[libName] = {
+                            name: libName,
+                            description: body.description || '',
+                            source: body.source || ''
+                        };
+                    }
+                    feed.updateAttribute('lib', libs)
+                    .then((result) => {
+                        if (!result) {
+                            var err = new Error(`Could not update feed property.`);
+                            err.statusCode = err.status = 400;
+                            return Promise.reject(err);
+                        }
+                        return Promise.resolve(result);
+                    })
+                }
+            });
+        if (cb) reqP.then(result => cb(null, result), err => cb(err));
+        return reqP;
+    }
+    ExecutableFeed.remoteMethod(
+        'registerLib',
+        {
+            description: 'Register a library script on executable feed by id',
+            accessType: 'WRITE',
+            accepts: [
+                {arg: 'id', type: 'string', required: true},
+                {arg: 'name', type: 'string', required: true},
+                {arg: 'body', type: 'object', http: {source: 'body'}}
+            ],
+            returns: {type: 'string', root: true},
+            http: {verb: 'post', path: '/:id/lib/:name'}
+        }
+    );
+
     ExecutableFeed.runScript = function (modelId, body, cb) {
-    	if (!body.source) {
+        if (!body.source) {
             var err = new Error("The request body is not valid. Details: 'script' can't be blank");
             err.name = 'Validation Error';
             err.statusCode = err.status = 422;
@@ -111,10 +172,11 @@ module.exports = function (ExecutableFeed) {
                 } else {
                     // If data sources for the feed are defined, fetch data and
                     // make it available to the script.
-                    if (body.data) {
+                    if (body.data || feed.data) {
                         context.feed = feed;
                         try {
-                            body.data.forEach(getData, context);
+                            var source = body.data || feed.data;
+                            source.forEach(getData, context);
                         } catch (error) {
                             return Promise.reject(error);
                         } 
@@ -137,6 +199,8 @@ module.exports = function (ExecutableFeed) {
             })
             .then((vmContext) => {
                 vmOptions.data = vmContext.data;
+                vmOptions.lib = vmContext.feed.lib;
+
                 return new Promise((resolve, reject) => {
                     var start, end, time;
                     var response = null;
@@ -156,9 +220,9 @@ module.exports = function (ExecutableFeed) {
                             result: res
                         };
                         resolve(response);
-			        });
-        		});
-        	});
+                    });
+                });
+            });
 
         if (cb) reqP.then(result => cb(null, result), err => cb(err));
         return reqP;
@@ -191,12 +255,24 @@ module.exports = function (ExecutableFeed) {
     });
 
     ExecutableFeed.afterRemote('runScript', function(context, remoteMethodOutput, next) {
-        if (context.req.headers.accept && context.req.headers.accept === 'text/plain') {
-            context.res.setHeader('Content-Type', 'text/plain');
+        if (context.req.headers.accept) {
+            context.res.setHeader('Content-Type', context.req.headers.accept);
             context.res.end(JSON.stringify(remoteMethodOutput.result) + '');
         } else {
             next();
         }
     });
 
+    ExecutableFeed.beforeRemote('registerLib', function(context, unused, next) {
+        // If plain text script is posted, modify request to be json for remote method.
+        // Possibly also validate script here.
+        if (context.req.headers['content-type'] === 'text/plain') {
+            var tmpBody = {
+                source: context.req.body
+            }
+            context.body = context.req.body = context.args.body = tmpBody;
+            context.req.headers['content-type'] = context.req.rawHeaders['Content-Type'] = 'application/json';
+        }
+        next();
+    });
 };
