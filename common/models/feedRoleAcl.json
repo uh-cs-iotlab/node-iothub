@@ -28,6 +28,11 @@
             "type": "belongsTo",
             "model": "ExecutableFeed",
             "foreignKey": "executableId"
+        },
+        "virtual": {
+            "type": "belongsTo",
+            "model": "VirtualFeed",
+            "foreignKey": "virtualId"
         }
     },
     "acls": [

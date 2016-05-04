@@ -1,21 +1,25 @@
 'use strict';
 
 var app = require('../server');
-var Helper = require('./test-helper')(app);
 
-var request = require('supertest');
+var request = require('supertest-as-promised');
 var chai = require('chai');
 var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
+var HelperClass = require('./test-helper');
+var Helper = new HelperClass(app);
+
 var testUserCreds = {email: 'testuser@hub.fi', password: 'testPassword'};
+var adminRoleId;
 var testUserId;
 var testUserToken;
 
 var server;
 
 before(function () {
+    this.timeout(0);
     var config = {
         "restApiRoot": "/api",
         "host": "0.0.0.0",
@@ -37,6 +41,10 @@ before(function () {
     .then((token) => {
         testUserId = token.userId;
         testUserToken = token.id;
+        return Helper.getAdminRoleId();
+    })
+    .then((adminId) => {
+        adminRoleId = adminId;
     });
 });
 
@@ -223,6 +231,25 @@ describe('IoT Hub API, Authenticated', function () {
                     });
                 });
             });
+        });
+
+        it('A composed feed should be automatically associated to admin', function () {
+            return Helper.insertValidComposedFeed(testUserToken)
+            .then((args) => {
+                var insertedId = args[0];
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .get(`/api/feeds/composed/${insertedId}/role-acl`)
+                    .set('Authorization', testUserToken)
+                    .expect(200, (err, res) => {
+                        if (err) return reject(err);
+                        expect(res.body).to.have.length(1);
+                        expect(res.body[0].roleId).to.equal(adminRoleId);
+                        expect(res.body[0].composedId).to.equal(insertedId);
+                        resolve();
+                    });
+                });
+            })
         });
 
         it('Should delete a previously inserted feed', function () {
@@ -873,6 +900,152 @@ describe('Admin/Client access', function () {
                     });
                 });
             });
+        });
+
+    });
+
+});
+
+describe('Virtual feeds', function () {
+
+    describe('composed mappings', function () {
+
+        let composedId;
+        let virtualId;
+
+        beforeEach(function () {
+            return Helper.insertValidComposedFeed(testUserToken)
+            .then((args) => {
+                composedId = args[0];
+                return Helper.insertVirtualFeed(testUserToken);
+            })
+            .then((feedId) => {
+                virtualId = feedId;
+            });
+        });
+
+        afterEach(function () {
+            return Helper.deleteFeed(testUserToken, {
+                type: 'composed',
+                id: composedId,
+                force: true
+            })
+            .then(() => Helper.deleteVirtualFeed(testUserToken, virtualId));
+        });
+
+        describe('basic operations', function () {
+
+            let firstMappingId;
+
+            beforeEach(function () {
+                return Helper.validateFeed(testUserToken, {feedType: 'composed', id: composedId})
+                .then(() => Helper.insertVirtualComposedMapping(testUserToken, {
+                    virtualId,
+                    feedId: composedId
+                }))
+                .then((mappingId) => {
+                    firstMappingId = mappingId;
+                });
+            });
+
+            afterEach(function () {
+                return Helper.deleteVirtualComposedMapping(testUserToken, {virtualId, mappingId: firstMappingId});
+            });
+
+            it('default mapping name should be feed name', function () {
+                return app.models.ComposedFeed.findById(composedId)
+                .then((composedFeed) => {
+                    return app.models.ComposedFeedVirtualMapping.findById(firstMappingId)
+                    .then((composedMapping) => {
+                        expect(composedMapping.name).to.equals(composedFeed.name);
+                    });
+                });
+            });
+
+            it('only one mapping per feed is allowed', function () {
+                let mapping = Helper.virtualComposedMapping(composedId);
+                return request(app)
+                .post(`/api/feeds/virtual/${virtualId}/composed`)
+                .set('Authorization', testUserToken)
+                .type('json')
+                .send(JSON.stringify(mapping))
+                .expect(422);
+            });
+
+            it('should get data of mapped feeds', function () {
+                let insertedData = {testField: {unit: 'cel', value: 4}};
+                let virtualData = {testFeed: insertedData};
+                return Helper.insertData(testUserToken, insertedData, {
+                    feedType: 'composed',
+                    id: composedId
+                })
+                .then(() => Helper.getData(testUserToken, {feedType: 'virtual', id: virtualId}))
+                .then((data) => {
+                    expect(data).to.eql(virtualData);
+                });
+            });
+
+        });
+
+        describe('advanced checking', function () {
+
+            it('mapped feed must be validated', function () {
+                let mapping = Helper.virtualComposedMapping(composedId);
+                return request(app)
+                .post(`/api/feeds/virtual/${virtualId}/composed`)
+                .set('Authorization', testUserToken)
+                .type('json')
+                .send(JSON.stringify(mapping))
+                .expect(422);
+            });
+
+            it('should filter fields with composed mapping', function () {
+                let firstMappingId;
+                let clean = () => {
+                    return Helper.deleteVirtualComposedMapping(testUserToken, {virtualId, mappingId: firstMappingId});
+                };
+                let secondFieldName = 'aSecondField';
+                let insertedData = {
+                    testField: {unit: 'cel', value: 4},
+                    [secondFieldName]: {unit: 'cel', value: 5}
+                };
+                let virtualData = {
+                    testFeed: {
+                        [secondFieldName]: insertedData[secondFieldName]
+                    }
+                };
+                return Helper.insertValidField(testUserToken, {
+                    feedType: 'composed',
+                    id: composedId,
+                    fieldProperty: 'fields'
+                }, {
+                    name: secondFieldName
+                })
+                .then(() => Helper.validateFeed(testUserToken, {feedType: 'composed', id: composedId}))
+                .then(() => Helper.insertVirtualComposedMapping(testUserToken, {
+                    virtualId,
+                    feedId: composedId
+                }, {
+                    fields: [secondFieldName]
+                }))
+                .then((mappingId) => {
+                    firstMappingId = mappingId;
+                    return Helper.insertData(testUserToken, insertedData, {
+                        feedType: 'composed',
+                        id: composedId
+                    });
+                })
+                .then(() => Helper.getData(testUserToken, {feedType: 'virtual', id: virtualId}))
+                .then((data) => {
+                    expect(data).to.eql(virtualData);
+                })
+                .catch(err => ({err}))
+                .then((obj) => {
+                    clean()
+                    .then(() => obj && obj.err ? Promise.reject(obj.err) : Promise.resolve());
+                });
+            });
+
         });
 
     });

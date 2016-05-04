@@ -1,30 +1,26 @@
 {
-    "name": "Field",
+    "name": "ComposedFeedVirtualMapping",
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
+    "http": {
+        "path": "/feeds/composedVirtualMapping"
+    },
     "properties": {
         "name": {
             "type": "string",
             "required": true
         },
-        "type": {
-            "type": "string",
-            "required": true
-        },
-        "required": {
-            "type": "boolean",
-            "default": false
-        },
-        "metadata": {
-            "type": "string",
-            "default": ""
-        },
-        "keywords": {
-            "type": [
-                "string"
-            ],
+        "fields": {
+            "type": ["string"],
             "default": []
+        }
+    },
+    "relations": {
+        "feed": {
+            "type": "belongsTo",
+            "model": "ComposedFeed",
+            "foreignKey": "feedId"
         }
     },
     "acls": [

@@ -1,13 +1,13 @@
 {
-    "name": "AtomicFeed",
+    "name": "VirtualFeed",
     "base": "PersistedModel",
     "strict": true,
     "idInjection": true,
     "relations": {
-        "field": {
-            "type": "embedsOne",
-            "model": "Field",
-            "property": "field",
+        "composed": {
+            "type": "embedsMany",
+            "model": "ComposedFeedVirtualMapping",
+            "property": "composed",
             "options": {
                 "persistent": true,
                 "forceId": true

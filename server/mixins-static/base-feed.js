@@ -8,6 +8,32 @@ module.exports = function (Model, mixinOptions) {
     Model.defineProperty('name', {type: 'string', required: true});
     Model.defineProperty('metadata', {type: 'string', default: ''});
     Model.defineProperty('keywords', {type: ['string'], default: []});
+    if (!Model.settings.acls) Model.settings.acls = [];
+    Model.settings.acls.push({
+        accessType: '*',
+        property: '*',
+        principalType: 'ROLE',
+        principalId: '$everyone',
+        permission: 'DENY'
+    }, {
+        accessType: 'READ',
+        property: [
+            'filteredExists',
+            'filteredfind',
+            'filteredFindOne',
+            'filteredFindById',
+            'filteredCount'
+        ],
+        principalType: 'ROLE',
+        principalId: '$authenticated',
+        permission: 'ALLOW'
+    }, {
+        accessType: '*',
+        property: '*',
+        principalType: 'ROLE',
+        principalId: 'admin',
+        permission: 'ALLOW'
+    });
 
     /*!
      * Convert null callbacks to 404 error objects.
@@ -282,7 +308,7 @@ module.exports = function (Model, mixinOptions) {
                 let predicate = {
                     [`${mixinOptions.type}Id`]: modelId
                 };
-                return FeedRoleACL.find(predicate, cb);
+                return FeedRoleACL.find(predicate);
             });
             if (cb) reqP.then(acls => cb(null, acls), err => cb(err));
             return reqP;

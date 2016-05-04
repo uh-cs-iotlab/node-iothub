@@ -43,6 +43,10 @@
         "dataSource": "db",
         "public": true
     },
+    "VirtualFeed": {
+        "dataSource": "db",
+        "public": true
+    },
     "HubRole": {
         "dataSource": "db",
         "public": true
@@ -52,6 +56,10 @@
         "public": true
     },
     "FeedRoleACL": {
+        "dataSource": "db",
+        "public": false
+    },
+    "ComposedFeedVirtualMapping": {
         "dataSource": "db",
         "public": false
     }

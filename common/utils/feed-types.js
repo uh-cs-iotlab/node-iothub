@@ -3,7 +3,8 @@
 var FeedTypes = module.exports = {
     ATOMIC: 'atomic',
     COMPOSED: 'composed',
-    EXECUTABLE: 'executable'
+    EXECUTABLE: 'executable',
+    VIRTUAL: 'virtual'
 };
 Object.defineProperties(FeedTypes, {
     getModelName: {
@@ -16,6 +17,21 @@ Object.defineProperties(FeedTypes, {
                     return 'ComposedFeed';
                 case FeedTypes.EXECUTABLE:
                     return 'ExecutableFeed';
+                case FeedTypes.VIRTUAL:
+                    return 'VirtualFeed';
+            }
+        }
+    },
+    getFieldKey: {
+        enumerable: false,
+        value: (feedType) => {
+            switch (feedType) {
+                case FeedTypes.ATOMIC:
+                    return '_field';
+                case FeedTypes.COMPOSED:
+                    return '_fields';
+                default:
+                    return null;
             }
         }
     },
@@ -31,8 +47,8 @@ Object.defineProperties(FeedTypes, {
                         return {type: FeedTypes.ATOMIC, key};
                     case 'fields':
                         return {type: FeedTypes.COMPOSED, key};
-                    default:
-                        continue;
+                    case 'virtual':
+                        return {type: FeedTypes.VIRTUAL, virtual: data.virtual};
                 }
             }
             return {type: FeedTypes.EXECUTABLE};

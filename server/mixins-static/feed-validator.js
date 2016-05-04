@@ -10,21 +10,20 @@ module.exports = function (Model, mixinOptions) {
     Model.defineProperty('validated', {type: 'boolean', default: false});
     if (Model.settings.hidden) Model.settings.hidden.push('validated');
     else Model.settings.hidden = ['validated'];
-    if (Model.settings.acls) {
-        Model.settings.acls.push({
-            accessType: 'READ',
-            property: ['getData', 'getDataFormat', 'createDataChangeStream'],
-            principalType: 'ROLE',
-            principalId: '$authenticated',
-            permission: 'ALLOW'
-        }, {
-            accessType: 'WRITE',
-            property: 'postData',
-            principalType: 'ROLE',
-            principalId: '$authenticated',
-            permission: 'ALLOW'
-        });
-    }
+    if (!Model.settings.acls) Model.settings.acls = [];
+    Model.settings.acls.push({
+        accessType: 'READ',
+        property: ['getData', 'getDataFormat', 'createDataChangeStream'],
+        principalType: 'ROLE',
+        principalId: '$authenticated',
+        permission: 'ALLOW'
+    }, {
+        accessType: 'WRITE',
+        property: 'postData',
+        principalType: 'ROLE',
+        principalId: '$authenticated',
+        permission: 'ALLOW'
+    });
 
     var fieldPropertyName = function () {
         switch (mixinOptions.type) {
@@ -66,6 +65,11 @@ module.exports = function (Model, mixinOptions) {
     );
 
     Model.getData = function (modelId, filter, cb) {
+        if (typeof filter === 'function' && cb === undefined) {
+            // getData(modelId, cb)
+            cb = filter;
+            filter = {};
+        }
         var reqP = Model.filteredFindById(modelId)
         .then((model) => FeedData.get(Model, {modelId, filter}));
         if (cb) return reqP.then((data) => cb(null, data), (err) => cb(err));
@@ -335,6 +339,7 @@ module.exports = function (Model, mixinOptions) {
             if (models.length === 1) {
                 var model = models[0];
                 if (model.validated) {
+                    // If a model is validated, the user has to force the deletion. This will empty the associated data collection.
                     var currCtx = loopback.getCurrentContext();
                     var forced = currCtx.get('forceDelete');
                     if (forced) {
