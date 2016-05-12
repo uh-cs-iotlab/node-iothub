@@ -8,8 +8,7 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
-var HelperClass = require('./test-helper');
-var Helper = new HelperClass(app);
+var Helper = require('./helpers/test-helper')(app);
 
 var testUserCreds = {email: 'testuser@hub.fi', password: 'testPassword'};
 var adminRoleId;
