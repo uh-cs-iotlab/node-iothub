@@ -6,8 +6,10 @@
     "session": {},
     "auth": {},
     "parse": {
-        "body-parser#json": {},
+        "body-parser#json": {"params":{"limit":"50mb"}},
+        "body-parser#raw": {"params":{"limit":"50mb"}},
         "body-parser#text": {
+            "params":{"limit":"50mb"},
             "methods":["post"],
             "paths":["/api/feeds/executable"]
         }
