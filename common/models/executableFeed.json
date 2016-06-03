@@ -24,9 +24,13 @@
             "type": "object",
             "default": {}
         },
+        "dataDependencies": "object",
+        "libDependencies": "object",
+        "distribution": "object",
+        "monitor": "object",
         "description": {
-            "type": "string",
-            "default": ""
+            "type": "object",
+            "default": {}
         },
         "readable": {
             "type": "boolean",
