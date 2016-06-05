@@ -6,11 +6,11 @@ var inquirer = require('inquirer');
 
 module.exports = function (app) {
 
-    var Role = app.models.HubRole;
-    var User = app.models.HubUser;
-    var RoleMapping = app.models.RoleMapping;
+    let Role = app.models.HubRole;
+    let User = app.models.HubUser;
+    let RoleMapping = app.models.RoleMapping;
 
-    var getAdmins = () => {
+    let getAdmins = () => {
         return new Promise((resolve, reject) => {
             Role.findOrCreate({name: 'admin'}, {name: 'admin'}, (err, role) => {
                 if (err) reject(err);
@@ -27,29 +27,36 @@ module.exports = function (app) {
         });
     };
 
-    var isAdminCredentialsValid = (creds) => {
-        var keys = Object.keys(creds);
+    let isAdminCredentialsValid = (creds) => {
+        let keys = Object.keys(creds);
         return keys.length >= 2 && keys.length <= 3;
     };
 
     getAdmins()
     .then((adminInfos) => {
-        var adminCredsConfFile = app.get('adminCredentials') || 'admin-creds.json';
+        let adminCredsConfFile = app.get('adminCredentials') || 'admin-creds.json';
         if (!path.isAbsolute(adminCredsConfFile)) {
             adminCredsConfFile = path.join(__dirname, '..', '..', adminCredsConfFile);
         }
         return new Promise((resolve, reject) => {
             fs.access(adminCredsConfFile, fs.R_OK, (err) => {
-                if (err) reject(err);
-                resolve();
+                var optionsCreds = app.get('adminCredentialsObject') || null;
+                var confFileCreds;
+                if (err) {
+                    // No credentials file exists, and no credentials were specified for boot
+                    if (optionsCreds === null) reject(err);
+                    confFileCreds = {};
+                } else {
+                    confFileCreds = JSON.parse(fs.readFileSync(adminCredsConfFile, 'utf8')) || {};
+                }
+                // Merge credentials file options, and options given to boot. Options given to boot
+                // function override options set in the credentials file.
+                resolve(Object.assign(confFileCreds, optionsCreds));
             });
         })
-        .then(() => fs.readFileSync(adminCredsConfFile, 'utf8'), () => {
+        .then((mergedConfs) => mergedConfs, () => {
             // If file not found, try to find it as a parameter
-            var adminCreds;
-            if (adminCreds = app.get('adminCredentialsObject')) {
-                return Promise.resolve(adminCreds);
-            } else if (adminInfos.principals.length === 0) {
+            if (adminInfos.principals.length === 0) {
                 // If no paramater given and if no admin already exists, create one.
                 console.info('\nCredentials file not found, this assistant will help you to create a new administrator:');
                 return new Promise((resolve) => {
@@ -59,7 +66,7 @@ module.exports = function (app) {
                             name: 'email',
                             message: 'Enter email address',
                             validate: (input) => {
-                                var re = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+                                let re = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
                                 return re.test(input) ? true : 'Wrong format for email address';
                             }
                         },
@@ -93,7 +100,7 @@ module.exports = function (app) {
             if (!isAdminCredentialsValid(adminCreds)) {
                 return Promise.reject(new Error(`The provided admin credentials are invalid.`));
             } else {
-                var where = {};
+                let where = {};
                 if (adminCreds.username) where.username = adminCreds.username;
                 if (adminCreds.email) where.email = adminCreds.email;
                 return User.findOrCreate(where, adminCreds)

@@ -28,21 +28,10 @@ module.exports = (app) => {
         })
         .then((accessToken) => {
             if (!accessToken) return res.status(401).end();
-            let context = loopback.createContext('filteredFeeds');
             return Promise.all(Object.keys(FeedTypes).map((feedTypeKey) => {
                 let feedType = FeedTypes[feedTypeKey];
                 let feedModelName = FeedTypes.getModelName(feedType);
-                return new Promise((resolve, reject) => {
-                    let fn = () => {
-                        let activeContext = loopback.getCurrentContext();
-                        activeContext.set('accessToken', accessToken);
-                        app.models[feedModelName].filteredFind((err, models) => {
-                            if (err) return reject(err);
-                            resolve(models);
-                        });
-                    };
-                    loopback.runInContext(fn, context);
-                })
+                return app.models[feedModelName].filteredFind({}, {accessToken})
                 .then(body => ({body, feedType}), () => ({body: null}));
             }))
             .then((responses) => {

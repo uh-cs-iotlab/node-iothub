@@ -1,0 +1,662 @@
+{
+    "/users/{id}/accessTokens/{fk}": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Find a related item by id for accessTokens.",
+            "operationId": "HubUser.prototype.__findById__accessTokens",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for accessTokens",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AccessToken"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["HubUser"],
+            "summary": "Delete a related item by id for accessTokens.",
+            "operationId": "HubUser.prototype.__destroyById__accessTokens",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for accessTokens",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["HubUser"],
+            "summary": "Update a related item by id for accessTokens.",
+            "operationId": "HubUser.prototype.__updateById__accessTokens",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for accessTokens",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/AccessToken"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AccessToken"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/{id}/accessTokens": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Queries accessTokens of HubUser.",
+            "operationId": "HubUser.prototype.__get__accessTokens",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/AccessToken"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": ["HubUser"],
+            "summary": "Creates a new instance in accessTokens of this model.",
+            "operationId": "HubUser.prototype.__create__accessTokens",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/AccessToken"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/AccessToken"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["HubUser"],
+            "summary": "Deletes all accessTokens of this model.",
+            "operationId": "HubUser.prototype.__delete__accessTokens",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/{id}/accessTokens/count": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Counts accessTokens of HubUser.",
+            "operationId": "HubUser.prototype.__count__accessTokens",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users": {
+        "post": {
+            "tags": ["HubUser"],
+            "summary": "Create a new instance of the model and persist it into the data source.",
+            "operationId": "HubUser.create",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubUser_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubUser_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["HubUser"],
+            "summary": "Update an existing model instance or insert a new one into the data source.",
+            "operationId": "HubUser.upsert",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubUser_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubUser_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Find all instances of the model matched by filter from the data source.",
+            "operationId": "HubUser.find",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/HubUser_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/{id}/exists": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "HubUser.exists__get_users_{id}_exists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/{id}": {
+        "head": {
+            "tags": ["HubUser"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "HubUser.exists__head_users_{id}",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Find a model instance by id from the data source.",
+            "operationId": "HubUser.findById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubUser_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["HubUser"],
+            "summary": "Delete a model instance by id from the data source.",
+            "operationId": "HubUser.deleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["HubUser"],
+            "summary": "Update attributes for a model instance and persist it into the data source.",
+            "operationId": "HubUser.prototype.updateAttributes",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubUser_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "User id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubUser_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/findOne": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Find first instance of the model matched by filter from the data source.",
+            "operationId": "HubUser.findOne",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubUser_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/update": {
+        "post": {
+            "tags": ["HubUser"],
+            "summary": "Update instances of the model matched by where from the data source.",
+            "operationId": "HubUser.updateAll",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubUser_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "description": "The number of instances updated",
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/count": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Count instances of the model matched by where from the data source.",
+            "operationId": "HubUser.count",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/change-stream": {
+        "post": {
+            "tags": ["HubUser"],
+            "summary": "Create a change stream.",
+            "operationId": "HubUser.createChangeStream__post_users_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "formData",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Create a change stream.",
+            "operationId": "HubUser.createChangeStream__get_users_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/login": {
+        "post": {
+            "tags": ["HubUser", "Client"],
+            "summary": "Login a user with username/email and password.",
+            "operationId": "HubUser.login",
+            "parameters": [{
+                "name": "credentials",
+                "in": "body",
+                "required": true,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "email": "string",
+                        "username": "string",
+                        "password": "string"
+                    },
+                    "required": ["password"]
+                }
+            }, {
+                "name": "include",
+                "in": "query",
+                "description": "Related objects to include in the response. See the description of return value for more details.",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "description": "The response body contains properties of the AccessToken created on login.\nDepending on the value of `include` parameter, the body may contain additional properties:\n\n  - `user` - `{User}` - Data of the currently logged in user. (`include=user`)\n\n",
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/logout": {
+        "post": {
+            "tags": ["HubUser", "Client"],
+            "summary": "Logout a user with access token.",
+            "operationId": "HubUser.logout",
+            "parameters": [],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/confirm": {
+        "get": {
+            "tags": ["HubUser"],
+            "summary": "Confirm a user registration with email verification token.",
+            "operationId": "HubUser.confirm",
+            "parameters": [{
+                "name": "uid",
+                "in": "query",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "token",
+                "in": "query",
+                "required": true,
+                "type": "string"
+            }, {
+                "name": "redirect",
+                "in": "query",
+                "required": false,
+                "type": "string"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/users/reset": {
+        "post": {
+            "tags": ["HubUser"],
+            "summary": "Reset password for a user with email.",
+            "operationId": "HubUser.resetPassword",
+            "parameters": [{
+                "name": "options",
+                "in": "body",
+                "required": true,
+                "schema": {
+                    "type": "object"
+                }
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    }
+}

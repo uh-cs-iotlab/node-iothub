@@ -9,7 +9,7 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
-var testUserCreds = {email: 'testuser@hub.fi', password: 'testPassword'};
+var testUserCreds = {username:'testuser', email: 'testuser@hub.fi', password: 'testPassword'};
 var testUserId;
 var testUserToken;
 

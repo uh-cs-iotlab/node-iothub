@@ -1,21 +1,19 @@
-# node-iothub
-Node.js implementation of the IoT Hub
+# solmuhub
+Node.js implementation of the IoT Hub.
 
 Authors
 -------
 
 **Julien Mineraud**
 + http://www.cs.helsinki.fi/u/mineraud/
-+ http://github.com/jmineraud
++ https://github.com/jmineraud
 
-Install
+**Aurélien Bertron**
++ https://github.com/Nautigsam
+
+Getting started
 ----------
-Please check install information on [INSTALL.md](INSTALL.md)
-
-Known issues
-------------
-
-* At the moment, it is not usable
+Please check informations right [here](https://uh-cs-iotlab.github.io/solmuhub/#installation).
 
 Licence
 -------

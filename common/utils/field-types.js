@@ -4,73 +4,72 @@ var fs = require('fs');
 var path = require('path');
 var Validator = require('jsonschema').Validator;
 var $RefParser = require('json-schema-ref-parser');
+var SchemasManager = require('./schemas-manager');
+var schemaManager = new SchemasManager;
 
-var schemasDb = {};
-var _formatId = (id) => {
-    if (id.charAt(0) === '/') id = id.substr(1);
-    return id.split('/');
-};
-var _getSchema = (levels, subtree) => {
-    var currLevel = levels.shift();
-    if (subtree.hasOwnProperty(currLevel)) {
-        if (levels.length === 0) {
-            // this is the end
-            return subtree[currLevel];
-        } else {
-            return _getSchema(levels, subtree[currLevel]);
-        }
-    } else {
-        return null;
-    }
-};
-
-var _setSchemaHelper = (levels, subtree, schema) => {
-    var currLevel = levels.shift();
-    if (levels.length === 0) {
-        // this is the end
-        if (subtree.hasOwnProperty(currLevel)) {
-            return false;
-        } else {
-            subtree[currLevel] = schema;
-            return true;
-        }
-    } else {
-        if (!subtree.hasOwnProperty(currLevel)) subtree[currLevel] = {};
-        return _setSchemaHelper(levels, subtree[currLevel], schema);
-    }
-};
-var setSchema = (schema) => {
-    return _setSchemaHelper(_formatId(schema.id), schemasDb, schema);
+/*
+    These short types can be used as aliases for field types.
+    Note that if the user creates another type with a short type as id,
+    this creates a conflict and neither user type and short type can't be used.
+ */
+var shortTypes = {
+    boolean: '/root/boolean',
+    genericSensor: '/root/genericSensor',
+    integer: '/root/integer',
+    number: '/root/number',
+    string: '/root/string',
+    temperature: '/root/temperature'
 };
 
 var schemasDir = path.join(__dirname, '..', 'data-types');
-var _loadSchemas = (schemaPath) => {
-    var files = fs.readdirSync(schemaPath);
-    for (var filename of files) {
-        var filePath = path.join(schemaPath, filename);
-        var stats = fs.statSync(filePath);
+var loadSchemas = (schemaPath) => {
+    let files = fs.readdirSync(schemaPath);
+    return Promise.all(files.map((filename) => {
+        let filePath = path.join(schemaPath, filename);
+        let stats = fs.statSync(filePath);
         if (stats.isDirectory()) {
-            _loadSchemas(filePath);
+            return loadSchemas(filePath);
         } else {
+            let returnObj = {filePath};
             if (filename.endsWith('.json')) {
+                let schema = null;
                 try {
-                    var schema = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-                    setSchema(schema);
-                } catch (err) {}
+                    schema = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                } catch (err) {
+                    err.message = `Error parsing file "${filePath}": ${err.message}`;
+                    return Promise.reject(err);
+                }
+                let err = schemaManager.set(schema);
+                if (err) returnObj.err = err;
             }
+            return Promise.resolve(returnObj);
         }
-    }
+    }));
 };
-_loadSchemas(schemasDir);
+loadSchemas(schemasDir)
+.then((files) => {
+    files.forEach((file) => {
+        if (file.err) {
+            console.warn(`Schema file "${file.filePath}" has been ignored: ${err.toString()}`);
+        }
+    });
+}, (err) => {
+    console.error(err.toString());
+    process.exit(1);
+});
 
 var importNextSchema = (validator) => {
-    var nextSchemaId = validator.unresolvedRefs.shift();
-    if (!nextSchemaId) return;
-    var schema = FieldTypes.get(nextSchemaId);
-    if (schema != null) {
-        validator.addSchema(schema);
-        importNextSchema(validator);
+    let nextSchemaId = validator.unresolvedRefs.shift();
+    if (nextSchemaId) {
+        return FieldTypes.get(nextSchemaId)
+        .then((schema) => {
+            if (schema != null) {
+                validator.addSchema(schema);
+                return importNextSchema(validator);
+            }
+        });
     }
+    return Promise.resolve();
 };
 
 var refResolver = {
@@ -81,28 +80,70 @@ var refResolver = {
     }
 };
 
+var schemaExists = (schema) => {
+    return typeof schema === 'object' && schema != null;
+};
+
+var AmbiguousTypeError = function (message) {
+    Error.call(this, message);
+    this.name = 'AmbiguousTypeError';
+};
+AmbiguousTypeError.prototype = Object.create(Error.prototype);
+AmbiguousTypeError.prototype.constructor = AmbiguousTypeError;
+
 var FieldTypes = module.exports = {
+    AmbiguousTypeError,
     exists(id) {
-        return (this.get(id) !== null);
+        return this.get(id)
+        .then(schemaExists);
+    },
+    // @throws AmbiguousTypeError
+    existsSync(id) {
+        return schemaExists(this.getSync(id));
     },
     get(id) {
-        return _getSchema(_formatId(id), schemasDb);
+        try {
+            let schema = this.getSync(id);
+            return Promise.resolve(schema);
+        } catch (err) {
+            return Promise.reject(err);
+        }
+    },
+    // @throws AmbiguousTypeError
+    getSync(id) {
+        let schema = schemaManager.get(id);
+        if (shortTypes.hasOwnProperty(id)) {
+            if (schema) {
+                let err = new AmbiguousTypeError(`Ambiguous type: "${id}"`);
+                err.fieldType = id;
+                err.statusCode = err.status = 422;
+                throw err;
+            } else {
+                id = shortTypes[id];
+                return schemaManager.get(id);
+            }
+        }
+        return schema;
     },
     isValid(id, value) {
-        var v = new Validator();
-        var schema = this.get(id);
-        if (schema != null) {
+        return this.get(id)
+        .then((schema) => {
+            if (schema == null) return false;
+            let v = new Validator();
             v.addSchema(schema);
-            importNextSchema(v);
-            var result = v.validate(value.valueOf(), schema);
-            return result.valid;
-        }
-        return false;
+            return importNextSchema(v)
+            .then(() => {
+                let result = v.validate(value.valueOf(), schema);
+                return result.valid;
+            });
+        });
     },
     dataFormat(id) {
-        var schema = this.get(id);
-        if (schema == null) return null;
-        var parser = new $RefParser();
-        return parser.bundle(schema, {resolve: {fieldTypes: refResolver}});
+        return this.get(id)
+        .then((schema) => {
+            if (schema == null) return null;
+            let parser = new $RefParser();
+            return parser.bundle(schema, {resolve: {fieldTypes: refResolver}});
+        });
     }
 };

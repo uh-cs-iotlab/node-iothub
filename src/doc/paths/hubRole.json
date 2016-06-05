@@ -1,0 +1,560 @@
+{
+    "/roles/{id}/principals/{fk}": {
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Find a related item by id for principals.",
+            "operationId": "HubRole.prototype.__findById__principals",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for principals",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/RoleMapping"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["HubRole"],
+            "summary": "Delete a related item by id for principals.",
+            "operationId": "HubRole.prototype.__destroyById__principals",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for principals",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["HubRole"],
+            "summary": "Update a related item by id for principals.",
+            "operationId": "HubRole.prototype.__updateById__principals",
+            "parameters": [{
+                "name": "fk",
+                "in": "path",
+                "description": "Foreign key for principals",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/RoleMapping"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/RoleMapping"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/{id}/principals": {
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Queries principals of HubRole.",
+            "operationId": "HubRole.prototype.__get__principals",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/RoleMapping"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "post": {
+            "tags": ["HubRole"],
+            "summary": "Creates a new instance in principals of this model.",
+            "operationId": "HubRole.prototype.__create__principals",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/RoleMapping"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/RoleMapping"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["HubRole"],
+            "summary": "Deletes all principals of this model.",
+            "operationId": "HubRole.prototype.__delete__principals",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "204": {
+                    "description": "Request was successful"
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/{id}/principals/count": {
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Counts principals of HubRole.",
+            "operationId": "HubRole.prototype.__count__principals",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles": {
+        "post": {
+            "tags": ["HubRole"],
+            "summary": "Create a new instance of the model and persist it into the data source.",
+            "operationId": "HubRole.create",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubRole_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubRole_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["HubRole"],
+            "summary": "Update an existing model instance or insert a new one into the data source.",
+            "operationId": "HubRole.upsert",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "Model instance data",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubRole_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubRole_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Find all instances of the model matched by filter from the data source.",
+            "operationId": "HubRole.find",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/HubRole_get"
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/{id}/exists": {
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "HubRole.exists__get_roles_{id}_exists",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/{id}": {
+        "head": {
+            "tags": ["HubRole"],
+            "summary": "Check whether a model instance exists in the data source.",
+            "operationId": "HubRole.exists__head_roles_{id}",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "exists": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Find a model instance by id from the data source.",
+            "operationId": "HubRole.findById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields and include",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubRole_get"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "delete": {
+            "tags": ["HubRole"],
+            "summary": "Delete a model instance by id from the data source.",
+            "operationId": "HubRole.deleteById",
+            "parameters": [{
+                "name": "id",
+                "in": "path",
+                "description": "Model id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "put": {
+            "tags": ["HubRole"],
+            "summary": "Update attributes for a model instance and persist it into the data source.",
+            "operationId": "HubRole.prototype.updateAttributes",
+            "parameters": [{
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubRole_post"
+                }
+            }, {
+                "name": "id",
+                "in": "path",
+                "description": "Role id",
+                "required": true,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubRole_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/findOne": {
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Find first instance of the model matched by filter from the data source.",
+            "operationId": "HubRole.findOne",
+            "parameters": [{
+                "name": "filter",
+                "in": "query",
+                "description": "Filter defining fields, where, include, order, offset, and limit",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "$ref": "#/definitions/HubRole_get"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/update": {
+        "post": {
+            "tags": ["HubRole"],
+            "summary": "Update instances of the model matched by where from the data source.",
+            "operationId": "HubRole.updateAll",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }, {
+                "name": "data",
+                "in": "body",
+                "description": "An object of model property name/value pairs",
+                "required": false,
+                "schema": {
+                    "$ref": "#/definitions/HubRole_post"
+                }
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "description": "The number of instances updated",
+                        "type": "object"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/count": {
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Count instances of the model matched by where from the data source.",
+            "operationId": "HubRole.count",
+            "parameters": [{
+                "name": "where",
+                "in": "query",
+                "description": "Criteria to match model instances",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "object",
+                        "required": [],
+                        "properties": {
+                            "count": {
+                                "type": "number",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    },
+    "/roles/change-stream": {
+        "post": {
+            "tags": ["HubRole"],
+            "summary": "Create a change stream.",
+            "operationId": "HubRole.createChangeStream__post_roles_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "formData",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        },
+        "get": {
+            "tags": ["HubRole"],
+            "summary": "Create a change stream.",
+            "operationId": "HubRole.createChangeStream__get_roles_change-stream",
+            "parameters": [{
+                "name": "options",
+                "in": "query",
+                "required": false,
+                "type": "string",
+                "format": "JSON"
+            }],
+            "responses": {
+                "200": {
+                    "description": "Request was successful",
+                    "schema": {
+                        "type": "file"
+                    }
+                }
+            },
+            "deprecated": false
+        }
+    }
+}
