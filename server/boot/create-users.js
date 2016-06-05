@@ -40,16 +40,23 @@ module.exports = function (app) {
         }
         return new Promise((resolve, reject) => {
             fs.access(adminCredsConfFile, fs.R_OK, (err) => {
-                if (err) reject(err);
-                resolve();
+                var optionsCreds = app.get('adminCredentialsObject') || null;
+                var confFileCreds;
+                if (err) {
+                    // No credentials file exists, and no credentials were specified for boot
+                    if (optionsCreds === null) reject(err);
+                    confFileCreds = {};
+                } else {
+                    confFileCreds = JSON.parse(fs.readFileSync(adminCredsConfFile, 'utf8')) || {};
+                }
+                // Merge credentials file options, and options given to boot. Options given to boot
+                // function override options set in the credentials file.
+                resolve(Object.assign(confFileCreds, optionsCreds));
             });
         })
-        .then(() => fs.readFileSync(adminCredsConfFile, 'utf8'), () => {
+        .then((mergedConfs) => mergedConfs, () => {
             // If file not found, try to find it as a parameter
-            var adminCreds;
-            if (adminCreds = app.get('adminCredentialsObject')) {
-                return Promise.resolve(adminCreds);
-            } else if (adminInfos.principals.length === 0) {
+            if (adminInfos.principals.length === 0) {
                 // If no paramater given and if no admin already exists, create one.
                 console.info('\nCredentials file not found, this assistant will help you to create a new administrator:');
                 return new Promise((resolve) => {
