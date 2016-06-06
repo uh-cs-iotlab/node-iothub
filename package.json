@@ -30,8 +30,8 @@
     "loopback-component-explorer": "^2.1.1",
     "loopback-connector-mongodb": "^1.13.0",
     "morgan": "^1.6.1",
-    "duktape": "^0.3.0",
-    "swagger-ui-browserify": "http://aurelienbertron.fr/swagger-ui-browserify-2.1.4.tgz"
+    "swagger-ui-browserify": "http://aurelienbertron.fr/swagger-ui-browserify-2.1.4.tgz",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
     "assert": "^1.3.0",

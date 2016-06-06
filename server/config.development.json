@@ -1,0 +1,4 @@
+{
+	"enableAuth": false,
+    "executableLogs": "exec-logs.json"
+}

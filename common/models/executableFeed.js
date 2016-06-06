@@ -5,10 +5,11 @@ var assert = require('assert');
 var FeedTypes = require('../utils/feed-types');
 var vmContainer = require('../../lib/vm-container');
 var app = require('../../server/server');
+var logger = require('../utils/logger');
 
-var processors = require('../../lib/processors');
-var mappers = require('../../lib/mappers');
-var reducers = require('../../lib/reducers');
+var processors = require('../lib/processors');
+var mappers = require('../lib/mappers');
+var reducers = require('../lib/reducers');
 
 
 module.exports = function (ExecutableFeed) {
@@ -244,7 +245,7 @@ module.exports = function (ExecutableFeed) {
                     reject(err)
                 }
                 context.end = new Date().getTime();
-                console.log('Execute time: ' + (context.end-context.start)/1000)
+                logger.info('Execute time', {tag: 'execution_time', time:(context.end-context.start)/1000})
                 resolve({res:res, context:context, data:vmContext.data});
             });
         });
@@ -282,11 +283,12 @@ module.exports = function (ExecutableFeed) {
                 // If metadata is desired with the response, return it. Defaults to
                 // plain result object
                 return {
+                	metadata: true,
                     time: context.end - context.start,
                     result: result,
                     contentType: 'application/json',
                     pieceResult: options.pieceResult || false,
-                    postProcessing: options.postProcessing
+                    postProcessing: false
                 }
             } else if (options.contentType) {
                 return {
@@ -417,10 +419,9 @@ module.exports = function (ExecutableFeed) {
             if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
                 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
             }
-            console.log('Sending piece ' + index);
             request(options, function (error, response, body) { 
                 let e = new Date().getTime();
-                console.log('Getting piece ' + index + ' : ' + (e-s)/1000);
+                logger.info('Getting piece ' + index, {tag:'piece_latency', time:(e-s)/1000});
                 if (error === null && response.statusCode !== 200) {
                     error = new Error('Could not execute script piece: ' + body.error.message);
                     error.name = 'ExecutionError';
@@ -652,7 +653,8 @@ module.exports = function (ExecutableFeed) {
         reqP = ExecutableFeed.findById(modelId)
             .then((feed) => {
                 let ss = new Date().getTime();
-                console.log('START');
+                logger.info('init', {tag: 'init', time: 0});
+
                 if (!feed) {
                     let err = new Error(`Feed not found.`);
                     err.statusCode = err.status = 404;
@@ -677,15 +679,15 @@ module.exports = function (ExecutableFeed) {
                     if (distribute && (body.currentDepth < distributeOptions.maxDepth)) {
                         let s = new Date().getTime();
                         return getDistributableData(body, feed, distributeOptions).then((pieces) => {
-                            let d = new Date().getTime();
-                            console.log('Getting data + mapping: ' + (d-s)/1000);
+                            let d = new Date().getTime();	
+                            logger.info('Getting data + mapping', {tag:'datamap_latency', time: (d-s)/1000});
                             // Increase depth counter for next level
                             body.currentDepth++;
                             // Wait all the pieces to return responses, which may only be ACKs, or full
                             // responses.
                             return Promise.all(pieces.map(sendPiece, req)).then((values) => {
                                 let p = new Date().getTime();
-                                console.log('Getting all responses: ' + (p-d)/1000)
+                                logger.info('Getting all responses', {tag:'dist_response_latency', time:(p-d)/1000})
                                 // Do something with the values..
                                 // console.log('values', values)
                                 if (values && values[0] && values[0].result.error) {
@@ -700,8 +702,8 @@ module.exports = function (ExecutableFeed) {
                                         let reducerStart = new Date().getTime();
                                         reducedResult = runReducer(feed, values, distributeOptions);
                                         let reducerEnd = new Date().getTime();
-                                        console.log('Reducer runtime: ' + (reducerEnd-reducerStart)/1000);
-                                        console.log('Total time: ' + (reducerEnd-s)/1000);
+                                        logger.info('Reducer runtime', {tag: 'reducer_latency', time:(reducerEnd-reducerStart)/1000});
+                                        logger.info('Total time', {tag: 'total_latency', time:(reducerEnd-s)/1000});
                                         return Promise.resolve(formatResponse(reducedResult.result, options));
                                     } catch (err) {
                                         let error = new Error('Failed to run reducer: ' + err.message);
@@ -721,7 +723,7 @@ module.exports = function (ExecutableFeed) {
                             // Now we have ready context object with data and libraries fetched. Next we execute
                             // the script and return response. 
                             let d = new Date().getTime();
-                            console.log('Getting data: ' + (d-s)/1000);
+                            logger.info('Getting data', {tag:'data_latency', time:(d-s)/1000});
                             return executeScript(body, context).then(rawResult => {
                                 let options = body.response;
                                 if (distribute && body.response.processors) {
@@ -739,7 +741,7 @@ module.exports = function (ExecutableFeed) {
                                 }
                                 let res = formatResponse(rawResult.res, options, rawResult.context);
                                 let e = new Date().getTime();
-                                console.log('Getting data + execute time: ' + (e-s)/1000);
+                                logger.info('Getting data + execute time', {tag: 'local_latency', time:(e-s)/1000});
                                 return res;
                             }, err => Promise.reject(err));         
                         });
@@ -789,8 +791,13 @@ module.exports = function (ExecutableFeed) {
                 context.res.setHeader('Content-Type', remoteMethodOutput.contentType);
                 context.res.end(remoteMethodOutput.result, encoding);
             } else if (encoding === 'utf8') {
-                context.result = remoteMethodOutput.result;
-                next();
+            	if (remoteMethodOutput.metadata) {
+                	context.result = {};
+                	next();
+                } else {
+                	context.result = remoteMethodOutput.result;
+                	next();
+                }
                 // context.res.setHeader('Content-Type', remoteMethodOutput.contentType);
                 // context.res.end(remoteMethodOutput.result, encoding);
             } else if (remoteMethodOutput.contentType === 'text/plain') {
