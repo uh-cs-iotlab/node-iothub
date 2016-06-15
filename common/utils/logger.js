@@ -7,8 +7,8 @@ var path = require('path');
 var logger = new winston.Logger({
     transports: [
         new winston.transports.File({
-            level: 'info',
-            filename: path.join(__dirname, '../../logs/debug', 'debug-logs'),
+            level: 'error',
+            filename: path.join(__dirname, '../../logs/error', 'error.log'),
             handleExceptions: true,
             json: true,
             maxsize: 5242880, //5MB
@@ -16,7 +16,7 @@ var logger = new winston.Logger({
             colorize: false
         }),
         new winston.transports.Console({
-            level: 'debug',
+            level: 'info',
             handleExceptions: true,
             json: false,
             colorize: true
