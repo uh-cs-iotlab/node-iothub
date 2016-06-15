@@ -30,7 +30,9 @@
     "loopback-component-explorer": "^2.1.1",
     "loopback-connector-mongodb": "^1.13.0",
     "morgan": "^1.6.1",
+    "node-flags": "^0.1.9",
     "swagger-ui-browserify": "http://aurelienbertron.fr/swagger-ui-browserify-2.1.4.tgz",
+    "usage": "^0.7.1",
     "winston": "^2.2.0"
   },
   "devDependencies": {
@@ -55,7 +57,7 @@
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0",
-    "jpeg-js":"^0.1.2"
+    "jpeg-js": "^0.1.2"
   },
   "repository": {
     "type": "git",
