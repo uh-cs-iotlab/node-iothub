@@ -6,15 +6,25 @@ var FeedTypes = require('../utils/feed-types');
 var vmContainer = require('../../lib/vm-container');
 var app = require('../../server/server');
 var logger = require('../utils/logger');
+var os = require('os');
+
+var usage = require('usage');
+var usageOptions = require('../utils/usage-conf');
+var profileEvents = require('../utils/profile-events');
 
 var processors = require('../lib/processors');
 var mappers = require('../lib/mappers');
 var reducers = require('../lib/reducers');
+var profiler = require('../lib/profiler');
 
 
 module.exports = function (ExecutableFeed) {
 
     ExecutableFeed.mixin('BaseFeed', {type: FeedTypes.EXECUTABLE});
+
+    // initialize execution counter
+    let executionId = 1;
+    profiler.clearAll();
 
     /**
      * Check datasource definitions , and return a Promise for each data set.
@@ -32,6 +42,13 @@ module.exports = function (ExecutableFeed) {
             if (element.type === 'inline' || element.type === 'piece') {
                 this.data.push(element);
             }
+            else if (element.type === 'local' || element.type === 'remote') {
+                let response = fetchFeed(element).then((elem) => {
+                    elem.data = formatData(elem);
+                    return elem;
+                });
+                this.data.push(response);
+            }     
             // Doesn't work yet, used for getting data from defined executable
             // feed data argument descriptions.
             // else if (element.type === 'feed') {
@@ -39,14 +56,7 @@ module.exports = function (ExecutableFeed) {
             //     {name:element.name, data:formatData(this.feed.data)}
             //     this.data.push(element);
             // }
-            else if (element.type === 'local' || element.type === 'remote') {
-                var response = fetchFeed(element).then((elem) => {
-                    elem.data = formatData(elem);
-                    return elem;
-                });
-                this.data.push(response);
-                
-            } else {
+            else {
                 throw new Error('Type ' + element.type + ' not supported');
             }
         } else {
@@ -58,9 +68,9 @@ module.exports = function (ExecutableFeed) {
      * Returns an array of Promises, where each one is an entry in the data source
      * argument given in request body. After the promise array has the data ready,
      * the data is made available to the script that is to be executed.
-     * @param  {[type]} body [description]
-     * @param  {[type]} feed [description]
-     * @return {[type]}      [description]
+     * @param  {Object} body [description]
+     * @param  {Object} feed [description]
+     * @return {Object}      [description]
      */
     var getAllData = function (body, feed) {
         var context = {
@@ -126,14 +136,15 @@ module.exports = function (ExecutableFeed) {
     var fetchFeed = function (element) {
         var feedId = element.feed || '',
             feedType = element.feedType || 'atomic';
+        let url;
 
         if (element.type === 'local') {
             // Default settings for local feeds
             var baseUrl = 'https://' + app.get('host') + ':' + app.get('port') + '/api/feeds',
-                feedUrl =  baseUrl + '/' + feedType + '/' + feedId,
-                url = baseUrl + feedUrl;
+                feedUrl =  baseUrl + '/' + feedType + '/' + feedId
+            url = baseUrl + feedUrl;
         } else if (element.type === 'remote' && element.url) {
-            var url = element.url;
+            url = element.url;
         } else {
             var error = new Error(`Type ` + element.type + ` not identified`);
             Promise.reject(error);
@@ -196,7 +207,6 @@ module.exports = function (ExecutableFeed) {
             case 'application/javascript':
             case undefined:
             default:
-                // JSON.parse() the data?
                 response = elem.data;
                 break;
         }
@@ -221,9 +231,9 @@ module.exports = function (ExecutableFeed) {
 
     /**
      * Initializes a vm and executes the script in that environment
-     * @param  {[type]} body      [description]
-     * @param  {[type]} vmContext [description]
-     * @return {[type]}           [description]
+     * @param  {object} body      [description]
+     * @param  {object} vmContext [description]
+     * @return {object}           Promise object: error or result of executing the script
      */
     var executeScript = function (body, vmContext) {
         var script = body.source;
@@ -239,24 +249,23 @@ module.exports = function (ExecutableFeed) {
               , options = {}
             // Get vm instance
             var vm = vmContainer.createVM(vmName, vmOptions);
-            context.start = new Date().getTime();
             vm.runScript(script, (err, res) => {
                 if (err) {
                     reject(err)
                 }
-                context.end = new Date().getTime();
-                logger.info('Execute time', {tag: 'execution_time', time:(context.end-context.start)/1000})
-                resolve({res:res, context:context, data:vmContext.data});
+                logProfile({tag:'execution_end'}).then(val => {
+                	resolve({res:res, context:context, data:vmContext.data});
+                });
             });
         });
     }
 
     /**
-     * Formats result according to options argument
-     * @param  {[type]} result  [description]
-     * @param  {[type]} options [description]
-     * @param  {[type]} context [description]
-     * @return {[type]}         [description]
+     * Formats response object according to options argument
+     * @param  {object} result  [description]
+     * @param  {object} options [description]
+     * @param  {object} context [description]
+     * @return {object}         [description]
      */
     var formatResponse = function (result, options, context) {
         if (options) {
@@ -278,13 +287,18 @@ module.exports = function (ExecutableFeed) {
                     throw new Error('Unsupported processor type');
                 }
             }
-
-            if (options.metadata) {
-                // If metadata is desired with the response, return it. Defaults to
+            if (options.profiler && options.profiler.enabled) {
+                // If profiler data is desired with the response, return it. Defaults to
                 // plain result object
+                if (!app.get('profiler') || !context) {
+                	result = new Error('profiler info not available for this node');
+                }
                 return {
-                	metadata: true,
-                    time: context.end - context.start,
+                	profiler: {
+                		enabled: !!options.profiler.enabled,
+                		data: context,
+                		history: !!options.profiler.history
+                	},
                     result: result,
                     contentType: 'application/json',
                     pieceResult: options.pieceResult || false,
@@ -318,11 +332,12 @@ module.exports = function (ExecutableFeed) {
     /**
      * Registrates a library module to the feed. After registration, the module is available for
      * executing scripts in the 'lib' variable.
-     * @param  {[type]}   modelId [description]
-     * @param  {[type]}   libName [description]
-     * @param  {[type]}   body    [description]
-     * @param  {Function} cb      [description]
-     * @return {[type]}           [description]
+     * @param  {string}   modelId ModelId of the executable feed
+     * @param  {string}   libName Name of the added library
+     * @param  {object}   body    Request body
+     * @param  {Function} cb      Callback function
+     * @return {object}           A Promise object that is either rejected with an error, or resolved and
+     *                            includes the updated libraries object.
      */
     ExecutableFeed.registerLib = function (modelId, libName, body, cb) {
 
@@ -413,15 +428,12 @@ module.exports = function (ExecutableFeed) {
             json: true,
             body: req.body
         }
-        let s = new Date().getTime();
         return new Promise((resolve, reject) => {
             // Allow self-signed certs
             if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
                 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
             }
             request(options, function (error, response, body) { 
-                let e = new Date().getTime();
-                logger.info('Getting piece ' + index, {tag:'piece_latency', time:(e-s)/1000});
                 if (error === null && response.statusCode !== 200) {
                     error = new Error('Could not execute script piece: ' + body.error.message);
                     error.name = 'ExecutionError';
@@ -429,12 +441,22 @@ module.exports = function (ExecutableFeed) {
                     reject(error);
                 } else if (error) {
                     reject(error);
+                } else if (!body.result) {
+                	reject(new Error('No result retrieved from node: ' + dataPiece.pieceId));
                 } else {
-                    let res = {
-                        result: body,
-                        pieceId: dataPiece.pieceId
-                    }
-                    resolve(res);
+                	// logger.info('Getting piece ' + index, {tag:'piece_latency', time:(e-s)/1000});
+                	let contentLength = response.headers['content-length'];
+                	logProfile({tag:'piece_response_latency', pieceId:dataPiece.pieceId, contentLength:contentLength}).then(val => {
+	                    let res = {
+	                        result: body.result,
+	                        pieceId: dataPiece.pieceId
+	                    }
+	                    if (req.body.profiler && req.body.profiler.enabled) {
+	                    	// If profiler enabled, include profiler data from response
+	                    	res.profiler = body.profiler;
+	                    }
+	                    resolve(res);
+	                }, err => reject(err));
                 }
             });
         });
@@ -639,6 +661,12 @@ module.exports = function (ExecutableFeed) {
     ExecutableFeed.runScript = function (modelId, req, cb) {
         var body = req.body;
         var reqP;
+        var responseOptions = body.response;
+        var profilerOptions = body.profiler;
+
+        // Clear all previous logs from profiler
+        profiler.clearAll();
+        profiler.start();
 
         if (!body.source) {
             let err = new Error("The request body is not valid. Details: 'script' can't be blank");
@@ -652,107 +680,124 @@ module.exports = function (ExecutableFeed) {
         // - if script is run in this node, fetch data and library dependencies, then execute script
         reqP = ExecutableFeed.findById(modelId)
             .then((feed) => {
-                let ss = new Date().getTime();
-                logger.info('init', {tag: 'init', time: 0});
+        		return logProfile({tag:'feed_fetched'}).then(success => {
+	                if (!feed) {
+	                    let err = new Error(`Feed not found.`);
+	                    err.statusCode = err.status = 404;
+	                    return Promise.reject(err);
+	                } else {
+	                    let distribute, distributeOptions;
+	                    if (body.distribution && body.distribution.enabled) {
+	                         distribute = true;
+	                         distributeOptions = body.distribution;
+	                    } else if (feed.distribution && feed.distribution.enabled) {
+	                        distribute = true;
+	                        distributeOptions = feed.distribution;
+	                    }  else {
+	                        distribute = false;
+	                        distributeOptions = undefined;
+	                    }
 
-                if (!feed) {
-                    let err = new Error(`Feed not found.`);
-                    err.statusCode = err.status = 404;
-                    return Promise.reject(err);
-                } else {
-                    let distribute, distributeOptions;
-                    if (body.distribution && body.distribution.enabled) {
-                         distribute = true;
-                         distributeOptions = body.distribution;
-                    } else if (feed.distribution && feed.distribution.enabled) {
-                        distribute = true;
-                        distributeOptions = feed.distribution;
-                    }  else {
-                        distribute = false;
-                        distributeOptions = undefined;
-                    }
+	                    // Chech distribution parameter, and either distribute and send data further,
+	                    // or handle in this node.
+	                    body.currentDepth = body.currentDepth || 0;
+	                    if (distribute && (body.currentDepth < distributeOptions.maxDepth)) {
+	                        return getDistributableData(body, feed, distributeOptions).then((pieces) => {
+	                            return logProfile({tag:'after_data_map'}).then(success => {
+		                            // Increase depth counter for next level
+		                            body.currentDepth++;
+		                            // Wait all the pieces to return responses, which may only be ACKs, or full
+		                            // responses.
+		                            return Promise.all(pieces.map(sendPiece, req)).then((values) => {
+		                                return logProfile({tag:'dist_response_latency'}).then(success => {
+			                                if (values && values[0] && values[0].result.error) {
+			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;
+			                                    logger.error(msg);
+			                                    let err = new Error(msg);
+			                                    return Promise.reject(err);
+			                                }
+			                                let reducedResult;
+			                                responseOptions.postProcessing = true;
 
-                    // Chech distribution parameter, and either distribute and send data further,
-                    // or handle in this node.
-                    body.currentDepth = body.currentDepth || 0;
-                    // console.log('distribute', body.currentDepth, distributeOptions)
-                    if (distribute && (body.currentDepth < distributeOptions.maxDepth)) {
-                        let s = new Date().getTime();
-                        return getDistributableData(body, feed, distributeOptions).then((pieces) => {
-                            let d = new Date().getTime();	
-                            logger.info('Getting data + mapping', {tag:'datamap_latency', time: (d-s)/1000});
-                            // Increase depth counter for next level
-                            body.currentDepth++;
-                            // Wait all the pieces to return responses, which may only be ACKs, or full
-                            // responses.
-                            return Promise.all(pieces.map(sendPiece, req)).then((values) => {
-                                let p = new Date().getTime();
-                                logger.info('Getting all responses', {tag:'dist_response_latency', time:(p-d)/1000})
-                                // Do something with the values..
-                                // console.log('values', values)
-                                if (values && values[0] && values[0].result.error) {
-                                    let err = new Error('Error running distributed code: ' + values[0].result.error.message);
-                                    throw err;
-                                }
-                                let options = body.response;
-                                let reducedResult;
-                                options.postProcessing = true;
-                                if (distributeOptions.reducer) {
-                                    try {
-                                        let reducerStart = new Date().getTime();
-                                        reducedResult = runReducer(feed, values, distributeOptions);
-                                        let reducerEnd = new Date().getTime();
-                                        logger.info('Reducer runtime', {tag: 'reducer_latency', time:(reducerEnd-reducerStart)/1000});
-                                        logger.info('Total time', {tag: 'total_latency', time:(reducerEnd-s)/1000});
-                                        return Promise.resolve(formatResponse(reducedResult.result, options));
-                                    } catch (err) {
-                                        let error = new Error('Failed to run reducer: ' + err.message);
-                                        error.status = 400;
-                                        error.name = 'ReducerExecutionError';
-                                        return Promise.reject(err);
-                                    }
-                                } else {
-                                    reducedResult = defaultReducer(values);
-                                    return Promise.resolve(formatResponse(reducedResult, options));
-                                }
-                            }, err => Promise.reject(err));
-                        });    
-                    } else {
-                        let s = new Date().getTime();
-                        return getAllData(body, feed).then((context) => {
-                            // Now we have ready context object with data and libraries fetched. Next we execute
-                            // the script and return response. 
-                            let d = new Date().getTime();
-                            logger.info('Getting data', {tag:'data_latency', time:(d-s)/1000});
-                            return executeScript(body, context).then(rawResult => {
-                                let options = body.response;
-                                if (distribute && body.response.processors) {
-                                    // If we are executing in a leaf node, don't run processors on data.
-                                    // They are run after reducers in parent nodes.
-                                    options.postProcessing = false;
-                                    // Indicate that this is an intermediate result
-                                    options.pieceResponse = true;
-                                    // Set content type to binary data, so original content-type
-                                    // is ignored for distributed piece results. This is needed
-                                    // so that data is not needlessly processed.
-                                    options.contentType = 'application/json';
-                                } else {
-                                    options.postProcessing = true;
-                                }
-                                let res = formatResponse(rawResult.res, options, rawResult.context);
-                                let e = new Date().getTime();
-                                logger.info('Getting data + execute time', {tag: 'local_latency', time:(e-s)/1000});
-                                return res;
-                            }, err => Promise.reject(err));         
-                        });
-                    }
-                }
-            });
+			                                if (distributeOptions.reducer) {
+			                                    try {
+			                                        reducedResult = runReducer(feed, values, distributeOptions);
+		                                        	let res;
+		                                        	return logProfile({tag:'after_reducer'}).then(success => {
+		                                        		if (profilerOptions && profilerOptions.enabled) {
+		                                        			responseOptions.profiler = profilerOptions;
+		                                        			let r = formatResponse(reducedResult.result, responseOptions, reducedResult.profilerData);
+		                                        			r.profiler.piecesData = reducedResult.profilerData;
+		                                        			r.profiler.data = profiler.all();
+		                                        			delete r.result;
+		                                        			res = r;
+		                                        		} else {
+		                                        			res = formatResponse(reducedResult.result, responseOptions, {});
+		                                        		}
+		                                        		return logProfile({tag:'before_sending_response'}).then(success => {
+		                                        			return res;
+		                                        		});
+		                                        	});
+			                                    } catch (err) {
+			                                        let error = new Error('Failed to run reducer: ' + err.message);
+			                                        logger.error(err.message);
+			                                        error.status = 400;
+			                                        error.name = 'ReducerExecutionError';
+			                                        return Promise.reject(err);
+			                                    }
+			                                } else {
+			                                	// TODO: test this, add profilerData
+			                                    reducedResult = defaultReducer(values);
+			                                    let res = Promise.resolve(formatResponse(reducedResult, responseOptions));
+			                                	return logProfile({tag:'before_sending_response'}).then(success => {
+			                                		return res;
+			                                	});
+			                                }
+			                            }, err => Promise.reject(err));
+		                            }, err => Promise.reject(err));
+								}, err => Promise.reject(err));
+	                        });    
+	                    } else {
+	                        return getAllData(body, feed).then((context) => {
+	                            // Now we have ready context object with data and libraries fetched. Next we execute
+	                            // the script and return response. 
+	                            return logProfile({tag:'after_data_fetch'}).then(success => {
+		                            return executeScript(body, context).then(rawResult => {
+		                                if (distribute && body.response.processors) {
+		                                    // If we are executing in a leaf node, don't run processors on data.
+		                                    // They are run after reducers in parent nodes.
+		                                    responseOptions.postProcessing = false;
+		                                    // Indicate that this is an intermediate result
+		                                    responseOptions.pieceResult = true;
+		                                    // Set content type to binary data, so original content-type
+		                                    // is ignored for distributed piece results. This is needed
+		                                    // so that data is not needlessly processed.
+		                                    responseOptions.contentType = 'application/json';
+		                                } else {
+		                                    responseOptions.postProcessing = true;
+		                                }
+
+		                                if (profilerOptions && profilerOptions.enabled) {
+		                                	responseOptions.profiler = profilerOptions;
+		                                }
+		                                let res = formatResponse(rawResult.res, responseOptions, rawResult.context);
+		                                return logProfile({tag:'before_sending_response'}).then(success => {
+			                                return res;
+		                            	}, err => Promise.reject(err));
+		                            }, err => Promise.reject(err));
+								}, err => Promise.reject(err));
+
+	                        });
+	                    }
+	                }
+	        	}, err => Promise.reject(err)); //profilingInfo
+        	});
 
         if (cb) reqP.then(result => {
             cb(null, result);
         }, err => cb(err));
         return reqP;
+	    
     };
     ExecutableFeed.remoteMethod(
         'runScript',
@@ -781,28 +826,50 @@ module.exports = function (ExecutableFeed) {
         next();
     });
 
-    ExecutableFeed.afterRemote('runScript', function(context, remoteMethodOutput, next) {
+    ExecutableFeed.afterRemote('runScript', function(context, executionOutput, next) {
         if (context.req.headers.accept && context.req.headers.accept === 'text/plain') {
             context.res.setHeader('Content-Type', context.req.headers.accept);
-            context.res.end(JSON.stringify(remoteMethodOutput.result) + '');
-        } else if (remoteMethodOutput.contentType) {
-            let encoding = getEncoding(remoteMethodOutput.contentType);
+            context.res.end(JSON.stringify(executionOutput.result) + '');
+        } else if (executionOutput.contentType) {
+            let encoding = getEncoding(executionOutput.contentType);
             if (encoding === 'binary') {
-                context.res.setHeader('Content-Type', remoteMethodOutput.contentType);
-                context.res.end(remoteMethodOutput.result, encoding);
+                context.res.setHeader('Content-Type', executionOutput.contentType);
+                context.res.end(executionOutput.result, encoding);
             } else if (encoding === 'utf8') {
-            	if (remoteMethodOutput.metadata) {
-                	context.result = {};
+            	// If profiler is true, return only profiler data
+            	if (executionOutput.profiler && executionOutput.profiler.enabled) {
+                	if (executionOutput.pieceResult) {
+                		// Include profilerData in the piece response
+                		context.result = {
+	                		result: executionOutput.result,
+	                		profiler: {
+	                			enabled: true,
+	                			data: profiler.all()
+	                		}
+	                	}
+                	} else {
+	                	// Omit normal response for profiler data
+	                	context.result = {
+	                		profiler: {
+	                			id: executionId++,
+	                			timestamp: new Date().getTime(),
+	                			data: profiler.all()
+	                		}
+	                	}
+	                	if (executionOutput.profiler.piecesData) {
+	                		context.result.profiler.piecesData = executionOutput.profiler.piecesData;
+	                	}
+	                }
                 	next();
                 } else {
-                	context.result = remoteMethodOutput.result;
+                	context.result = {
+                		result: executionOutput.result
+                	}
                 	next();
                 }
-                // context.res.setHeader('Content-Type', remoteMethodOutput.contentType);
-                // context.res.end(remoteMethodOutput.result, encoding);
-            } else if (remoteMethodOutput.contentType === 'text/plain') {
-                context.res.setHeader('Content-Type', remoteMethodOutput.contentType);
-                context.res.end(JSON.stringify(remoteMethodOutput.result) + '');
+            } else if (executionOutput.contentType === 'text/plain') {
+                context.res.setHeader('Content-Type', executionOutput.contentType);
+                context.res.end(JSON.stringify(executionOutput.result) + '');
             } else {
                 next();
             }
@@ -823,4 +890,77 @@ module.exports = function (ExecutableFeed) {
         }
         next();
     });
+
+    /**
+     * Extracts system profiling information, and asves that information in a Profiler object.
+     * @param  {object} data Data object describing the attributes of the logged location in code.
+     * @return {object}      Promise object: error or true.
+     */
+    var logProfile = function (data) { 
+	    return new Promise((resolve, reject) => {
+	    	if (!app.get('profiler')) {
+	    		resolve(false);
+	    	} else {
+
+		    	if (!data.tag || typeof data.tag !== 'string') {
+		    		reject(new Error('tag is a compulsory argument to logProfile data, and it must be a string'));
+		    	}
+		    	ExecutableFeed.emit(data.tag);
+
+		    	let tag = data.tag;
+		    	let log = (data.level && logger[data.level]) || logger.info;
+		    	let type = data.type || 'profile';
+		    	let msg = (profileEvents.get(data.tag) && profileEvents.get(data.tag).msg) || data.tag;
+		    	let logData = {}
+
+		    	Object.keys(data).forEach((key) => {
+		    		logData[key] = data[key];
+		    	});
+
+		    	if (type === 'profile') {
+					let load = os.loadavg();
+		    		usage.lookup(process.pid, usageOptions, function(err, result) {
+		    			logData.usage = {
+		    				cpu: result.cpu,
+		    				totalMem: os.totalmem(),
+		    				freeMem: os.freemem(),
+		    				rssMem: result.memoryInfo.rss,
+		    				processMem: process.memoryUsage().rss,
+		    				mem: process.memoryUsage().rss/os.totalmem()*100,
+		    				load: load
+		    			}
+		    			profiler.add(logData);
+		    			if (app.get('logProfilingInfo') === true) {
+		    				log(msg, logData);
+		    			}
+		    			resolve(true);
+					});
+		    	} else {
+		    		log('Unknown executionEvent, no operation: ', data.type);
+		    		resolve(true);
+		    	}
+		    }
+	    });
+    };
+
+    	// NOTE: Would prefer to use events for profiling info, but we need the results
+    	// before response is sent to client, for now, so support for separate logging location
+    	// remains as a TODO.
+
+	   //  ExecutableFeed.on('executionEvent', (event) => {
+	   //  	var log = logger[event.level] || logger.info;
+
+	   //  	if (event.type === 'profile') {
+				// if (app.get('enableProfiling') === true) {
+		  //   		usage.lookup(process.pid, usageOptions, function(err, result) {
+		  //   			profiler.add(event);
+		  //   			if (app.get('logProfilingInfo') === true) {
+		  //   				log(event.msg || event.tag, {tag: event.tag, time: event.time, usage: result});
+		  //   			}
+				// 	});
+	   //  		}
+	   //  	} else {
+	   //  		log('Unknown executionEvent, no operation: ', event.type);
+	   //  	}
+	   //  });
 };

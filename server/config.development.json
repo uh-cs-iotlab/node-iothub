@@ -1,4 +1,5 @@
 {
 	"enableAuth": false,
-    "executableLogs": "exec-logs.json"
+    "executableLogs": "exec-logs.json",
+    "logProfilingInfo": true 
 }
