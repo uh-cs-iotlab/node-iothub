@@ -4,12 +4,17 @@ var fs = require('fs');
 var path = require('path');
 var http = require('http');
 var https = require('https');
+var flags = require('node-flags');
 var app = module.exports = require('./server/server');
+var logger = require('./common/utils/logger');
 
 if (require.main === module) {
+
     app.boot()
     .then(() => {
         let httpOnly = process.env.HTTP;
+        let port =  flags.get('port') || app.get('port');
+
         if (typeof httpOnly === 'undefined') httpOnly = false;
         let server = null;
         if (httpOnly) {
@@ -21,8 +26,8 @@ if (require.main === module) {
             };
             server = https.createServer(options, app);
         }
-        server.listen(app.get('port'), () => {
-            let baseUrl = `${httpOnly ? 'http' : 'https'}://${app.get('host')}:${app.get('port')}`;
+        server.listen(port, () => {
+            let baseUrl = `${httpOnly ? 'http' : 'https'}://${app.get('host')}:${port}`;
             app.emit('started', baseUrl);
             if (app.get('env') === 'development') {
                 console.log('Web server listening at: %s', baseUrl);
@@ -33,6 +38,10 @@ if (require.main === module) {
             }
         });
     }, (err) => {
-        console.error(`Error: ${err.message}`);
+        if (NODE_ENV === 'development') {
+            logger.error(`Error: ${err.stack}`);
+        } else {
+            logger.error(`Error: ${err.message}`);
+        }
     });
 }
