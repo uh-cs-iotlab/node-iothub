@@ -269,7 +269,7 @@ module.exports = function (ExecutableFeed) {
      */
     var formatResponse = function (result, options, context) {
         if (options) {
-            // Run processor functions before final formatting is done
+            // Run post processing functions before final formatting is done
             if (options.postProcessing) {
                 if (typeof options.processors === 'string' &&  processors.get(options.processors)) {
                     result = processors.get(options.processors)(result);
@@ -444,7 +444,6 @@ module.exports = function (ExecutableFeed) {
                 } else if (!body.result) {
                 	reject(new Error('No result retrieved from node: ' + dataPiece.pieceId));
                 } else {
-                	// logger.info('Getting piece ' + index, {tag:'piece_latency', time:(e-s)/1000});
                 	let contentLength = response.headers['content-length'];
                 	logProfile({tag:'piece_response_latency', pieceId:dataPiece.pieceId, contentLength:contentLength}).then(val => {
 	                    let res = {
@@ -568,36 +567,37 @@ module.exports = function (ExecutableFeed) {
         return convergedData.then((data) => {
             // Takes care of processing data as needed before mapping
             data.data = formatData(data);
+            return logProfile({tag:'after_data_fetch'}).then(success => {
+	            var mapperFunction;
 
-            var mapperFunction;
-
-            // Call mapper function
-            switch (typeof body.distribution.mapper) {
-                case 'string':
-                    if (mappers.get(body.distribution.mapper)) {
-                        return mappers.get(body.distribution.mapper)(data, options);
-                    } else if (feed.lib[body.distribution.mapper]) {
-                        return feed.lib[body.distribution.mapper](data, options);
-                    } else {
-                        let err = new Error('Specified mapper function not found');
-                        err.status = 404;
-                        throw err;
-                    }
-                    break;
-                case 'function':
-                    try {
-                        return body.distribution.mapper(data, options);
-                    } catch (err) {
-                        let err = new Error('Error executing custom mapper: ' + err.message);
-                        err.status = 404;
-                        throw err;   
-                    }
-                    break;
-                case undefined:
-                default:
-                    return defaultMapper(data, options);
-                    break;
-            }
+	            // Call mapper function
+	            switch (typeof body.distribution.mapper) {
+	                case 'string':
+	                    if (mappers.get(body.distribution.mapper)) {
+	                        return mappers.get(body.distribution.mapper)(data, options);
+	                    } else if (feed.lib[body.distribution.mapper]) {
+	                        return feed.lib[body.distribution.mapper](data, options);
+	                    } else {
+	                        let err = new Error('Specified mapper function not found');
+	                        err.status = 404;
+	                        throw err;
+	                    }
+	                    break;
+	                case 'function':
+	                    try {
+	                        return body.distribution.mapper(data, options);
+	                    } catch (err) {
+	                        let err = new Error('Error executing custom mapper: ' + err.message);
+	                        err.status = 404;
+	                        throw err;   
+	                    }
+	                    break;
+	                case undefined:
+	                default:
+	                    return defaultMapper(data, options);
+	                    break;
+	            }
+	        });
         });
     }
 
@@ -892,7 +892,7 @@ module.exports = function (ExecutableFeed) {
     });
 
     /**
-     * Extracts system profiling information, and asves that information in a Profiler object.
+     * Extracts system profiling information, and saves that information in a Profiler object.
      * @param  {object} data Data object describing the attributes of the logged location in code.
      * @return {object}      Promise object: error or true.
      */
