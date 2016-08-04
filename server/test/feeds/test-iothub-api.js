@@ -1,7 +1,7 @@
 'use strict';
 
-var app = require('../server');
-var Helper = require('./test-helper')(app);
+var app = require('../../server');
+var Helper = require('../helpers/test-helper')(app);
 
 var request = require('supertest');
 var chai = require('chai');

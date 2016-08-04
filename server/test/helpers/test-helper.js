@@ -38,7 +38,7 @@ module.exports = (app) => {
             if (userCreds) {
                 return app.models.HubUser.login(userCreds);
             } else {
-                let adminCredsConfFile = path.join(__dirname, '..', '..', 'admin-creds-test.json');
+                let adminCredsConfFile = path.join(__dirname, '..', '..', '..', 'admin-creds-test.json');
                 let userCreds = JSON.parse(fs.readFileSync(adminCredsConfFile, 'utf8'));
                 return app.models.HubUser.login(userCreds);
             }

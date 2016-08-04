@@ -3,7 +3,7 @@
 var expect = require('chai').expect,
     util = require('util'),
     express = require('express'),
-    iothubvm = require('../../lib/iothub-vm');
+    iothubvm = require('../../../lib/iothub-vm');
 
 function hook_consolelog(callback) {
     var old_log = console.log;
