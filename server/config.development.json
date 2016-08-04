@@ -1,5 +1,15 @@
 {
 	"enableAuth": false,
     "executableLogs": "exec-logs.json",
-    "logProfilingInfo": true 
+    "logProfilingInfo": true,
+    "host": "localhost",
+    "port": 3000,
+    "remoting": {
+        "context": {
+            "enableHttpContext": true
+        },
+        "errorHandler": {
+          "disableStackTrace": false
+        }
+    }
 }

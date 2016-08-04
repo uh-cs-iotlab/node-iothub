@@ -1,13 +1,5 @@
 {
     "adminCredentials": "admin-creds.json",
     "restApiRoot": "/api",
-    "host": "localhost",
-    "port": 3000,
-    "legacyExplorer": false,
-    "enableAuth": true,
-    "remoting": {
-        "context": {
-            "enableHttpContext": true
-        }
-    }
+    "legacyExplorer": false
 }
