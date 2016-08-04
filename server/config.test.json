@@ -1,9 +1,10 @@
 {
-	"enableAuth": true,
+    "adminCredentials": "admin-creds-test.json",
+    "enableAuth": true,
     "executableLogs": "exec-logs.json",
     "logProfilingInfo": true,
     "host": "0.0.0.0",
-    "port": 3030,
+    "port": 0,
     "remoting": {
         "context": {
             "enableHttpContext": true
@@ -11,5 +12,7 @@
         "errorHandler": {
           "disableStackTrace": false
         }
-    }
+    },
+    "restApiRoot": "/api",
+    "legacyExplorer": false
 }

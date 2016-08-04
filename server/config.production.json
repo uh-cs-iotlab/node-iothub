@@ -1,4 +1,5 @@
 {
+    "adminCredentials": "admin-creds-production.json",
 	"enableAuth": true,
     "executableLogs": false,
     "logProfilingInfo": false,

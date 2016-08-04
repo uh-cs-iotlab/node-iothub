@@ -1,6 +1,8 @@
 'use strict';
 
 var request = require('supertest');
+var fs = require('fs');
+var path = require('path');
 
 module.exports = (app) => {
 
@@ -33,7 +35,13 @@ module.exports = (app) => {
             });
         },
         login(userCreds) {
-            return app.models.HubUser.login(userCreds);
+            if (userCreds) {
+                return app.models.HubUser.login(userCreds);
+            } else {
+                let adminCredsConfFile = path.join(__dirname, '..', '..', 'admin-creds-test.json');
+                let userCreds = JSON.parse(fs.readFileSync(adminCredsConfFile, 'utf8'));
+                return app.models.HubUser.login(userCreds);
+            }
         },
         removeUser(userId, tokenId) {
             var userP = Promise.resolve();

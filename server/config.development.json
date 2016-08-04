@@ -1,4 +1,5 @@
 {
+    "adminCredentials": "admin-creds.json",
 	"enableAuth": false,
     "executableLogs": "exec-logs.json",
     "logProfilingInfo": true,

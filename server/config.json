@@ -1,5 +1,4 @@
 {
-    "adminCredentials": "admin-creds.json",
     "restApiRoot": "/api",
     "legacyExplorer": false
 }

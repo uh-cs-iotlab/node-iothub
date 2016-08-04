@@ -9,31 +9,19 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
-var testUserCreds = {username:'testuser', email: 'testuser@hub.fi', password: 'testPassword'};
 var testUserId;
 var testUserToken;
 
 var server;
 
 before(function () {
-    var config = {
-        "restApiRoot": "/api",
-        "host": "0.0.0.0",
-        "port": 0,
-        "legacyExplorer": false,
-        "remoting": {
-            "context": {
-                "enableHttpContext": true
-            }
-        }
-    };
-    return app.boot({adminCredentials: testUserCreds, config: config})
+    return app.boot()
     .then(() => {
         return new Promise((resolve) => {
             server = app.listen(resolve);
         });
     })
-    .then(() => Helper.login(testUserCreds))
+    .then(() => Helper.login())
     .then((token) => {
         testUserId = token.userId;
         testUserToken = token.id;
