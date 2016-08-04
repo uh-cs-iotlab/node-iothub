@@ -38,7 +38,7 @@ if (require.main === module) {
             }
         });
     }, (err) => {
-        if (NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development') {
             logger.error(`Error: ${err.stack}`);
         } else {
             logger.error(`Error: ${err.message}`);
