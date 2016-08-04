@@ -661,8 +661,8 @@ module.exports = function (ExecutableFeed) {
     ExecutableFeed.runScript = function (modelId, req, cb) {
         var body = req.body;
         var reqP;
-        var responseOptions = body.response;
-        var profilerOptions = body.profiler;
+        var responseOptions = body.response || {};
+        var profilerOptions = body.profiler || {};
 
         // Clear all previous logs from profiler
         profiler.clearAll();
