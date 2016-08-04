@@ -141,6 +141,8 @@ module.exports = function (app) {
             }, (err) => {
                 console.error(`[ERROR] Couldn't log in user "${username}": ${err.message}`);
             });
+        } else {
+            console.log("Authentication is: " + (app.get('enableAuth') === true ? "ENABLED" : "DISABLED"));
         }
         app.emit('adminCreated');
     }, (err) => {

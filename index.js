@@ -29,12 +29,14 @@ if (require.main === module) {
         server.listen(port, () => {
             let baseUrl = `${httpOnly ? 'http' : 'https'}://${app.get('host')}:${port}`;
             app.emit('started', baseUrl);
-            if (app.get('env') === 'development') {
+            if (app.get('env') === 'development' || app.get('env') === 'test') {
                 console.log('Web server listening at: %s', baseUrl);
                 if (app.get('loopback-component-explorer')) {
                     let explorerPath = app.get('loopback-component-explorer').mountPath;
                     console.log('Browse your REST API at %s%s', baseUrl, explorerPath);
                 }
+            } else if (app.get('env') === 'production') {
+                console.log('Production IoT hub started at : %s', baseUrl);
             }
         });
     }, (err) => {
