@@ -221,6 +221,8 @@ module.exports = (app) => {
                 name: 'testFeed',
                 metadata: '',
                 keywords: [],
+                lib: {},
+                response: {},
                 source: '',
                 params: [],
                 data: [],

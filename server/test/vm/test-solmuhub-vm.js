@@ -23,7 +23,7 @@ describe("IoT Hub javascript VM", function () {
 
     describe("Execute code without permission", function () {
         it("Hello world", function (done) {
-            var script = "print('Hello World');";
+            var script = "print('Hello World');data;";
             var output;
             var unhook = hook_consolelog(function (msg) {
                 output = msg;
@@ -265,7 +265,6 @@ describe("IoT Hub javascript VM", function () {
             });
             vm.runScript(script, function (err, res) {
                 unhook();
-                expect(res).to.be.undefined;
                 expect(output).to.equal('Hello from web server');
                 done();
             });
