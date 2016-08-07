@@ -132,8 +132,8 @@ module.exports = function (app) {
         });
     })
     .then((user) => {
-        if (user !== null && app.get('env') === 'development') {
-            let username = user.username || user.email;
+        if (user !== null && app.get('env') === 'development' && app.get('enableAuth') !== false) {
+            var username = user.username || user.email;
             // Auto-login admin
             user.createAccessToken(0)
             .then((token) => {
@@ -141,6 +141,8 @@ module.exports = function (app) {
             }, (err) => {
                 console.error(`[ERROR] Couldn't log in user "${username}": ${err.message}`);
             });
+        } else {
+            console.log("Authentication is: " + (app.get('enableAuth') === true ? "ENABLED" : "DISABLED"));
         }
         app.emit('adminCreated');
     }, (err) => {

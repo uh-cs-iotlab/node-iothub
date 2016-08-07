@@ -1,6 +1,5 @@
 'use strict';
 
-var bodyParser = require('body-parser');
 var loopback = require('loopback');
 var FeedTypes = require('../../common/utils/feed-types');
 
@@ -15,6 +14,7 @@ module.exports = (app) => {
     });
 
     let restApiRoot = app.get('restApiRoot');
+
     app.get(restApiRoot + '/feeds', (req, res) => {
         let feeds = {
             count: 0,
@@ -60,7 +60,7 @@ module.exports = (app) => {
         return Object.assign({}, err, {message: err.message});
     };
 
-    app.use(restApiRoot + '/feeds', bodyParser.json());
+    
     app.post(restApiRoot + '/feeds', (req, res) => {
         if (!req.body) {
             let err = new Error('Body can\'t be empty');

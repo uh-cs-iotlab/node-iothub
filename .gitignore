@@ -31,6 +31,8 @@ node_modules
 
 # Admin credentials config file
 admin-creds.json
+admin-creds-production.json 
+admin-creds-development.json
 
 # Client application
 client

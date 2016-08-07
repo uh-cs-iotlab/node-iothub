@@ -7,6 +7,7 @@ var morgan = require('morgan');
 var fs = require('fs');
 var path = require('path');
 var app = module.exports = loopback();
+var flags = require('node-flags');
 
 var logDirectory = path.join(__dirname, '..', 'logs');
 // ensure log directory exists
@@ -21,6 +22,10 @@ var accessLogStream = FileStreamRotator.getStream({
 app.use(morgan('combined', {stream: accessLogStream}));
 
 app.set('view engine', 'jade');
+
+// Set profiler on/off, mainly for executable feeds. Note that --profiler flag is not the same
+// as Node's internal profiler that is setup with '--prof' flag
+app.set('profiler', flags.get('profiler'));
 
 app.boot = (options, cb) => {
     if (typeof options === 'function' && typeof cb === 'undefined') {

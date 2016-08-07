@@ -14,6 +14,29 @@
             ],
             "default": []
         },
+        "profiler": "object",
+        "response": {
+            "type": "object",
+            "default": {}
+        },
+        "data": {
+            "type": [
+                "object"
+            ],
+            "default": []
+        },
+        "lib": {
+            "type": "object",
+            "default": {}
+        },
+        "dataDependencies": "object",
+        "libDependencies": "object",
+        "distribution": "object",
+        "monitor": "object",
+        "description": {
+            "type": "object",
+            "default": {}
+        },
         "readable": {
             "type": "boolean",
             "default": false
@@ -42,6 +65,13 @@
                 "filteredFindById",
                 "filteredCount"
             ],
+            "principalType": "ROLE",
+            "principalId": "$authenticated",
+            "permission": "ALLOW"
+        },
+        {
+            "accessType": "EXECUTE",
+            "property": "runScript",
             "principalType": "ROLE",
             "principalId": "$authenticated",
             "permission": "ALLOW"

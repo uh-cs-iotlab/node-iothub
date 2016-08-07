@@ -1,7 +1,7 @@
 'use strict';
 
-var app = require('../server');
-var Helper = require('./test-helper')(app);
+var app = require('../../server');
+var Helper = require('../helpers/test-helper')(app);
 
 var request = require('supertest');
 var chai = require('chai');
@@ -9,31 +9,19 @@ var chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
-var testUserCreds = {username:'testuser', email: 'testuser@hub.fi', password: 'testPassword'};
 var testUserId;
 var testUserToken;
 
 var server;
 
 before(function () {
-    var config = {
-        "restApiRoot": "/api",
-        "host": "0.0.0.0",
-        "port": 0,
-        "legacyExplorer": false,
-        "remoting": {
-            "context": {
-                "enableHttpContext": true
-            }
-        }
-    };
-    return app.boot({adminCredentials: testUserCreds, config: config})
+    return app.boot()
     .then(() => {
         return new Promise((resolve) => {
             server = app.listen(resolve);
         });
     })
-    .then(() => Helper.login(testUserCreds))
+    .then(() => Helper.login())
     .then((token) => {
         testUserId = token.userId;
         testUserToken = token.id;
@@ -268,7 +256,7 @@ describe('IoT Hub API, Authenticated', function () {
             return Helper.insertValidExecutableFeed(testUserToken);
         });
 
-        it("Invalid executable feed (built-in validation mecanism)", function (done) {
+        it("Invalid executable feed (built-in validation mechanism)", function (done) {
             // the name field is missing
             var invalidFeed = Helper.validExecutableFeed();
             delete invalidFeed.name;
@@ -309,6 +297,79 @@ describe('IoT Hub API, Authenticated', function () {
             });
         });
 
+        it('Should execute a simple script', function () {
+            return Helper.insertValidExecutableFeed(testUserToken)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', testUserToken)
+                    .type('json')
+                    .send(JSON.stringify({"source": "5;"}))
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.body.result).to.eql(5);
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        it('Should execute a function call script', function () {
+            return Helper.insertValidExecutableFeed(testUserToken)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', testUserToken)
+                    .type('json')
+                    .send(JSON.stringify({"source": "var t=function(){return \'Done\'};t();"}))
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.body.result).to.eql('Done');
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        it('Should execute script POSTed as plain text', function () {
+            return Helper.insertValidExecutableFeed(testUserToken)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', testUserToken)
+                    .type('text/plain')
+                    .send("var s=function(){return 'Done';};s();")
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.body.result).to.eql('Done');
+                        resolve();
+                    });
+                });
+            });
+        });
+
+        it('Should return text/plain response', function () {
+            return Helper.insertValidExecutableFeed(testUserToken)
+            .then((insertedId) => {
+                return new Promise((resolve, reject) => {
+                    request(app)
+                    .post(`/api/feeds/executable/${insertedId}/run`)
+                    .set('Authorization', testUserToken)
+                    .set('Accept', 'text/plain')
+                    .type('json')
+                    .send(JSON.stringify({source: "var s=function(){return 5;};s();"}))
+                    .expect('Content-Type', /text/)
+                    .expect(200, (err, res) => {
+                        if (err) reject(err);
+                        expect(res.text).to.eql('5');
+                        resolve();
+                    });
+                });
+            });
+        });
     });
 
     describe('General querying', function () {

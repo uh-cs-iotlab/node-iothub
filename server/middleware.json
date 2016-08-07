@@ -5,7 +5,15 @@
     "initial": {},
     "session": {},
     "auth": {},
-    "parse": {},
+    "parse": {
+        "body-parser#json": {"params":{"limit":"1000mb"}},
+        "body-parser#raw": {"params":{"limit":"1000mb"}},
+        "body-parser#text": {
+            "params":{"limit":"1000mb"},
+            "methods":["post"],
+            "paths":["/api/feeds/executable"]
+        }
+    },
     "routes": {
         "loopback#rest": {
             "paths": [
