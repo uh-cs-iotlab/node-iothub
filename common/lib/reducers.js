@@ -4,6 +4,27 @@ var assert = require('assert');
 var logger = require('../utils/logger');
 
 var reducers = {
+    defaultReducer: function (values) {
+		/**
+	     * Default reducer function for combining response pieces. Maybe needs to be moved to reducers
+	     * library.
+	     * @param  {[type]} values [description]
+	     * @return {[type]}        [description]
+	     */
+        assert.ok(Array.isArray(values), "argument 'values' must be a valid array.");
+
+        var arr = [];
+        for (let item of values) {
+            if (item.result) {
+                arr.push(item.result);
+            } else {
+                let err = new Error('Invalid piece of data for reducer: Item does not have argument result.');
+                err.name = 'InvalidPieceResponseError';
+                throw err;
+            }
+        }
+        return {response: arr}
+    },
 	imageReducer: function (arrs) {
 		var arr;
 		var response;
