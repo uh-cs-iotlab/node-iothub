@@ -16,7 +16,7 @@ Profiler.prototype.start = function () {
 
 Profiler.prototype.add = function (data) {
 	if (typeof data !== 'object') {
-		throw new Error('First argument to add must be an object');
+		throw new Error('First argument to Profiler.add must be an object');
 	}
 	if (!this.data[data.tag]) {
 		this.data[data.tag] = [];

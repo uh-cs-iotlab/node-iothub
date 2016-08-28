@@ -29,15 +29,26 @@ var reducers = {
 		var arr;
 		var response;
         assert.ok(Array.isArray(arrs), "Invalid argument for reducer given. Array expected, " + typeof arrs + " found.");
+        let type = arrs[0].result.data.type || 'Array';
 
         if (Array.isArray(arrs)) { 
         	var width = arrs[0].result.width
-        	  , height = arrs[0].result.height
         	var bufs = [];
+        	var height;
 			var profilerData = [];
+        	
+        	if (type === 'Array') {
+        		height = arrs[0].result.height;
+        	} else {
+        		height = arrs[0].result.height * arrs.length;
+        	}
 
 	        for (let item of arrs) {
-	   			bufs.push(item.result.data);
+	   			if (type === 'Array') {
+	   				bufs.push(item.result.data);
+	   			} else {
+	   				bufs.push(item.result.data.data);
+		   		}
 	   			if (item.profiler && item.profiler.enabled) {
 	   					profilerData.push({pieceId:item.pieceId, data:item.profiler.data});
 	   				// if (Array.isArray(item.profiler.data)) {
@@ -48,6 +59,7 @@ var reducers = {
 	        }
 	        // Nice way to concatenate n arrays
 	        arr = [].concat.apply([], bufs);
+
 	        if (profilerData.length > 0) {
 	        	[].concat.apply([], profilerData);
 	        }

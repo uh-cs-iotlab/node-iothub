@@ -1,5 +1,7 @@
 'use strict'
 
+const url = require('url');
+
 var mappers = {
 	defaultMapper: function (elem, options) {
 		/**
@@ -57,46 +59,34 @@ var mappers = {
         }
         return ret;
     },
-    imageUrlMapper: function (imgObject, options) {
+    imageUrlMapper: function (dataElement, options) {
     	options = options || {}
-	    var arr = imgObject.data.data;
 
-	    var ret = []
-	      , len = arr.length
+	    let ret = []
+	      , len = dataElement.maxNodes
 	      , obj = null
 	      , tmpArr = []
 	      , nodeCount = options.nodeCount || options.nodes.length
 
-	    var pieceLength = Math.floor(len/nodeCount);
+	    let pieceLength = Math.floor(len/nodeCount);
+        let urlParts = url.parse(dataElement.url, true);
+        urlParts.search = null;
 
-	    var i, j, chunk = pieceLength;
-	    for (let i = 1, j = 1; i <= len; i++) {
-	        // Check if subarray is equal to the length of the wanted piece, and that this is not 
-	        // the last piece of input array. NOTE! Last piece will also include any remaining data in the array. 
-	        // Thus, it would be best to have data such that: dataLength mod nodeCount would be close to 0. 
-	        // Otherwise the last piece could have more data than other pieces, and takes longer to process 
-	        // than other nodes.
-	        let tmpObj = {
-                name: imgObject.name,
-                type: 'url-piece',
-                pieceId: j,
-                data: {
-                	height: imgObject.data.height,
-                	width: imgObject.data.width,
-                	data: tmpArr
-                },
-                contentType: imgObject.contentType,
-                processors: imgObject.processors
+	    for (let i = 1; i <= len; i++) {
+
+            // TODO: don't hardcode these keys/values
+            urlParts.query.size = parseInt(urlParts.query.size);
+            urlParts.query.nodes = len;
+            urlParts.query.index = i;
+            let tmpObj = {
+                name: dataElement.name,
+                type: 'local',
+                pieceId: i,
+                url: urlParts.format(),
+               	contentType: dataElement.contentType,
+                processors: dataElement.processors
             }
-
-            tmpArr.push(arr[i-1]);
-	        if (i % pieceLength === 0 && j !== nodeCount) {
-            	ret.push(tmpObj);
-	            tmpArr = [];
-	            j++;
-	        } else if (i === len) {
-	        	ret.push(tmpObj);
-	        }
+            ret.push(tmpObj);
 	    }
 	    return ret;
     },
@@ -119,6 +109,8 @@ var mappers = {
 	        // Thus, it would be best to have data such that: dataLength mod nodeCount would be close to 0. 
 	        // Otherwise the last piece could have more data than other pieces, and takes longer to process 
 	        // than other nodes.
+
+            tmpArr.push(arr[i-1]);
 	        let tmpObj = {
                 name: imgObject.name,
                 type: 'piece',
@@ -131,8 +123,6 @@ var mappers = {
                 contentType: imgObject.contentType,
                 processors: imgObject.processors
             }
-
-            tmpArr.push(arr[i-1]);
 	        if (i % pieceLength === 0 && j !== nodeCount) {
             	ret.push(tmpObj);
 	            tmpArr = [];

@@ -135,8 +135,8 @@ module.exports = function (ExecutableFeed) {
 	                } else {
 	                    let distribute, distributeOptions;
 	                    if (body.distribution && body.distribution.enabled) {
-	                         distribute = true;
-	                         distributeOptions = body.distribution;
+                            distribute = true;
+                            distributeOptions = body.distribution;
 	                    } else if (feed.distribution && feed.distribution.enabled) {
 	                        distribute = true;
 	                        distributeOptions = feed.distribution;
@@ -150,13 +150,15 @@ module.exports = function (ExecutableFeed) {
 	                    body.currentDepth = body.currentDepth || 0;
                         if (distribute && distributeOptions.type != 'url' && (body.currentDepth < distributeOptions.maxDepth)) {
 	                        return helpers.getDistributableData(body, feed, distributeOptions).then((pieces) => {
-	                            return helpers.logProfile({tag:'after_data_map'}).then(success => {
+	                            // Each piece is a definition of a piece of the original data. The definition may already
+                                // include fetched and distributed data, or only a url for getting a piece of data.
+                                return helpers.logProfile({tag:'after_data_map'}).then(success => {
 		                            // Increase depth counter for next level
-		                            body.currentDepth++;
+                                    body.currentDepth++;
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
 		                            return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
-		                                return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
+                                        return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
 			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;
 			                                    logger.error(msg);
@@ -165,21 +167,20 @@ module.exports = function (ExecutableFeed) {
 			                                }
 			                                let reducedResult;
 			                                responseOptions.postProcessing = true;
-
-			                                if (distributeOptions.reducer) {
-			                                    try {
-			                                        reducedResult = helpers.runReducer(feed, values, distributeOptions);
-		                                        	let res;
-		                                        	return helpers.logProfile({tag:'after_reducer'}).then(success => {
-		                                        		if (profilerOptions && profilerOptions.enabled) {
-		                                        			responseOptions.profiler = profilerOptions;
-		                                        			let r = helpers.formatResponse(reducedResult.result, responseOptions, reducedResult.profilerData);
-		                                        			r.profiler.piecesData = reducedResult.profilerData;
-		                                        			r.profiler.data = profiler.all();
-		                                        			delete r.result;
-		                                        			res = r;
-		                                        		} else {
-		                                        			res = helpers.formatResponse(reducedResult.result, responseOptions, {});
+                                            if (distributeOptions.reducer) {
+                                                try {
+                                                    reducedResult = helpers.runReducer(feed, values, distributeOptions);
+                                                    let res;
+                                                    return helpers.logProfile({tag:'after_reducer'}).then(success => {
+                                                        if (profilerOptions && profilerOptions.enabled) {
+                                                            responseOptions.profiler = profilerOptions;
+                                                            let r = helpers.formatResponse(reducedResult.result, responseOptions, reducedResult.profilerData);
+                                                            r.profiler.piecesData = reducedResult.profilerData;
+                                                            r.profiler.data = profiler.all();
+                                                            delete r.result;
+                                                            res = r;
+                                                        } else {
+                                                            res = helpers.formatResponse(reducedResult.result, responseOptions, {});
 		                                        		}
 		                                        		return helpers.logProfile({tag:'before_sending_response'}).then(success => {
 		                                        			return res;
@@ -205,11 +206,8 @@ module.exports = function (ExecutableFeed) {
 		                            }, err => Promise.reject(err));
 								}, err => Promise.reject(err));
 	                        });
-                        } else if (distribute && distributeOptions.type == 'url' && (body.currentDepth < distributeOptions.maxDepth)) {
-                            // 
-                            return Promise.reject(new Error("Noop"));
-	                    } else {
-	                        // No distribution, execute locally
+                        } else {
+                            // No distribution, execute locally
                             return helpers.getAllData(body, feed).then((context) => {
 	                            // Now we have ready context object with data and libraries fetched. Next we execute
 	                            // the script and return response. 
@@ -228,12 +226,11 @@ module.exports = function (ExecutableFeed) {
 		                                } else {
 		                                    responseOptions.postProcessing = true;
 		                                }
-
-		                                if (profilerOptions && profilerOptions.enabled) {
-		                                	responseOptions.profiler = profilerOptions;
-		                                }
-		                                let res = helpers.formatResponse(rawResult.res, responseOptions, rawResult.context);
-		                                return helpers.logProfile({tag:'before_sending_response'}).then(success => {
+                                        if (profilerOptions && profilerOptions.enabled) {
+                                            responseOptions.profiler = profilerOptions;
+                                        }
+                                        let res = helpers.formatResponse(rawResult.res, responseOptions, rawResult.context);
+                                        return helpers.logProfile({tag:'before_sending_response'}).then(success => {
 			                                return res;
 		                            	}, err => Promise.reject(err));
 		                            }, err => Promise.reject(err));

@@ -34,8 +34,8 @@ Helper.prototype.getData = function (element, index, array) {
             return element;
         }
         else if (element.type === 'local' || element.type === 'remote') {
-            return this.fetchFeed(element).then((elem) => {
-                elem.data = this.formatData(elem);
+            return Helper.prototype.fetchFeed(element).then((elem) => {
+                elem.data = Helper.prototype.preprocessData(elem);
                 return elem;
             });
             
@@ -43,8 +43,8 @@ Helper.prototype.getData = function (element, index, array) {
         // Doesn't work yet, used for getting data from defined executable
         // feed data argument descriptions.
         // else if (element.type === 'feed') {
-        //     element.data = formatData(element);
-        //     {name:element.name, data:formatData(this.feed.data)}
+        //     element.data = preprocessData(element);
+        //     {name:element.name, data:preprocessData(this.feed.data)}
         //     this.data.push(element);
         // }
         else {
@@ -77,7 +77,7 @@ Helper.prototype.getAllData = function (body, feed) {
             return Promise.reject(error);
         } 
         return Promise.all(resolvedData).then(values => {
-            if (values) {
+        	if (values) {
                 let contextObj = {data:{}};
                 let data = {};
                 values.forEach(function (elem) { data[elem.name] = elem.data; });
@@ -106,12 +106,12 @@ Helper.prototype.fetchFeed = function (element) {
         feedType = element.feedType || 'atomic';
     let url;
 
-    if (element.type === 'local') {
+    if (element.type === 'feed') {
         // Default settings for local feeds
         var baseUrl = 'https://' + app.get('host') + ':' + app.get('port') + '/api/feeds',
             feedUrl =  baseUrl + '/' + feedType + '/' + feedId
         url = baseUrl + feedUrl;
-    } else if (element.type === 'remote' && element.url) {
+    } else if (element.type === 'local' && element.url) {
         url = element.url;
     } else {
         var error = new Error(`Type ` + element.type + ` not identified`);
@@ -348,8 +348,13 @@ Helper.prototype.isBinaryType = function (type) {
  * @param  {[type]} elem [description]
  * @return {[type]}      [description]
  */
-Helper.prototype.formatData = function (elem) {
+Helper.prototype.preprocessData = function (elem) {
     var response;
+
+    // No preprocessing for remote datasources (processed in remote hubs)
+    if (elem.type === 'remote') {
+    	return elem.data;
+    }
 
     switch (elem.contentType) {
         case 'application/octet-stream':
@@ -371,6 +376,8 @@ Helper.prototype.formatData = function (elem) {
             break;
     }
 
+    // Preprocess the data before using a mapping function. E.g., JSON decoding can be applied. Mapping
+    // functions usually expect arrays.
     if (elem.type === 'inline' && elem.processors && processors.get(elem.processors)) {
         response = processors.get(elem.processors)(response);
     }
@@ -389,18 +396,29 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
     let d = body.data || feed.data;
     // NOTE! Distributable data should be the first object in the array.
     let dataSource = d[0];
+    var convergedData;
     if (!dataSource) {
         let err = new Error('Could not find distributable data');
         return Promise.reject(err);
     }
 
-    var convergedData = dataSource.type === 'inline' ? Promise.resolve(dataSource) : this.fetchFeed(dataSource);
+    if (dataSource.type === 'inline' || dataSource.type === 'remote') {
+    	// Data is ready
+    	convergedData = Promise.resolve(dataSource)
+    } else if (dataSource.type === 'local') {
+    	// Fetch data locally and distribute it to hubs
+    	convergedData = this.fetchFeed(dataSource);
+    } else {
+    	let err = new Error("Invalid type for data source. Supported types are inline, local and remote.");
+    	err.status = 400;
+    	err.name = "DataSourceValidationError";
+    	return Promise.reject(err);
+    }
 
     return convergedData.then((data) => {
         // Takes care of processing data as needed before mapping
-        data.data = this.formatData(data);
-        return this.logProfile({tag:'after_data_fetch'}).then(success => {
-            var mapperFunction;
+        data.data = this.preprocessData(data);
+        return Helper.prototype.logProfile({tag:'after_data_fetch'}).then(success => {
 
             switch (typeof body.distribution.mapper) {
                 case 'string':
@@ -458,8 +476,10 @@ Helper.prototype.executeScript = function (body, vmContext) {
             if (err) {
                 reject(err)
             }
-            this.logProfile({tag:'execution_end'}).then(val => {
+            Helper.prototype.logProfile({tag:'execution_end'}).then(() => {
             	resolve({res:res, context:context, data:vmContext.data});
+            }, (err) => {
+            	reject("Could not log profiling info for node. " + err.message);
             });
         });
     });
@@ -498,7 +518,7 @@ Helper.prototype.runReducer = function (feed, values, options) {
 Helper.prototype.logProfile = function (data) { 
     return new Promise((resolve, reject) => {
     	if (!app.get('profiler')) {
-    		resolve(false);
+    		reject(new Error("No profiler available for hub."));
     	} else {
 
 	    	if (!data.tag || typeof data.tag !== 'string') {
@@ -531,7 +551,7 @@ Helper.prototype.logProfile = function (data) {
 		    			}
 		    			profiler.add(logData);
 		    			if (app.get('logProfilingInfo') === true) {
-		    				log(msg, logData);
+		    				// log(msg, logData);
 		    			}
 		    		}
 		    		resolve(true);
