@@ -184,6 +184,7 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: req.body
     }
+    console.log('SENDING PIECE', options)
     return new Promise((resolve, reject) => {
         // Allow self-signed certs
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
@@ -268,6 +269,7 @@ Helper.prototype.formatResponse = function (result, options, context) {
                 postProcessing: false
             }
         } else if (options.contentType) {
+            console.log(options)
             return {
                 contentType: options.contentType,
                 result: result,
@@ -402,7 +404,7 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
         return Promise.reject(err);
     }
 
-    if (dataSource.type === 'inline' || dataSource.type === 'remote') {
+    if (dataSource.type === 'inline' || dataSource.type === 'remote' || dataSource.type === 'piece') {
     	// Data is ready
     	convergedData = Promise.resolve(dataSource)
     } else if (dataSource.type === 'local') {
@@ -416,8 +418,10 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
     }
 
     return convergedData.then((data) => {
-        // Takes care of processing data as needed before mapping
-        data.data = this.preprocessData(data);
+        // Takes care of processing data as needed before mapping. If data is already processed, don't process
+        if (dataSource.type !== 'piece') {
+            data.data = this.preprocessData(data);
+        }
         return Helper.prototype.logProfile({tag:'after_data_fetch'}).then(success => {
 
             switch (typeof body.distribution.mapper) {

@@ -124,7 +124,7 @@ module.exports = function (ExecutableFeed) {
 
         // Sequence to handle request:
         // - check distribution param, and send request further if needed
-        // - if script is run in this node, fetch data and library dependencies, then execute script
+        // - if script is run in this node, get/fetch data and library dependencies, then execute script
         reqP = ExecutableFeed.findById(modelId)
             .then((feed) => {
         		return helpers.logProfile({tag:'feed_fetched'}).then(success => {
@@ -148,7 +148,7 @@ module.exports = function (ExecutableFeed) {
 	                    // Check distribution parameter, and either distribute and send data further,
 	                    // or handle in this node.
 	                    body.currentDepth = body.currentDepth || 0;
-                        if (distribute && distributeOptions.type != 'url' && (body.currentDepth < distributeOptions.maxDepth)) {
+                        if (distribute && (body.currentDepth < distributeOptions.maxDepth)) {
 	                        return helpers.getDistributableData(body, feed, distributeOptions).then((pieces) => {
 	                            // Each piece is a definition of a piece of the original data. The definition may already
                                 // include fetched and distributed data, or only a url for getting a piece of data.
@@ -157,7 +157,8 @@ module.exports = function (ExecutableFeed) {
                                     body.currentDepth++;
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
-		                            return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
+                                    console.log(pieces)
+                                    return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
                                         return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
 			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;
@@ -165,8 +166,15 @@ module.exports = function (ExecutableFeed) {
 			                                    let err = new Error(msg);
 			                                    return Promise.reject(err);
 			                                }
-			                                let reducedResult;
-			                                responseOptions.postProcessing = true;
+                                            let reducedResult;
+                                            if (body.currentDepth == 1) {
+                                                responseOptions.postProcessing = true;
+                                            } else {
+                                                // This is an intermediary result, and needs further reducing up the call stack
+                                                responseOptions.postProcessing = false;
+                                                responseOptions.pieceResult = true;
+                                                responseOptions.contentType = 'application/json';
+                                            }
                                             if (distributeOptions.reducer) {
                                                 try {
                                                     reducedResult = helpers.runReducer(feed, values, distributeOptions);
@@ -180,6 +188,7 @@ module.exports = function (ExecutableFeed) {
                                                             delete r.result;
                                                             res = r;
                                                         } else {
+                                                            console.log('GOT RESULTS', responseOptions)
                                                             res = helpers.formatResponse(reducedResult.result, responseOptions, {});
 		                                        		}
 		                                        		return helpers.logProfile({tag:'before_sending_response'}).then(success => {
@@ -200,7 +209,7 @@ module.exports = function (ExecutableFeed) {
 			                                	// return helpers.logProfile({tag:'before_sending_response'}).then(success => {
 			                                	// 	return res;
 			                                	// });
-                                                throw new Error("Default reducer function is not implemented. Use image reducer.");
+                                                return Promise.reject(new Error("Default reducer function is not implemented. Use image reducer."));
 			                                }
 			                            }, err => Promise.reject(err));
 		                            }, err => Promise.reject(err));
@@ -209,10 +218,11 @@ module.exports = function (ExecutableFeed) {
                         } else {
                             // No distribution, execute locally
                             return helpers.getAllData(body, feed).then((context) => {
-	                            // Now we have ready context object with data and libraries fetched. Next we execute
-	                            // the script and return response. 
-	                            return helpers.logProfile({tag:'after_data_fetch'}).then(success => {
-		                            return helpers.executeScript(body, context).then(rawResult => {
+                                // Now we have ready context object with data and libraries fetched. Next we execute
+                                // the script and return response. 
+                                return helpers.logProfile({tag:'after_data_fetch'}).then(success => {
+                                    return helpers.executeScript(body, context).then(rawResult => {
+                                        console.log('EXECUTING')
 		                                if (distribute && body.response.processors) {
 		                                    // If we are executing in a leaf node, don't run processors on data.
 		                                    // They are run after reducers in parent nodes.

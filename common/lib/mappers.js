@@ -70,7 +70,7 @@ var mappers = {
 
 	    let pieceLength = Math.floor(len/nodeCount);
         let urlParts = url.parse(dataElement.url, true);
-        urlParts.search = null;
+        urlParts.search = null; // Remove search part of the url so that format() uses the values we want
 
 	    for (let i = 1; i <= len; i++) {
 
@@ -90,31 +90,28 @@ var mappers = {
 	    }
 	    return ret;
     },
-    imageDataMapper: function (imgObject, options) {
-    	options = options || {}
-	    var arr = imgObject.data.data;
+    imageDataMapper: function (imgObject, distributeOptions) {
+    	let options = distributeOptions || {}
+	    let arr = imgObject.data.data;
 
-	    var ret = []
+	    let ret = []
 	      , len = arr.length
 	      , obj = null
 	      , tmpArr = []
 	      , nodeCount = options.nodeCount || options.nodes.length
 
-	    var pieceLength = Math.floor(len/nodeCount);
+	    let pieceLength = Math.floor(len/nodeCount);
 
-	    var i, j, chunk = pieceLength;
+	    let i, j, chunk = pieceLength;
+	    console.log(pieceLength)
+
 	    for (let i = 1, j = 1; i <= len; i++) {
-	        // Check if subarray is equal to the length of the wanted piece, and that this is not 
-	        // the last piece of input array. NOTE! Last piece will also include any remaining data in the array. 
-	        // Thus, it would be best to have data such that: dataLength mod nodeCount would be close to 0. 
-	        // Otherwise the last piece could have more data than other pieces, and takes longer to process 
-	        // than other nodes.
-
             tmpArr.push(arr[i-1]);
+            let pieceId = imgObject.pieceId ? imgObject.pieceId + '.' + j : j;
 	        let tmpObj = {
                 name: imgObject.name,
                 type: 'piece',
-                pieceId: j,
+                pieceId: pieceId,
                 data: {
                 	height: imgObject.data.height,
                 	width: imgObject.data.width,
@@ -123,6 +120,11 @@ var mappers = {
                 contentType: imgObject.contentType,
                 processors: imgObject.processors
             }
+	        // Check if subarray is equal to the length of the wanted piece, and that this is not 
+	        // the last piece of input array. NOTE! Last piece will also include any remaining data in the array. 
+	        // Thus, it would be best to have data such that: dataLength mod nodeCount would be close to 0. 
+	        // Otherwise the last piece could have more data than other pieces, and takes longer to process 
+	        // than other nodes.
 	        if (i % pieceLength === 0 && j !== nodeCount) {
             	ret.push(tmpObj);
 	            tmpArr = [];
