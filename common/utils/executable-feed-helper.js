@@ -163,6 +163,17 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
     var req = this;
     var url;
     if (req.body.distribution.nodes && req.body.distribution.nodes[index]) {
+        // If this is a nested distribution, the urls in the distribution part of the request must
+        // be one level deeper in the nested object. If such level exists, we replace the current highest
+        // level of node url definitions with the next level. This continues for each level of distribution.
+        // If no next level is defined in the distribution urls, uses the current level. So using bigger
+        // maximum depth for execution than there are actually node urls defined results in distributing the 
+        // computations over and over to the same nodes!
+        if (dataPiece.type === 'piece' && dataPiece.pieceId.indexOf('.') !== -1) {
+            if (req.body.distribution.nodes[index].nodes && req.body.distribution.nodes[index].nodes.length > 0) {
+                req.body.distribution.nodes = req.body.distribution.nodes[index].nodes;
+            }
+        }
         url = req.body.distribution.nodes[index].url;
     } else {
         // Should use a node url given by a metahub, throws an error for now.
@@ -406,7 +417,7 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
 
     if (dataSource.type === 'inline' || dataSource.type === 'remote' || dataSource.type === 'piece') {
     	// Data is ready
-    	convergedData = Promise.resolve(dataSource)
+    	convergedData = Promise.resolve(dataSource);
     } else if (dataSource.type === 'local') {
     	// Fetch data locally and distribute it to hubs
     	convergedData = this.fetchFeed(dataSource);
@@ -522,7 +533,7 @@ Helper.prototype.runReducer = function (feed, values, options) {
 Helper.prototype.logProfile = function (data) { 
     return new Promise((resolve, reject) => {
     	if (!app.get('profiler')) {
-    		reject(new Error("No profiler available for hub."));
+    		resolve(true);
     	} else {
 
 	    	if (!data.tag || typeof data.tag !== 'string') {

@@ -107,7 +107,7 @@ var mappers = {
 
 	    for (let i = 1, j = 1; i <= len; i++) {
             tmpArr.push(arr[i-1]);
-            let pieceId = imgObject.pieceId ? imgObject.pieceId + '.' + j : j;
+            let pieceId = imgObject.pieceId ? imgObject.pieceId + '.' + j : j + '';
 	        let tmpObj = {
                 name: imgObject.name,
                 type: 'piece',
