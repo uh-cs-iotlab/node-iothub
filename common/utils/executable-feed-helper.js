@@ -161,6 +161,7 @@ Helper.prototype.fetchFeed = function (element) {
  */
 Helper.prototype.sendPiece = function (dataPiece, index, array) {
     let req = this;
+    // Use copy of request body, so that we don't modify one common object
     let strCopy = JSON.stringify(this.body);
     let body = JSON.parse(strCopy);
     let url;
@@ -175,8 +176,13 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
             // NOTE! Here url definition MUST be before nodes is reassigned
             url = body.distribution.nodes[index].url;
             if (body.distribution.nodes[index].nodes && body.distribution.nodes[index].nodes.length > 0) {
+                // When another level of distribution is found
                 body.distribution.nodes = body.distribution.nodes[index].nodes;
             } else {
+                // No further distribution levels defined for this node
+                if (!body.distribution.minDepth || body.distribution.minDepth <= body.currentDepth) {
+                    body.distribution.maxDepth = body.currentDepth-1;
+                }
                 body.distribution.nodes = [body.distribution.nodes[index]];
             }
         } else {
@@ -202,9 +208,9 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: body
     }
-    console.log('SENDING PIECE', index, options.url, options.body.distribution.nodes)
+    console.log('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth)
     return new Promise((resolve, reject) => {
-        // Allow self-signed certs
+        // Allow self-signed certs for dev and test
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         }
@@ -378,8 +384,6 @@ Helper.prototype.preprocessData = function (elem) {
 
     switch (elem.contentType) {
         case 'application/octet-stream':
-            response = new Buffer(elem.data);
-            break;
         case 'image/gif':
         case 'image/png':
         case 'image/jpeg':
@@ -455,7 +459,6 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
                         err.status = 404;
                         throw err;
                     }
-                    break;
                 case 'function':
                     try {
                         return body.distribution.mapper(data, options);
@@ -468,7 +471,6 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
                 case undefined:
                 default:
                     return mappers.get('defaultMapper')(data, options);
-                    break;
             }
         });
     });
@@ -491,7 +493,6 @@ Helper.prototype.executeScript = function (body, vmContext) {
 
     return new Promise((resolve, reject) => {
         var context = {}
-          , options = {}
         // Get vm instance
         var vm = vmContainer.createVM(vmName, vmOptions);
         vm.runScript(script, (err, res) => {
