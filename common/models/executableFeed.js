@@ -157,7 +157,7 @@ module.exports = function (ExecutableFeed) {
                                     body.currentDepth++;
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
-                                    console.log(pieces)
+                                    console.log('PIECES', pieces)
                                     return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
                                         return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
@@ -167,7 +167,7 @@ module.exports = function (ExecutableFeed) {
 			                                    return Promise.reject(err);
 			                                }
                                             let reducedResult;
-                                            if (body.currentDepth == 1) {
+                                            if (body.currentDepth === 1) {
                                                 responseOptions.postProcessing = true;
                                             } else {
                                                 // This is an intermediary result, and needs further reducing up the call stack

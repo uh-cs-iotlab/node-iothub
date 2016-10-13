@@ -160,21 +160,28 @@ Helper.prototype.fetchFeed = function (element) {
  * @return {[type]}           [description]
  */
 Helper.prototype.sendPiece = function (dataPiece, index, array) {
-    var req = this;
-    var url;
-    if (req.body.distribution.nodes && req.body.distribution.nodes[index]) {
+    let req = this;
+    let strCopy = JSON.stringify(this.body);
+    let body = JSON.parse(strCopy);
+    let url;
+    if (body.distribution.nodes && body.distribution.nodes[index]) {
         // If this is a nested distribution, the urls in the distribution part of the request must
         // be one level deeper in the nested object. If such level exists, we replace the current highest
         // level of node url definitions with the next level. This continues for each level of distribution.
         // If no next level is defined in the distribution urls, uses the current level. So using bigger
         // maximum depth for execution than there are actually node urls defined results in distributing the 
         // computations over and over to the same nodes!
-        if (dataPiece.type === 'piece' && dataPiece.pieceId.indexOf('.') !== -1) {
-            if (req.body.distribution.nodes[index].nodes && req.body.distribution.nodes[index].nodes.length > 0) {
-                req.body.distribution.nodes = req.body.distribution.nodes[index].nodes;
+        if (dataPiece.type === 'piece') {
+            // NOTE! Here url definition MUST be before nodes is reassigned
+            url = body.distribution.nodes[index].url;
+            if (body.distribution.nodes[index].nodes && body.distribution.nodes[index].nodes.length > 0) {
+                body.distribution.nodes = body.distribution.nodes[index].nodes;
+            } else {
+                body.distribution.nodes = [body.distribution.nodes[index]];
             }
+        } else {
+            url = body.distribution.nodes[index].url;
         }
-        url = req.body.distribution.nodes[index].url;
     } else {
         // Should use a node url given by a metahub, throws an error for now.
         var err = new Error(`No URLs were defined for distributed data. Define a url component 
@@ -187,32 +194,32 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
     // Set first data item to refer to this piece of data. This overrides the whole data that is
     // saved in the first index, and this is the desired effect. The first index should be used 
     // for data that needs to be distributed.
-    req.body.data[0] = dataPiece;
+    body.data[0] = dataPiece;
 
     var options = {
-        method: req.method,
+        method: 'POST',
         url: url,
         json: true,
-        body: req.body
+        body: body
     }
-    console.log('SENDING PIECE', options)
+    console.log('SENDING PIECE', index, options.url, options.body.distribution.nodes)
     return new Promise((resolve, reject) => {
         // Allow self-signed certs
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         }
-        request(options, function (error, response, body) { 
+        request(options, function (error, response, responseBody) {
             if (error === null && response.statusCode !== 200) {
-                error = new Error('Could not execute script piece: ' + body.error.message);
+                error = new Error('Could not execute script piece: ' + responseBody.error.message);
                 error.name = 'ExecutionError';
                 error.status = 400;
                 reject(error);
             } else if (error) {
                 reject(error);
-            } else if (!body.result) {
+            } else if (!responseBody.result) {
             	reject(new Error('No result retrieved from node: ' + dataPiece.pieceId));
             } else {
-            	let contentLength = response.headers['content-length'];
+            	const contentLength = response.headers['content-length'];
             	// Can't use 'this', because it refers to request object !!!
             	Helper.prototype.logProfile({
             		tag: 'piece_response_latency', 
@@ -220,12 +227,12 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
             		contentLength: contentLength
             	}).then(val => {
                     let res = {
-                        result: body.result,
+                        result: responseBody.result,
                         pieceId: dataPiece.pieceId
                     }
-                    if (req.body.profiler && req.body.profiler.enabled) {
+                    if (body.profiler && body.profiler.enabled) {
                     	// If profiler enabled, include profiler data from response
-                    	res.profiler = body.profiler;
+                    	res.profiler = responseBody.profiler;
                     }
                     resolve(res);
                 }, err => reject(err));
