@@ -123,13 +123,13 @@ module.exports = function (ExecutableFeed) {
         }
 
         // Sequence to handle request:
-        // - check distribution param, and send request further if needed
-        // - if script is run in this node, get/fetch data and library dependencies, then execute script
+        // 1. Check distribution param, and send request further if needed
+        // 2. If script is run in this node, get/fetch data and library dependencies, then execute script
         reqP = ExecutableFeed.findById(modelId)
             .then((feed) => {
         		return helpers.logProfile({tag:'feed_fetched'}).then(success => {
 	                if (!feed) {
-	                    let err = new Error(`Feed not found.`);
+	                    let err = new Error(`Feed not found: ` + modelId);
 	                    err.statusCode = err.status = 404;
 	                    return Promise.reject(err);
 	                } else {

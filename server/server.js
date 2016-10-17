@@ -10,16 +10,19 @@ var app = module.exports = loopback();
 var flags = require('node-flags');
 
 var logDirectory = path.join(__dirname, '..', 'logs');
-// ensure log directory exists
-fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
-// create a rotating write stream
-var accessLogStream = FileStreamRotator.getStream({
-    filename: path.join(logDirectory, 'access-%DATE%.log'),
-    frequency: 'daily',
-    verbose: false
-});
-// setup the logger
-app.use(morgan('combined', {stream: accessLogStream}));
+
+// Do not try to create local logs when running in ZEIT cloud
+if (!process.env.NOW) {
+    fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
+    // create a rotating write stream
+    var accessLogStream = FileStreamRotator.getStream({
+        filename: path.join(logDirectory, 'access-%DATE%.log'),
+        frequency: 'daily',
+        verbose: false
+    });
+    // setup the logger
+    app.use(morgan('combined', {stream: accessLogStream}));
+}
 
 app.set('view engine', 'jade');
 

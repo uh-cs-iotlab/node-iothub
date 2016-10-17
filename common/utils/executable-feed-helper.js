@@ -8,8 +8,9 @@ var request = require('request');
 var vmContainer = require('../../lib/vm-container');
 
 var profiler = require('../lib/profiler');
-var usage = require('usage');
-var usageOptions = require('../utils/usage-conf');
+var pusage = require('pidusage');
+
+
 var profileEvents = require('../utils/profile-events');
 var logger = require('../utils/logger');
 
@@ -40,13 +41,6 @@ Helper.prototype.getData = function (element, index, array) {
             });
             
         }     
-        // Doesn't work yet, used for getting data from defined executable
-        // feed data argument descriptions.
-        // else if (element.type === 'feed') {
-        //     element.data = preprocessData(element);
-        //     {name:element.name, data:preprocessData(this.feed.data)}
-        //     this.data.push(element);
-        // }
         else {
             throw new Error('Type ' + element.type + ' not supported');
         }
@@ -561,24 +555,26 @@ Helper.prototype.logProfile = function (data) {
 
 	    	if (type === 'profile') {
 				let load = os.loadavg();
-                usage.lookup(process.pid, usageOptions, function(err, result) {
-	    			if (result) { //sometimes result is undefined
-		    			logData.usage = {
-		    				cpu: result.cpu,
-		    				totalMem: os.totalmem(),
-		    				freeMem: os.freemem(),
-		    				rssMem: result.memoryInfo.rss,
-		    				processMem: process.memoryUsage().rss,
-		    				mem: process.memoryUsage().rss/os.totalmem()*100,
-		    				load: load
-		    			}
-		    			profiler.add(logData);
-		    			if (app.get('logProfilingInfo') === true) {
-		    				// log(msg, logData);
-		    			}
-		    		}
-		    		resolve(true);
-				});
+                pusage.stat(process.pid, function(err, result) {
+                    // Note that sometimes result may be undefined, if async requests are made in very quick
+                    // succession
+                    if (result) {
+                        logData.usage = {
+                            cpu: result.cpu,
+                            totalMem: os.totalmem(),
+                            freeMem: os.freemem(),
+                            processMem: process.memoryUsage().rss,
+                            mem: process.memoryUsage().rss/os.totalmem()*100,
+                            load: load
+                        }
+                        profiler.add(logData);
+                        if (app.get('logProfilingInfo') === true) {
+                            // log(msg, logData);
+                        }
+                    }
+                    resolve(true);
+                });
+
 	    	} else {
 	    		log('Unknown executionEvent, no operation: ', data.type);
 	    		resolve(true);
@@ -587,10 +583,8 @@ Helper.prototype.logProfile = function (data) {
     });
 };
 
-// NOTE: Would prefer to use events for profiling info, but we need the results
-// before response is sent to client, for now, so support for separate logging location
-// remains as a TODO.
-
+// TODO: Might be preferable to use events for profiling info, but we need the results
+// before response is sent to client for now, so support for remote logging remains as a TODO.
 //  ExecutableFeed.on('executionEvent', (event) => {
 //  	var log = logger[event.level] || logger.info;
 

@@ -49,7 +49,7 @@ module.exports = function (app) {
                 } else {
                     confFileCreds = JSON.parse(fs.readFileSync(adminCredsConfFile, 'utf8')) || {};
                 }
-                // Merge credentials file options, and options given to boot. Options given to boot
+                // Merge credentials file options, and command line options given to boot. Options given to boot
                 // function override options set in the credentials file.
                 resolve(Object.assign(confFileCreds, optionsCreds));
             });

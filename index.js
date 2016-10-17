@@ -9,15 +9,30 @@ var app = module.exports = require('./server/server');
 var logger = require('./common/utils/logger');
 
 if (require.main === module) {
+    let options = {}
 
-    app.boot()
+    if (process.env.NOW) {
+        process.env.NODE_ENV = 'production';
+    }
+    if (flags.get('adminUser') && flags.get('adminPass') && flags.get('adminEmail')) {
+        options.adminCredentials = {
+            username: flags.get('adminUser'),
+            password: flags.get('adminPass'),
+            email: flags.get('adminEmail')
+        }
+    }
+
+    app.boot(options)
     .then(() => {
         let httpOnly = process.env.HTTP;
         let port =  flags.get('port') || app.get('port');
 
         if (typeof httpOnly === 'undefined') httpOnly = false;
         let server = null;
-        if (httpOnly) {
+
+        // If http-only server requested, or running in ZEIT cloud, use http-server. ZEIT uses https, but
+        // uses its own front server, and deploys app in a background machine.
+        if (httpOnly || process.env.NOW) {
             server = http.createServer(app);
         } else {
             let options = {

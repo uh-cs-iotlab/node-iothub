@@ -1,6 +1,6 @@
 {
   "name": "iothub",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Node.js IotHub implementation by the IoT Lab of the University of Helsinki",
   "homepage": "http://iotlab.cs.helsinki.fi",
   "keywords": [
@@ -9,20 +9,22 @@
   ],
   "main": "index.js",
   "scripts": {
-    "start": "node .",
+    "start": "node index.js",
+    "now-start":"node index.js --profiler --adminUser=zeit --adminPass=zietty --adminEmail=zeit@admin.co",
+    "now-build":"gulp",
     "watch": "gulp watch",
     "build": "gulp",
     "prepublish": "gulp",
     "test": "NODE_ENV=test mocha --reporter spec server/test --recursive"
   },
   "engines": {
-    "node": ">=4.1.1"
+    "node": ">=6.0.0"
   },
   "dependencies": {
     "body-parser": "^1.15.0",
     "file-stream-rotator": "0.0.6",
     "inquirer": "^0.12.0",
-    "jade": "^1.11.0",
+    "pug": "=2.0.0-beta6",
     "json-schema-ref-parser": "^3.0.2",
     "jsonschema": "^1.1.0",
     "loopback": "^2.26.0",
@@ -33,7 +35,7 @@
     "node-flags": "^0.1.9",
     "require-from-string": "^1.2.0",
     "swagger-ui-browserify": "http://aurelienbertron.fr/swagger-ui-browserify-2.1.4.tgz",
-    "usage": "^0.7.1",
+    "pidusage": "=1.1.0",
     "winston": "^2.2.0"
   },
   "devDependencies": {
@@ -58,7 +60,7 @@
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0",
-    "jpeg-js": "^0.1.2"
+    "jpeg-js": "^0.2.0"
   },
   "repository": {
     "type": "git",
