@@ -154,6 +154,7 @@ module.exports = function (ExecutableFeed) {
                                 // include fetched and distributed data, or only a url for getting a piece of data.
                                 return helpers.logProfile({tag:'after_data_map'}).then(success => {
 		                            // Increase depth counter for next level
+                                    let thisLevel = body.currentDepth;
                                     body.currentDepth++;
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
@@ -167,7 +168,7 @@ module.exports = function (ExecutableFeed) {
 			                                    return Promise.reject(err);
 			                                }
                                             let reducedResult;
-                                            if (body.currentDepth === 1) {
+                                            if (thisLevel === 0) {
                                                 responseOptions.postProcessing = true;
                                             } else {
                                                 // This is an intermediary result, and needs further reducing up the call stack
@@ -185,7 +186,6 @@ module.exports = function (ExecutableFeed) {
                                                             let r = helpers.formatResponse(reducedResult.result, responseOptions, reducedResult.profilerData);
                                                             r.profiler.piecesData = reducedResult.profilerData;
                                                             r.profiler.data = profiler.all();
-                                                            delete r.result;
                                                             res = r;
                                                         } else {
                                                             console.log('GOT RESULTS', responseOptions)
@@ -295,18 +295,22 @@ module.exports = function (ExecutableFeed) {
                 context.res.setHeader('Content-Type', executionOutput.contentType);
                 context.res.end(executionOutput.result, encoding);
             } else if (encoding === 'utf8') {
-            	// If profiler is true, return only profiler data
+            	// If profiling info wanted, return only profiler data
             	if (executionOutput.profiler && executionOutput.profiler.enabled) {
                 	if (executionOutput.pieceResult) {
-                		// Include profilerData in the piece response
-                		context.result = {
+                        context.result = {
 	                		result: executionOutput.result,
 	                		profiler: {
 	                			enabled: true,
 	                			data: profiler.all()
 	                		}
 	                	}
-                	} else {
+                        // Include profilerData in the piece response
+                        if (executionOutput.profiler.piecesData) {
+                            context.result.profiler.piecesData = executionOutput.profiler.piecesData;
+                        }
+                        console.log('Adding profiling data in piece response', context.result.profiler);
+                    } else {
 	                	// Omit normal response for profiler data
 	                	context.result = {
 	                		profiler: {

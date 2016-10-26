@@ -50,11 +50,15 @@ var reducers = {
 	   				bufs.push(item.result.data.data);
 		   		}
 	   			if (item.profiler && item.profiler.enabled) {
-	   					profilerData.push({pieceId:item.pieceId, data:item.profiler.data});
-	   				// if (Array.isArray(item.profiler.data)) {
-	   				// } else {
-	   				// 	logger.warn('Hub returned invalid profiler data. Array required.');
-	   				// }
+					let profilerPieceData = {
+						pieceId: item.pieceId,
+						data: item.profiler.data
+					}
+					// Add each piece's profiling information
+					if (item.profiler.piecesData) {
+						profilerPieceData['piecesData'] = item.profiler.piecesData;
+					}
+					profilerData.push(profilerPieceData);
 	   			}
 	        }
 	        // Nice way to concatenate n arrays

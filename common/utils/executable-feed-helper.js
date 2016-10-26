@@ -555,6 +555,9 @@ Helper.prototype.logProfile = function (data) {
 
 	    	if (type === 'profile') {
 				let load = os.loadavg();
+                // Clear history
+                pusage.unmonitor(process.pid);
+
                 pusage.stat(process.pid, function(err, result) {
                     // Note that sometimes result may be undefined, if async requests are made in very quick
                     // succession
@@ -574,7 +577,6 @@ Helper.prototype.logProfile = function (data) {
                     }
                     resolve(true);
                 });
-
 	    	} else {
 	    		log('Unknown executionEvent, no operation: ', data.type);
 	    		resolve(true);
