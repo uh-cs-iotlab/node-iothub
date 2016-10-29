@@ -158,15 +158,19 @@ module.exports = function (ExecutableFeed) {
                                     body.currentDepth++;
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
-                                    console.log('PIECES', pieces)
                                     return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
+                                        // console.log('EXEC', values)
                                         return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
 			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;
 			                                    logger.error(msg);
 			                                    let err = new Error(msg);
 			                                    return Promise.reject(err);
-			                                }
+			                                } else if (values && values[0] == null) {
+                                                let err = new Error('Error: No data received after mapper');
+                                                return Promise.reject(err);
+                                            }
+
                                             let reducedResult;
                                             if (thisLevel === 0) {
                                                 responseOptions.postProcessing = true;
@@ -188,7 +192,6 @@ module.exports = function (ExecutableFeed) {
                                                             r.profiler.data = profiler.all();
                                                             res = r;
                                                         } else {
-                                                            console.log('GOT RESULTS', responseOptions)
                                                             res = helpers.formatResponse(reducedResult.result, responseOptions, {});
 		                                        		}
 		                                        		return helpers.logProfile({tag:'before_sending_response'}).then(success => {
@@ -221,8 +224,8 @@ module.exports = function (ExecutableFeed) {
                                 // Now we have ready context object with data and libraries fetched. Next we execute
                                 // the script and return response. 
                                 return helpers.logProfile({tag:'after_data_fetch'}).then(success => {
+                                    console.log('EXECUTING')
                                     return helpers.executeScript(body, context).then(rawResult => {
-                                        console.log('EXECUTING')
 		                                if (distribute && body.response.processors) {
 		                                    // If we are executing in a leaf node, don't run processors on data.
 		                                    // They are run after reducers in parent nodes.

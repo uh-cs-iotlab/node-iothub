@@ -31,7 +31,7 @@ var Helper = function () {}
  */
 Helper.prototype.getData = function (element, index, array) {
     if (element.type) {
-        if (element.type === 'inline' || element.type === 'piece') {
+        if (element.type === 'inline') {
             return element;
         }
         else if (element.type === 'local' || element.type === 'remote') {
@@ -40,8 +40,19 @@ Helper.prototype.getData = function (element, index, array) {
                 return elem;
             });
             
-        }     
-        else {
+        }
+        else if (element.type === 'piece') {
+            if (element.data) {
+                return element;
+            } else if (element.url) {
+                return Helper.prototype.fetchFeed(element).then((elem) => {
+                    elem.data = Helper.prototype.preprocessData(elem);
+                    return elem;
+                });
+            } else {
+                throw new Error('No datasource defined for data element: url or data must be provided.');
+            }
+        } else {
             throw new Error('Type ' + element.type + ' not supported');
         }
     } else {
@@ -105,11 +116,11 @@ Helper.prototype.fetchFeed = function (element) {
         var baseUrl = 'https://' + app.get('host') + ':' + app.get('port') + '/api/feeds',
             feedUrl =  baseUrl + '/' + feedType + '/' + feedId
         url = baseUrl + feedUrl;
-    } else if (element.type === 'local' && element.url) {
+    } else if (element.url) {
         url = element.url;
     } else {
         var error = new Error(`Type ` + element.type + ` not identified`);
-        Promise.reject(error);
+        return Promise.reject(error);
     }
 
     var options = {
@@ -124,14 +135,14 @@ Helper.prototype.fetchFeed = function (element) {
     return new Promise((resolve, reject) => {
         // Allow self-signed certs
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         }
 
         request(options, function (error, response, body) {
             if (error) {
                 reject(error);
             } else if (response.statusCode !== 200 && response.statusCode !== 0) {
-                var err = new Error('Could not fetch defined data for feed : ' 
+                var err = new Error('Could not fetch defined data for feed : '
                     + element.name);
                 err.name = 'Data Error';
                 err.statusCode = err.status = response.statusCode;
@@ -202,16 +213,16 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: body
     }
-    console.log('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth)
+    console.log('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth, body.data)
     return new Promise((resolve, reject) => {
         // Allow self-signed certs for dev and test
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         }
         request(options, function (error, response, responseBody) {
             if (error === null && response.statusCode !== 200) {
-                error = new Error('Could not execute script piece: ' + responseBody.error.message);
-                error.name = 'ExecutionError';
+                error = responseBody.error;
+                error.message = 'Error in received piece result: ' + responseBody.error.message;
                 error.status = 400;
                 reject(error);
             } else if (error) {

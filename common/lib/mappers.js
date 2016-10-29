@@ -2,7 +2,7 @@
 
 const url = require('url');
 
-var mappers = {
+let mappers = {
 	defaultMapper: function (elem, options) {
 		/**
 	     * Takes a data element and node count as arguments, and divides the given array to an array of subarrays
@@ -59,32 +59,34 @@ var mappers = {
         }
         return ret;
     },
-    imageUrlMapper: function (dataElement, options) {
-    	options = options || {}
+    imageUrlMapper: function (dataElement, distributeOptions) {
+    	let options = distributeOptions || {};
 
-	    let ret = []
-	      , len = dataElement.maxNodes
-	      , obj = null
-	      , tmpArr = []
-	      , nodeCount = options.nodeCount || options.nodes.length
+		let ret = []
+	      , len = dataElement.maxNodes || options.nodes.length;
 
-	    let pieceLength = Math.floor(len/nodeCount);
-        let urlParts = url.parse(dataElement.url, true);
+	    let urlParts = url.parse(dataElement.url, true);
         urlParts.search = null; // Remove search part of the url so that format() uses the values we want
 
 	    for (let i = 1; i <= len; i++) {
 
             // TODO: don't hardcode these keys/values
             urlParts.query.size = parseInt(urlParts.query.size);
-            urlParts.query.nodes = len;
-            urlParts.query.index = i;
-            let tmpObj = {
+			let pieceId = dataElement.pieceId ? dataElement.pieceId + '.' + i : i + '';
+			let maxNodesLevel = dataElement.maxNodesLevel ? dataElement.maxNodesLevel + '.' + len : len + '';
+
+			// Calculate how big piece of the whole image this piece is, by multiplying max nodes per level
+			let maxNodesCount = maxNodesLevel.split('.').reduce(function (a, b) {return a * b}, 1);
+			urlParts.query.nodes = maxNodesCount;
+			urlParts.query.index = i;
+			let tmpObj = {
                 name: dataElement.name,
-                type: 'local',
-                pieceId: i,
+                type: 'piece',
+				pieceId: pieceId,
                 url: urlParts.format(),
                	contentType: dataElement.contentType,
-                processors: dataElement.processors
+                processors: dataElement.processors,
+				maxNodesLevel: maxNodesLevel
             }
             ret.push(tmpObj);
 	    }
@@ -96,43 +98,43 @@ var mappers = {
 
 	    let ret = []
 	      , len = arr.length
-	      , obj = null
-	      , tmpArr = []
+	      , pieceData = []
 	      , nodeCount = options.nodeCount || options.nodes.length
 
 	    let pieceLength = Math.floor(len/nodeCount);
-
-	    let i, j, chunk = pieceLength;
-	    console.log(pieceLength)
+		let pieceHeight = parseInt(imgObject.data.height)/nodeCount;
 
 	    for (let i = 1, j = 1; i <= len; i++) {
-            tmpArr.push(arr[i-1]);
+            pieceData.push(arr[i-1]);
             let pieceId = imgObject.pieceId ? imgObject.pieceId + '.' + j : j + '';
-	        let tmpObj = {
+			let maxNodesLevel = imgObject.maxNodesLevel ? imgObject.maxNodesLevel + '.' + len : len + '';
+	        let pieceObj = {
                 name: imgObject.name,
                 type: 'piece',
                 pieceId: pieceId,
                 data: {
-                	height: imgObject.data.height,
+                	height: pieceHeight,
                 	width: imgObject.data.width,
-                	data: tmpArr
+                	data: pieceData
                 },
                 contentType: imgObject.contentType,
-                processors: imgObject.processors
-            }
+                processors: imgObject.processors,
+				maxNodesLevel: maxNodesLevel
+            };
 	        // Check if subarray is equal to the length of the wanted piece, and that this is not 
 	        // the last piece of input array. NOTE! Last piece will also include any remaining data in the array. 
 	        // Thus, it would be best to have data such that: dataLength mod nodeCount would be close to 0. 
 	        // Otherwise the last piece could have more data than other pieces, and takes longer to process 
 	        // than other nodes.
 	        if (i % pieceLength === 0 && j !== nodeCount) {
-            	ret.push(tmpObj);
-	            tmpArr = [];
+            	ret.push(pieceObj);
+	            pieceData = [];
 	            j++;
 	        } else if (i === len) {
-	        	ret.push(tmpObj);
+	        	ret.push(pieceObj);
 	        }
 	    }
+
 	    return ret;
     },
 	oldImageDataMapper: function (imgObject, options) {
@@ -227,7 +229,7 @@ var mappers = {
 	}
 }
 
-var get = function (name) {
+let get = function (name) {
 	return mappers[name] || false;
 }
 
