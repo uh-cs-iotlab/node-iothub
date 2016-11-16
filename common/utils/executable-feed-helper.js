@@ -211,7 +211,7 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: body
     }
-    logger.info('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth);
+    // logger.info('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth);
     return new Promise((resolve, reject) => {
         // Allow self-signed certs for dev and test
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
@@ -580,10 +580,10 @@ Helper.prototype.logProfile = function (data) {
                             // log(msg, logData);
                         }
                     }
-                    logger.info(process.pid, tag, result);
-                    if (tag === 'before_sending_response') {
-                        logger.info('-----------------------------------');
-                    }
+                    // logger.info(process.pid, tag, result);
+                    // if (tag === 'before_sending_response') {
+                    //     logger.info('-----------------------------------');
+                    // }
                     resolve(true);
                 });
 

@@ -41,10 +41,10 @@ var reducers = {
 				let thisBufferType  = item.result.data && item.result.data.type || 'Array';
 				arrHeights.push(item.result.height);
 				if (thisBufferType === 'Array') {
-					console.log('array')
+					// console.log('array')
 					bufs.push(item.result.data);
 	   			} else {
-					console.log('buffer')
+					// console.log('buffer')
 	   				bufs.push(item.result.data.data);
 		   		}
 	   			if (item.profiler && item.profiler.enabled) {
