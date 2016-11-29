@@ -1,22 +1,21 @@
 'use strict'
 
-var os = require('os');
-var processors = require('../lib/processors');
-var mappers = require('../lib/mappers');
-var reducers = require('../lib/reducers');
-var request = require('request');
-var vmContainer = require('../../lib/vm-container');
+const os = require('os');
+const processors = require('../lib/processors');
+const mappers = require('../lib/mappers');
+const reducers = require('../lib/reducers');
+const request = require('request');
+const vmContainer = require('../../lib/vm-container');
 
-var profiler = require('../lib/profiler');
-var pusage = require('pidusage');
+const profiler = require('../lib/profiler');
+const pusage = require('pidusage');
 
+const profileEvents = require('../utils/profile-events');
+const logger = require('../utils/logger');
 
-var profileEvents = require('../utils/profile-events');
-var logger = require('../utils/logger');
+const app = require('../../server/server');
 
-var app = require('../../server/server');
-
-var Helper = function () {}
+let Helper = function () {}
 
 /**
  * Check datasource definitions , and return a Promise for each data set.
@@ -39,7 +38,6 @@ Helper.prototype.getData = function (element, index, array) {
                 elem.data = Helper.prototype.preprocessData(elem);
                 return elem;
             });
-            
         }
         else if (element.type === 'piece') {
             if (element.data) {
@@ -213,7 +211,7 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: body
     }
-    console.log('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth, body.data)
+    // logger.info('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth);
     return new Promise((resolve, reject) => {
         // Allow self-signed certs for dev and test
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
@@ -298,7 +296,6 @@ Helper.prototype.formatResponse = function (result, options, context) {
                 postProcessing: false
             }
         } else if (options.contentType) {
-            console.log(options)
             return {
                 contentType: options.contentType,
                 result: result,
@@ -557,7 +554,6 @@ Helper.prototype.logProfile = function (data) {
 	    	let tag = data.tag;
 	    	let log = (data.level && logger[data.level]) || logger.info;
 	    	let type = data.type || 'profile';
-	    	let msg = (profileEvents.get(data.tag) && profileEvents.get(data.tag).msg) || data.tag;
 	    	let logData = {}
 
 	    	Object.keys(data).forEach((key) => {
@@ -566,11 +562,8 @@ Helper.prototype.logProfile = function (data) {
 
 	    	if (type === 'profile') {
 				let load = os.loadavg();
-                // Clear history
-                pusage.unmonitor(process.pid);
-
                 pusage.stat(process.pid, function(err, result) {
-                    // Note that sometimes result may be undefined, if async requests are made in very quick
+                    // Sometimes result may be undefined, if async requests are made in very quick
                     // succession
                     if (result) {
                         logData.usage = {
@@ -583,12 +576,21 @@ Helper.prototype.logProfile = function (data) {
                         }
                         profiler.add(logData);
                         if (app.get('logProfilingInfo') === true) {
+                            // let msg = (profileEvents.get(data.tag) && profileEvents.get(data.tag).msg) || data.tag;
                             // log(msg, logData);
                         }
                     }
+                    // logger.info(process.pid, tag, result);
+                    // if (tag === 'before_sending_response') {
+                    //     logger.info('-----------------------------------');
+                    // }
                     resolve(true);
                 });
-	    	} else {
+
+                // Clear history
+                pusage.unmonitor(process.pid);
+
+            } else {
 	    		log('Unknown executionEvent, no operation: ', data.type);
 	    		resolve(true);
 	    	}

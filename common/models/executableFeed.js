@@ -86,7 +86,7 @@ module.exports = function (ExecutableFeed) {
         // If plain text script is posted, modify request to be json for remote method.
         // Possibly also validate script here.
         if (context.req.headers['content-type'] === 'text/plain') {
-            var tmpBody = {
+            let tmpBody = {
                 source: context.req.body
             }
             context.body = context.req.body = context.args.body = tmpBody;
@@ -106,10 +106,10 @@ module.exports = function (ExecutableFeed) {
      * @return {[type]}           [description]
      */
     ExecutableFeed.runScript = function (modelId, req, cb) {
-        var body = req.body;
-        var reqP;
-        var responseOptions = body.response || {};
-        var profilerOptions = body.profiler || {};
+        let body = req.body;
+        let reqP;
+        let responseOptions = body.response || {};
+        let profilerOptions = body.profiler || {};
 
         // Clear all previous logs from profiler
         profiler.clearAll();
@@ -159,7 +159,6 @@ module.exports = function (ExecutableFeed) {
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
                                     return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
-                                        // console.log('EXEC', values)
                                         return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
 			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;
@@ -182,15 +181,17 @@ module.exports = function (ExecutableFeed) {
                                             }
                                             if (distributeOptions.reducer) {
                                                 try {
+                                                    if (profilerOptions.enabled && !app.get('profiler')) {
+                                                        throw new Error('Profiler data requested, but hub is not configured to produce it. Use --profiler option when tarting the hub');
+                                                    }
                                                     reducedResult = helpers.runReducer(feed, values, distributeOptions);
-                                                    let res;
-                                                    return helpers.logProfile({tag:'after_reducer'}).then(success => {
-                                                        if (profilerOptions && profilerOptions.enabled) {
+                                                    return helpers.logProfile({tag:'after_reducer'}).then((success) => {
+                                                        let res;
+                                                        if (profilerOptions.enabled) {
                                                             responseOptions.profiler = profilerOptions;
-                                                            let r = helpers.formatResponse(reducedResult.result, responseOptions, reducedResult.profilerData);
-                                                            r.profiler.piecesData = reducedResult.profilerData;
-                                                            r.profiler.data = profiler.all();
-                                                            res = r;
+                                                            res = helpers.formatResponse(reducedResult.result, responseOptions, reducedResult.profilerData);
+                                                            res.profiler.piecesData = reducedResult.profilerData;
+                                                            res.profiler.data = profiler.all();
                                                         } else {
                                                             res = helpers.formatResponse(reducedResult.result, responseOptions, {});
 		                                        		}
@@ -198,11 +199,11 @@ module.exports = function (ExecutableFeed) {
 		                                        			return res;
 		                                        		});
 		                                        	});
-			                                    } catch (err) {
-			                                        let error = new Error('Failed to run reducer: ' + err.message);
-			                                        logger.error(err.message);
-			                                        error.status = 400;
-			                                        error.name = 'ReducerExecutionError';
+                                                } catch (err) {
+                                                    logger.error(err.message);
+                                                    err.message = 'Failed to run reducer: ' + err.message;
+                                                    err.status = 400;
+			                                        err.name = 'ReducerExecutionError';
 			                                        return Promise.reject(err);
 			                                    }
 			                                } else {
@@ -212,7 +213,7 @@ module.exports = function (ExecutableFeed) {
 			                                	// return helpers.logProfile({tag:'before_sending_response'}).then(success => {
 			                                	// 	return res;
 			                                	// });
-                                                return Promise.reject(new Error("Default reducer function is not implemented. Use image reducer."));
+                                                return Promise.reject(new Error('Default reducer function is not implemented. Use imageReducer.'));
 			                                }
 			                            }, err => Promise.reject(err));
 		                            }, err => Promise.reject(err));
@@ -224,7 +225,7 @@ module.exports = function (ExecutableFeed) {
                                 // Now we have ready context object with data and libraries fetched. Next we execute
                                 // the script and return response. 
                                 return helpers.logProfile({tag:'after_data_fetch'}).then(success => {
-                                    console.log('EXECUTING')
+                                    // logger.info('EXECUTING');
                                     return helpers.executeScript(body, context).then(rawResult => {
 		                                if (distribute && body.response.processors) {
 		                                    // If we are executing in a leaf node, don't run processors on data.
@@ -242,9 +243,8 @@ module.exports = function (ExecutableFeed) {
                                         if (profilerOptions && profilerOptions.enabled) {
                                             responseOptions.profiler = profilerOptions;
                                         }
-                                        let res = helpers.formatResponse(rawResult.res, responseOptions, rawResult.context);
                                         return helpers.logProfile({tag:'before_sending_response'}).then(success => {
-			                                return res;
+			                                return helpers.formatResponse(rawResult.res, responseOptions, rawResult.context);
 		                            	}, err => Promise.reject(err));
 		                            }, err => Promise.reject(err));
 								}, err => Promise.reject(err));
@@ -312,7 +312,6 @@ module.exports = function (ExecutableFeed) {
                         if (executionOutput.profiler.piecesData) {
                             context.result.profiler.piecesData = executionOutput.profiler.piecesData;
                         }
-                        console.log('Adding profiling data in piece response', context.result.profiler);
                     } else {
 	                	// Omit normal response for profiler data
 	                	context.result = {

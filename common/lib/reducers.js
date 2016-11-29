@@ -27,10 +27,9 @@ var reducers = {
     },
 	imageReducer: function (arrs) {
 		assert.ok(Array.isArray(arrs), "Invalid argument for reducer given. Array expected, " + typeof arrs + " found.");
-
 		let arr, height, width;
 		let response;
-		let type = arrs[0].result.data.type || 'Array';
+		let type = arrs[0].result.data && arrs[0].result.data.type || 'Array';
 
 		if (Array.isArray(arrs)) {
         	let bufs = [];
@@ -39,13 +38,13 @@ var reducers = {
 			width = arrs[0].result.width
 
 	        for (let item of arrs) {
-				let thisBufferType  = item.result.data.type || 'Array';
+				let thisBufferType  = item.result.data && item.result.data.type || 'Array';
 				arrHeights.push(item.result.height);
 				if (thisBufferType === 'Array') {
-					console.log('array')
+					// console.log('array')
 					bufs.push(item.result.data);
 	   			} else {
-					console.log('buffer')
+					// console.log('buffer')
 	   				bufs.push(item.result.data.data);
 		   		}
 	   			if (item.profiler && item.profiler.enabled) {
