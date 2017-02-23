@@ -163,10 +163,25 @@ Helper.prototype.fetchFeed = function (element) {
  * @return {[type]}           [description]
  */
 Helper.prototype.sendPiece = function (dataPiece, index, array) {
-    let req = this;
+    let body = {};
+    body.distribution = {};
+    body.distribution.enabled = this.distribution.enabled;
+    body.distribution.mapper = this.distribution.mapper;
+    body.distribution.reducer = this.distribution.reducer;
+    body.distribution.nodes = [];
+    for (let i = 0; i < this.distribution.nodes.length; i++) {
+	body.distribution.nodes[i] = this.distribution.nodes[i];
+    }
+
+    body.name = this.name;
+    body.source = this.source;
+    body.profiler = this.profiler;
+    body.response = this.response;
+    body.data = [];
+
     // Use copy of request body, so that we don't modify one common object
-    let strCopy = JSON.stringify(this.body);
-    let body = JSON.parse(strCopy);
+    //let strCopy = JSON.stringify(this.body);
+    //let body = JSON.parse(strCopy);
     let url;
     if (body.distribution.nodes && body.distribution.nodes[index]) {
         // If this is a nested distribution, the urls in the distribution part of the request must
@@ -203,7 +218,7 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
     // Set first data item to refer to this piece of data. This overrides the whole data that is
     // saved in the first index, and this is the desired effect. The first index should be used 
     // for data that needs to be distributed.
-    body.data[0] = dataPiece;
+    body.data.push(dataPiece);
 
     var options = {
         method: 'POST',
@@ -211,12 +226,14 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: body
     }
+    console.log('REQUEST PAYLOAD: ' + Buffer.byteLength(JSON.stringify(options), 'utf8')/1000 + ' kB');
     // logger.info('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth);
     return new Promise((resolve, reject) => {
         // Allow self-signed certs for dev and test
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         }
+	//console.log('sending: ' + dataPiece.pieceId)
         request(options, function (error, response, responseBody) {
             if (error === null && response.statusCode !== 200) {
                 error = responseBody.error;

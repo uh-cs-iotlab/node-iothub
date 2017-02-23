@@ -158,7 +158,8 @@ module.exports = function (ExecutableFeed) {
                                     body.currentDepth++;
 		                            // Wait all the pieces to return responses, which may only be ACKs, or full
 		                            // responses.
-                                    return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
+				   
+                                    return Promise.all(pieces.map(helpers.sendPiece, req.body)).then((values) => {
                                         return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
 			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;

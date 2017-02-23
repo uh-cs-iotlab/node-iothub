@@ -9,7 +9,11 @@ var jpeg = require('jpeg-js');
  */
 var processors = {
 	jpegEncode: function (img) {
-		return jpeg.encode(img).data;
+		console.time('format')
+		console.log(img.data.length)
+		var ret = jpeg.encode(img).data;
+		console.timeEnd('format')
+		return ret;
 	},
 	jpegDecode: function (jpg) {
 		return jpeg.decode(jpg);
