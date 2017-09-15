@@ -34,7 +34,7 @@
     "morgan": "^1.6.1",
     "node-flags": "^0.1.9",
     "require-from-string": "^1.2.0",
-    "swagger-ui-browserify": "http://aurelienbertron.fr/swagger-ui-browserify-2.1.4.tgz",
+    "swagger-ui-browserify": "^2.1.4",
     "pidusage": "=1.1.0",
     "winston": "^2.2.0"
   },
