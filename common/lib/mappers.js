@@ -104,6 +104,7 @@ let mappers = {
 	    let pieceLength = Math.floor(len/nodeCount);
 		let pieceHeight = parseInt(imgObject.data.height)/nodeCount;
 
+		console.time('map')
 	    for (let i = 1, j = 1; i <= len; i++) {
             pieceData.push(arr[i-1]);
             let pieceId = imgObject.pieceId ? imgObject.pieceId + '.' + j : j + '';
@@ -134,6 +135,7 @@ let mappers = {
 	        	ret.push(pieceObj);
 	        }
 	    }
+	    console.timeEnd('map')
 
 	    return ret;
     },

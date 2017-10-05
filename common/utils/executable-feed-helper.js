@@ -111,6 +111,7 @@ Helper.prototype.fetchFeed = function (element) {
 
     if (element.type === 'feed') {
         // Default settings for local feeds
+        // TODO: check protocol
         var baseUrl = 'https://' + app.get('host') + ':' + app.get('port') + '/api/feeds',
             feedUrl =  baseUrl + '/' + feedType + '/' + feedId
         url = baseUrl + feedUrl;
@@ -163,11 +164,10 @@ Helper.prototype.fetchFeed = function (element) {
  * @return {[type]}           [description]
  */
 Helper.prototype.sendPiece = function (dataPiece, index, array) {
-    let req = this;
-    // Use copy of request body, so that we don't modify one common object
-    let strCopy = JSON.stringify(this.body);
-    let body = JSON.parse(strCopy);
+    logger.info('S' + index)
+    let body = JSON.parse(this);
     let url;
+
     if (body.distribution.nodes && body.distribution.nodes[index]) {
         // If this is a nested distribution, the urls in the distribution part of the request must
         // be one level deeper in the nested object. If such level exists, we replace the current highest
@@ -193,8 +193,8 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         }
     } else {
         // Should use a node url given by a metahub, throws an error for now.
-        var err = new Error(`No URLs were defined for distributed data. Define a url component 
-            for each node in the distribution definition.`);
+        var err = new Error(`Not enough URLs were defined for distributed data. Define a URL component 
+            for each node in the distribution definition, and check the value of maxNodes.`);
         err.name = 'InvalidArgumentError';
         err.status = 400;
         return Promise.reject(err);
@@ -211,13 +211,17 @@ Helper.prototype.sendPiece = function (dataPiece, index, array) {
         json: true,
         body: body
     }
-    // logger.info('SENDING PIECE', index, options.url, options.body.distribution.nodes, body.currentDepth, body.distribution.maxDepth);
+    //logger.info('SENDING PIECE', index, options.url, Buffer.byteLength(JSON.stringify(options), 'utf8')/1000000, body.distribution.maxDepth);
     return new Promise((resolve, reject) => {
         // Allow self-signed certs for dev and test
         if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         }
-        request(options, function (error, response, responseBody) {
+        console.log('sending piece ' + dataPiece.pieceId)
+        console.log('sending at:', new Date())
+        return request(options, function (error, response, responseBody) {
+            console.log('receiving' + dataPiece.pieceId)
+            console.log('received at:', new Date(), Buffer.byteLength(JSON.stringify(response)))
             if (error === null && response.statusCode !== 200) {
                 error = responseBody.error;
                 error.message = 'Error in received piece result: ' + responseBody.error.message;
@@ -278,6 +282,8 @@ Helper.prototype.formatResponse = function (result, options, context) {
                 throw new Error('Unsupported processor type');
             }
         }
+        logger.error('result')
+        result.data = result.data.toJSON()
         if (options.profiler && options.profiler.enabled) {
             // If profiler data is desired with the response, return it. Defaults to
             // plain result object
@@ -381,9 +387,8 @@ Helper.prototype.preprocessData = function (elem) {
 
     // No preprocessing for remote datasources (processed in remote hubs)
     if (elem.type === 'remote') {
-    	return elem.data;
+        return elem.data;
     }
-
     switch (elem.contentType) {
         case 'application/octet-stream':
         case 'image/gif':
@@ -407,7 +412,6 @@ Helper.prototype.preprocessData = function (elem) {
     if (elem.type === 'inline' && elem.processors && processors.get(elem.processors)) {
         response = processors.get(elem.processors)(response);
     }
-
     return response;
 }
 
@@ -429,16 +433,16 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
     }
 
     if (dataSource.type === 'inline' || dataSource.type === 'remote' || dataSource.type === 'piece') {
-    	// Data is ready
+        // Data is ready
     	convergedData = Promise.resolve(dataSource);
     } else if (dataSource.type === 'local') {
-    	// Fetch data locally and distribute it to hubs
+        // Fetch data locally and distribute it to hubs
     	convergedData = this.fetchFeed(dataSource);
     } else {
-    	let err = new Error("Invalid type for data source. Supported types are inline, local and remote.");
-    	err.status = 400;
-    	err.name = "DataSourceValidationError";
-    	return Promise.reject(err);
+        let err = new Error("Invalid type for data source. Supported types are inline, local and remote.");
+        err.status = 400;
+        err.name = "DataSourceValidationError";
+        return Promise.reject(err);
     }
 
     return convergedData.then((data) => {
@@ -467,7 +471,7 @@ Helper.prototype.getDistributableData = function (body, feed, options) {
                     } catch (err) {
                         let err = new Error('Error executing custom mapper: ' + err.message);
                         err.status = 404;
-                        throw err;   
+                        throw err;
                     }
                     break;
                 case undefined:

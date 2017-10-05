@@ -145,6 +145,7 @@ module.exports = function (ExecutableFeed) {
 	                        distributeOptions = undefined;
 	                    }
 
+	                    console.log('arrived: ', new Date());
 	                    // Check distribution parameter, and either distribute and send data further,
 	                    // or handle in this node.
 	                    body.currentDepth = body.currentDepth || 0;
@@ -153,12 +154,12 @@ module.exports = function (ExecutableFeed) {
 	                            // Each piece is a definition of a piece of the original data. The definition may already
                                 // include fetched and distributed data, or only a url for getting a piece of data.
                                 return helpers.logProfile({tag:'after_data_map'}).then(success => {
-		                            // Increase depth counter for next level
-                                    let thisLevel = body.currentDepth;
+		                            let thisLevel = body.currentDepth;
                                     body.currentDepth++;
-		                            // Wait all the pieces to return responses, which may only be ACKs, or full
-		                            // responses.
-                                    return Promise.all(pieces.map(helpers.sendPiece, req)).then((values) => {
+                                    console.time('stringify')
+		                            let strCopyOfBody = JSON.stringify(req.body);
+                                    console.timeEnd('stringify')
+                                    return Promise.all(pieces.map(helpers.sendPiece, strCopyOfBody)).then((values) => {
                                         return helpers.logProfile({tag:'dist_response_latency'}).then(success => {
 			                                if (values && values[0] && values[0].result && values[0].result.error) {
 			                                    let msg = 'Error running distributed code: ' + values[0].result.error.message;
@@ -174,7 +175,6 @@ module.exports = function (ExecutableFeed) {
                                             if (thisLevel === 0) {
                                                 responseOptions.postProcessing = true;
                                             } else {
-                                                // This is an intermediary result, and needs further reducing up the call stack
                                                 responseOptions.postProcessing = false;
                                                 responseOptions.pieceResult = true;
                                                 responseOptions.contentType = 'application/json';
@@ -225,17 +225,14 @@ module.exports = function (ExecutableFeed) {
                                 // Now we have ready context object with data and libraries fetched. Next we execute
                                 // the script and return response. 
                                 return helpers.logProfile({tag:'after_data_fetch'}).then(success => {
-                                    // logger.info('EXECUTING');
+                                    console.log('before exec at:', new Date(), context.data)
                                     return helpers.executeScript(body, context).then(rawResult => {
 		                                if (distribute && body.response.processors) {
-		                                    // If we are executing in a leaf node, don't run processors on data.
+		                                    // If executing in a leaf node, don't run post processors on data.
 		                                    // They are run after reducers in parent nodes.
 		                                    responseOptions.postProcessing = false;
 		                                    // Indicate that this is an intermediate result
 		                                    responseOptions.pieceResult = true;
-		                                    // Set content type to binary data, so original content-type
-		                                    // is ignored for distributed piece results. This is needed
-		                                    // so that data is not needlessly processed.
 		                                    responseOptions.contentType = 'application/json';
 		                                } else {
 		                                    responseOptions.postProcessing = true;
@@ -244,7 +241,10 @@ module.exports = function (ExecutableFeed) {
                                             responseOptions.profiler = profilerOptions;
                                         }
                                         return helpers.logProfile({tag:'before_sending_response'}).then(success => {
-			                                return helpers.formatResponse(rawResult.res, responseOptions, rawResult.context);
+			                                console.log('after exec at:', new Date())
+                                            var r =  helpers.formatResponse(rawResult.res, responseOptions, rawResult.context);
+                                            console.log('after format at:', new Date())
+                                            return r;
 		                            	}, err => Promise.reject(err));
 		                            }, err => Promise.reject(err));
 								}, err => Promise.reject(err));
@@ -252,7 +252,7 @@ module.exports = function (ExecutableFeed) {
 	                        });
 	                    }
 	                }
-	        	}, err => Promise.reject(err)); //profilingInfo
+	        	}, err => Promise.reject(err));
         	});
 
         if (cb) reqP.then(result => {
@@ -289,12 +289,14 @@ module.exports = function (ExecutableFeed) {
     });
 
     ExecutableFeed.afterRemote('runScript', function(context, executionOutput, next) {
+        console.log('afterRemote 1 at:', new Date())
         if (context.req.headers.accept && context.req.headers.accept === 'text/plain') {
             context.res.setHeader('Content-Type', context.req.headers.accept);
             context.res.end(JSON.stringify(executionOutput.result) + '');
         } else if (executionOutput.contentType) {
             let encoding = helpers.getEncoding(executionOutput.contentType);
             if (encoding === 'binary') {
+                console.log('afterRemote at binary:', new Date())
                 context.res.setHeader('Content-Type', executionOutput.contentType);
                 context.res.end(executionOutput.result, encoding);
             } else if (encoding === 'utf8') {
@@ -312,6 +314,8 @@ module.exports = function (ExecutableFeed) {
                         if (executionOutput.profiler.piecesData) {
                             context.result.profiler.piecesData = executionOutput.profiler.piecesData;
                         }
+
+                        console.log('afterRemote at utf-8 1:', new Date(), executionOutput.result.data.length)
                     } else {
 	                	// Omit normal response for profiler data
 	                	context.result = {
@@ -324,7 +328,9 @@ module.exports = function (ExecutableFeed) {
 	                	if (executionOutput.profiler.piecesData) {
 	                		context.result.profiler.piecesData = executionOutput.profiler.piecesData;
 	                	}
+                        console.log('afterRemote at utf-8 2:', new Date())
 	                }
+
                 	next();
                 } else {
                 	context.result = {
@@ -333,6 +339,7 @@ module.exports = function (ExecutableFeed) {
                 	next();
                 }
             } else if (executionOutput.contentType === 'text/plain') {
+                console.log('afterRemote 2 at text/plain:', new Date())
                 context.res.setHeader('Content-Type', executionOutput.contentType);
                 context.res.end(JSON.stringify(executionOutput.result) + '');
             } else {
